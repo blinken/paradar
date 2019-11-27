@@ -51,7 +51,7 @@ def track_aircraft(aircraft_list):
       print("Bad coordinate string: '{}'".format(line))
       continue
 
-    ac_bearing, ac_distance = calculate_bearing(aircraft_list[ac_id])
+    ac_bearing, ac_distance = calculate_bearing(aircraft_list[ac_id], 0)
     update_time = aircraft_list[ac_id][0].isoformat()
     print("Updating aircraft {}: {:<7,}meters  {:<5}° {}".format(ac_id, int(ac_distance), round(ac_bearing, 1), update_time))
 
@@ -85,34 +85,42 @@ reg_status = 0x34
 reg_measurement_x_2 = 0x24
 reg_tmrc = 0x0b
 
-def update_aircraft_display():
+def calculate_pixel(bearing):
   degrees_per_pixel = 360/24.0
+  display_offset = 9
+  max_pixel = 23
 
+  uncorrected_pixel = max_pixel - int(bearing/degrees_per_pixel)
+
+  return (uncorrected_pixel + display_offset) % max_pixel
+
+def update_aircraft_display(compass_angle):
   for i in range(24):
     pixels[i] = (0, 0, 0)
 
-  for value in list(aircraft_list.values()):
-    ac_bearing, ac_distance = calculate_bearing(value)
-    #print("Aircraft bearing {} distance {}".format(ac_bearing, ac_distance))
-    if ac_distance > 20000.0:
-      #print("Squelching aircraft with distance {}".format(ac_distance))
-      continue
-    next_pixel = 23 - int(ac_bearing/degrees_per_pixel)
-    next_brightness = int(max(0, min(255, ((15000-ac_distance)*255/10000.0))))
-    #print("Pixel {} to brightness {}".format(next_pixel, next_brightness))
+  # Show compass north in blue
+  pixels[calculate_pixel(compass_angle)] = (0, 0, 50)
 
-    if next_pixel > 23 or next_pixel < 0:
-      print("Error - next_pixel={}, bearing={}".format(next_pixel, ac_bearing))
+  for value in list(aircraft_list.values()):
+    ac_bearing, ac_distance = calculate_bearing(value, compass_angle)
+    if ac_distance > 100000.0:
+      # squelch aircraft too distant
       continue
+
+    next_pixel = calculate_pixel(ac_bearing)
+    next_brightness = int(max(0, min(255, ((15000-ac_distance)*255/10000.0))))
+
     pixels[next_pixel] = (next_brightness, 10, 00)
-  
+
+
   pixels.show()
 
-def calculate_bearing(value):
-  current_lat, current_lon = (0, 0) # placeholder, needs to be current location
+def calculate_bearing(ac_value, compass_angle):
+  current_lat, current_lon = (0.0, 0.0) # placeholder, needs to be current location
 
-  result = Geodesic.WGS84.Inverse(current_lat, current_lon, value[1], value[2])
-  return (result['azi1']+180, result['s12'])
+  result = Geodesic.WGS84.Inverse(current_lat, current_lon, ac_value[1], ac_value[2])
+  bearing = ((result['azi1']+180) + compass_angle) % 360
+  return (bearing, result['s12'])
 
 def cs(state):
   time.sleep(0.03)
@@ -142,7 +150,7 @@ def unpack_result(l):
   res = round((struct.unpack(">i", x)[0] >>1)/46603.0, 2)
   return res
 
-def get_results():
+def get_compass_results():
   # Normally it is only necessary to send "A4", since the register value automatically
   # increments on the clock cycles such that after sending "A4" all 3 bytes for the X axis
   # measurement would be clocked out, then the 3 bytes for the Y axis measurement, then the 3
@@ -154,52 +162,32 @@ def get_results():
   cs(False)
   return (unpack_result(results[:3]), unpack_result(results[3:6]), unpack_result(results[6:9]))
 
-def azimuth(x, y, z):
+def calculate_compass_azimuth(x, y, z):
   return round((180/math.pi * math.atan2(y, x)) % 360, 1)
 
 print("Data ready: " + str(GPIO.input(23)))
-print("Clearing registers")
+print("Clearing reg_poll & reg_cmm")
 print("reg_poll: " + hex(write(reg_poll, 0x00) & 0x80))
 print("reg_cmm: " + hex(write(reg_continuous_measurement_mode, 0x00) & 0x80))
 
-print("Cycle count settings: ")
-cs(True)
-spi.xfer2([0x84])
-time.sleep(0.1)
-print(spi.readbytes(6))
-cs(False)
-
-print("Setting cycle count: ")
+print("Setting cycle count")
 cs(True)
 spi.xfer2([0x04, 0x00, 0xc8, 0x00, 0xc8, 0x00, 0xc8])
 #spi.xfer2([0x04, 0x01, 0x90, 0x01, 0x90, 0x01, 0x90])
-time.sleep(0.1)
-cs(False)
-
-print("Cycle count settings: ")
-cs(True)
-spi.xfer2([0x84])
-time.sleep(0.1)
-print(spi.readbytes(6))
 cs(False)
 
 print("Setting up continuous measurement")
-print("reg_tmrc: " + hex(write(reg_tmrc, 0x99) & 0x80))
+print("reg_tmrc: " + hex(write(reg_tmrc, 0x98) & 0x80))
 print("reg_cmm: " + hex(write(reg_continuous_measurement_mode, 0x71) & 0x80))
-time.sleep(0.5)
 
 print()
-print("Starting measurement")
-
-#while True:
-#  while GPIO.input(23) == 0:
-#    time.sleep(0.01)
-#  
-#  x, y, z = get_results()
-#  angle = azimuth(x, y, z)
-#  print(angle)
-#  angle_to_pixel(angle)
+print("compass: starting measurement")
 
 while True:
-  update_aircraft_display()
-  time.sleep(1)
+  while GPIO.input(23) == 0:
+    time.sleep(0.02)
+
+  x, y, z = get_compass_results()
+  compass_angle = calculate_compass_azimuth(x, y, z)
+
+  update_aircraft_display(compass_angle)
