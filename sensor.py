@@ -159,6 +159,8 @@ class Display:
   _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
 
   _COLOUR_COMPASS_NORTH = (0, 0, 50) # blue
+  _COLOUR_COMPASS_EAST = (0, 50, 0) # green
+  _COLOUR_COMPASS_WEST = (50, 50, 50) # white
 
   def __init__(self):
     self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False)
@@ -169,14 +171,14 @@ class Display:
     self.pixels.show()
 
   def _pixel_for_bearing(self, bearing):
-    uncorrected_pixel = (self._PIXEL_COUNT - 1) - int(bearing/self._DEGREES_PER_PIXEL)
+    uncorrected_pixel = (self._PIXEL_COUNT - 1) + int(bearing/self._DEGREES_PER_PIXEL)
 
     return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
 
   def _calculate_bearing(ac_value, compass_angle):
     current_lat, current_lon = (0.0, 0.0) # placeholder, needs to be current location
 
-    result = Geodesic.WGS84.Inverse(current_lat, current_lon, ac_value[1], ac_value[2])
+    result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], current_lat, current_lon)
     bearing = ((result['azi1']+180) + compass_angle) % 360
     return (bearing, result['s12'])
 
@@ -190,9 +192,15 @@ class Display:
 
     # Indicate compass north
     self.pixels[self._pixel_for_bearing(compass.get_azimuth())] = self._COLOUR_COMPASS_NORTH
+    #self.pixels[self._pixel_for_bearing(compass.get_azimuth()+90)] = self._COLOUR_COMPASS_EAST
+    #self.pixels[self._pixel_for_bearing(compass.get_azimuth()-90)] = self._COLOUR_COMPASS_WEST
 
-    for value in list(aircraft_list.values()):
-      ac_bearing, ac_distance = self._calculate_bearing(value, compass.get_azimuth())
+    vectors = [ Display._calculate_bearing(value, compass.get_azimuth()) for value in list(aircraft_list.values()) ]
+    # Order the list of vectors to aircraft by distance, descending - so closer
+    # aircraft are displayed over farther ones.
+    vectors.sort(key=lambda x: x[1], reverse=True)
+
+    for ac_bearing, ac_distance in vectors:
       if ac_distance > 100000.0:
         # squelch aircraft too distant
         continue
@@ -253,5 +261,4 @@ display = Display()
 while True:
   #compass.update() # compass tracking is disabled until module is replaced
   time.sleep(0.1)
-  print(Aircraft.positions)
   display.update(compass, Aircraft.positions)
