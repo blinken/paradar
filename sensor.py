@@ -52,15 +52,15 @@ class Compass:
     self.spi.cshigh = False
 
     # Clear REG_POLL & reg_cmm
-    self._write(_REG_POLL, 0x00)
-    self._write(_REG_CONTINUOUS_MEASUREMENT_MODE, 0x00)
+    self._write(self._REG_POLL, 0x00)
+    self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00)
 
     # Set cycle count
     self._set_cycle_count()
 
     # Activate continuous measurement
-    self._write(_REG_TMRC, 0x98)
-    self._write(_REG_CONTINUOUS_MEASUREMENT_MODE, 0x71)
+    self._write(self._REG_TMRC, 0x98)
+    self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x71)
 
     self.update()
 
@@ -79,17 +79,17 @@ class Compass:
 
   # Wrap a method that does something with the chip, activating the chip-select
   # before and after it is accessed.
-  def chip_select(self, function):
-    def decorator():
-      time.sleep(_INSTRUCTION_SLEEP)
-      GPIO.output(self._GPIO_CHIP_SELECT, GPIO.LOW)
-      time.sleep(_INSTRUCTION_SLEEP)
+  def chip_select(function):
+    def decorator(*args):
+      time.sleep(Compass._INSTRUCTION_SLEEP)
+      GPIO.output(Compass._GPIO_CHIP_SELECT, GPIO.LOW)
+      time.sleep(Compass._INSTRUCTION_SLEEP)
 
-      result = function()
+      result = function(*args)
 
-      time.sleep(_INSTRUCTION_SLEEP)
-      GPIO.output(self._GPIO_CHIP_SELECT, GPIO.HIGH)
-      time.sleep(_INSTRUCTION_SLEEP)
+      time.sleep(Compass._INSTRUCTION_SLEEP)
+      GPIO.output(Compass._GPIO_CHIP_SELECT, GPIO.HIGH)
+      time.sleep(Compass._INSTRUCTION_SLEEP)
 
       return result
 
@@ -132,7 +132,7 @@ class Compass:
 
     x = self._unpack_measurement(results[:3])
     y = self._unpack_measurement(results[3:6])
-    z = self._unpack_measurement(results[6:9]))
+    z = self._unpack_measurement(results[6:9])
 
     return (x, y, z)
 
@@ -161,7 +161,7 @@ class Display:
   _COLOUR_COMPASS_NORTH = (0, 0, 50) # blue
 
   def __init__(self):
-    self.pixels = neopixel.NeoPixel(board.D18, _PIXEL_COUNT, auto_write=False)
+    self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False)
     self.off()
     self._refresh()
 
@@ -171,7 +171,7 @@ class Display:
   def _pixel_for_bearing(self, bearing):
     uncorrected_pixel = (self._PIXEL_COUNT - 1) - int(bearing/self._DEGREES_PER_PIXEL)
 
-    return (uncorrected_pixel + self.PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
+    return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
 
   def _calculate_bearing(ac_value, compass_angle):
     current_lat, current_lon = (0.0, 0.0) # placeholder, needs to be current location
@@ -189,7 +189,7 @@ class Display:
     self.off()
 
     # Indicate compass north
-    self.pixels[self._pixel_for_bearing(compass.get_azimuth())] = _COLOUR_COMPASS_NORTH
+    self.pixels[self._pixel_for_bearing(compass.get_azimuth())] = self._COLOUR_COMPASS_NORTH
 
     for value in list(aircraft_list.values()):
       ac_bearing, ac_distance = self._calculate_bearing(value, compass.get_azimuth())
@@ -217,7 +217,7 @@ class Aircraft:
       (msg_class, msg_type, _, _, ac_id, _, ac_date, ac_time, _, _, _, _, _, _, ac_lat, ac_lon, _) = line.split(",", 16)
 
       if msg_class != "MSG" or msg_type != "3":
-        continue
+        return None
 
       ac_datetime = datetime.strptime(ac_date + " " + ac_time, "%Y/%m/%d %H:%M:%S.%f")
       ac_lat = float(ac_lat)
@@ -244,12 +244,14 @@ class Aircraft:
           del Aircraft.positions[ac_id]
 
 ac = Aircraft()
-t_ac = threading.Thread(target=ac.track_aircraft, args=(ac, ), daemon=True)
+t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
 t_ac.start()
 
 compass = Compass()
 display = Display()
 
 while True:
-  compass.update() # wait for a new compass reading and update internal state
+  #compass.update() # compass tracking is disabled until module is replaced
+  time.sleep(0.1)
+  print(Aircraft.positions)
   display.update(compass, Aircraft.positions)
