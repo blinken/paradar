@@ -8,6 +8,8 @@ import signal
 import sys
 import threading
 import socket
+import serial
+import pynmea2
 import RPi.GPIO as GPIO
 from geographiclib.geodesic import Geodesic
 from datetime import datetime, timedelta
@@ -151,6 +153,28 @@ class Compass:
   def to_string(self):
     return str(round(self._azimuth, 1))
 
+class GPS:
+  def __init__(self):
+    self.port = serial.Serial("/dev/ttyAMA0", baudrate=9600, timeout=3.0)
+    self.latitude = 0.0
+    self.longitude = 0.0
+    self.updated = datetime.datetime(1970,1,1)
+
+  def track_gps(self):
+    streamreader = pynmea2.NMEAStreamReader(self.port)
+
+    while True:
+      for msg in streamreader.next():
+        try:
+          self.latitude = msg.latitude
+          self.longitude = msg.longitude
+          self.updated = msg.timestamp
+        except Exception as e:
+          print("Exception parsing NMEA - " + str(e))
+
+  def is_fresh(self):
+    return (datetime.datetime.now() - self.updated) < datetime.timedelta(minutes=2)
+
 class Display:
   _GPIO_DATA = board.D18
   _PIXEL_COUNT = 24
@@ -175,10 +199,8 @@ class Display:
 
     return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
 
-  def _calculate_bearing(ac_value, compass_angle):
-    current_lat, current_lon = (0.0, 0.0) # placeholder, needs to be current location
-
-    result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], current_lat, current_lon)
+  def _calculate_bearing(ac_value, compass_angle, gps):
+    result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], gps.latitude, gps.longitude)
     bearing = ((result['azi1']+180) + compass_angle) % 360
     return (bearing, result['s12'])
 
@@ -187,7 +209,7 @@ class Display:
       self.pixels[i] = (0, 0, 0)
 
   # Refresh the display with the value of self.pixels
-  def update(self, compass, aircraft_list):
+  def update(self, compass, gps, aircraft_list):
     self.off()
 
     # Indicate compass north
@@ -195,7 +217,7 @@ class Display:
     #self.pixels[self._pixel_for_bearing(compass.get_azimuth()+90)] = self._COLOUR_COMPASS_EAST
     #self.pixels[self._pixel_for_bearing(compass.get_azimuth()-90)] = self._COLOUR_COMPASS_WEST
 
-    vectors = [ Display._calculate_bearing(value, compass.get_azimuth()) for value in list(aircraft_list.values()) ]
+    vectors = [ Display._calculate_bearing(value, compass.get_azimuth(), gps) for value in list(aircraft_list.values()) ]
     # Order the list of vectors to aircraft by distance, descending - so closer
     # aircraft are displayed over farther ones.
     vectors.sort(key=lambda x: x[1], reverse=True)
@@ -255,10 +277,18 @@ ac = Aircraft()
 t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
 t_ac.start()
 
+gps = GPS()
+t_gps = threading.Thread(target=gps.track_gps, args=(), daemon=True)
+t_gps.start()
+
 compass = Compass()
 display = Display()
 
 while True:
   #compass.update() # compass tracking is disabled until module is replaced
   time.sleep(0.1)
-  display.update(compass, Aircraft.positions)
+
+  if !gps.is_fresh():
+    print("Warning: GPS position is not up-to-date")
+
+  display.update(compass, gps, Aircraft.positions)
