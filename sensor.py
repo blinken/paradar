@@ -64,20 +64,22 @@ class Compass:
     self._write(self._REG_TMRC, 0x98)
     self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x71)
 
+    self._debug()
+
     self.update()
 
   def _debug(self):
     print("Data ready: " + str(GPIO.input(self._GPIO_DRDY)))
     print("Clearing _REG_POLL & reg_cmm")
-    print("_REG_POLL: " + hex(self._write(self._REG_POLL, 0x00) & _RES_DRDY))
-    print("reg_cmm: " + hex(self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00) & _RES_DRDY))
+    print("_REG_POLL: " + hex(self._write(self._REG_POLL, 0x00) & self._RES_DRDY))
+    print("reg_cmm: " + hex(self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00) & self._RES_DRDY))
 
     print("Setting cycle count")
-    _self.set_cycle_count()
+    self._set_cycle_count()
 
     print("Setting up continuous measurement")
-    print("_REG_TMRC: " + hex(self._write(self._REG_TMRC, 0x98) & _RES_DRDY))
-    print("reg_cmm: " + hex(self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x71) & _RES_DRDY))
+    print("_REG_TMRC: " + hex(self._write(self._REG_TMRC, 0x98) & self._RES_DRDY))
+    print("reg_cmm: " + hex(self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x71) & self._RES_DRDY))
 
   # Wrap a method that does something with the chip, activating the chip-select
   # before and after it is accessed.
@@ -142,12 +144,13 @@ class Compass:
     return self._azimuth
 
   def update(self):
-    while GPIO.input(self._GPIO_DRDY) == 0:
-      time.sleep(_INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
+    #while GPIO.input(self._GPIO_DRDY) == 0:
+    #  time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
 
     x, y, z = self.get_raw_measurements()
     self._azimuth = (180/math.pi * math.atan2(y, x)) % 360
 
+    print(self._azimuth)
     return self._azimuth
 
   def to_string(self):
@@ -201,6 +204,7 @@ class Display:
 
   def _calculate_bearing(ac_value, compass_angle, gps):
     result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], gps.latitude, gps.longitude)
+
     bearing = ((result['azi1']+180) + compass_angle) % 360
     return (bearing, result['s12'])
 
@@ -285,7 +289,7 @@ compass = Compass()
 display = Display()
 
 while True:
-  #compass.update() # compass tracking is disabled until module is replaced
+  compass.update() # compass tracking is disabled until module is replaced
   time.sleep(0.1)
 
   if !gps.is_fresh():
