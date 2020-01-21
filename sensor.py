@@ -161,7 +161,7 @@ class GPS:
     self.port = serial.Serial("/dev/ttyAMA0", baudrate=9600, timeout=3.0)
     self.latitude = 0.0
     self.longitude = 0.0
-    self.updated = datetime.datetime(1970,1,1)
+    self.updated = datetime(1970,1,1)
 
   def track_gps(self):
     streamreader = pynmea2.NMEAStreamReader(self.port)
@@ -176,12 +176,12 @@ class GPS:
           print("Exception parsing NMEA - " + str(e))
 
   def is_fresh(self):
-    return (datetime.datetime.now() - self.updated) < datetime.timedelta(minutes=2)
+    return (datetime.now() - self.updated) < timedelta(minutes=2)
 
 class Display:
   _GPIO_DATA = board.D18
-  _PIXEL_COUNT = 24
-  _PIXEL_ANGLE_OFFSET = 9
+  _PIXEL_COUNT = 3
+  _PIXEL_ANGLE_OFFSET = 0
 
   _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
 
@@ -190,7 +190,7 @@ class Display:
   _COLOUR_COMPASS_WEST = (50, 50, 50) # white
 
   def __init__(self):
-    self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False)
+    self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3)
     self.off()
     self._refresh()
 
@@ -210,7 +210,7 @@ class Display:
 
   def off(self):
     for i in range(self._PIXEL_COUNT):
-      self.pixels[i] = (0, 0, 0)
+      self.pixels[i] = (255, 255, 255)
 
   # Refresh the display with the value of self.pixels
   def update(self, compass, gps, aircraft_list):
@@ -243,7 +243,7 @@ class Aircraft:
 
   def __init__(self):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.sock.connect(("127.0.0.1", 30003))
+    #self.sock.connect(("127.0.0.1", 30003))
 
   def _parse(self, line):
     try:
@@ -292,7 +292,7 @@ while True:
   compass.update() # compass tracking is disabled until module is replaced
   time.sleep(0.1)
 
-  if !gps.is_fresh():
+  if not gps.is_fresh():
     print("Warning: GPS position is not up-to-date")
 
   display.update(compass, gps, Aircraft.positions)
