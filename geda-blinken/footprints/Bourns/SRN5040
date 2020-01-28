@@ -1,0 +1,11 @@
+
+Element["" "" "" "" 4.5000mm 2.7000mm 0.0000 0.0000 0 100 ""]
+(
+	Pad[0.8500mm 0.8500mm 0.8500mm 3.3500mm 1.5000mm 20.00mil 1.7540mm "" "1" "square"]
+	Pad[4.4500mm 0.8500mm 4.4500mm 3.3500mm 1.5000mm 20.00mil 1.7540mm "" "2" "square"]
+	ElementLine [0.0000 0.0000 5.3000mm 0.0000 10.00mil]
+	ElementLine [5.3000mm 0.0000 5.3000mm 4.2000mm 10.00mil]
+	ElementLine [5.3000mm 4.2000mm 0.0000 4.2000mm 10.00mil]
+	ElementLine [0.0000 4.2000mm 0.0000 0.0000 10.00mil]
+
+	)
