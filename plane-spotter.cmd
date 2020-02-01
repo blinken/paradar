@@ -17,16 +17,6 @@ ChangePinName(F1, 1, 1)
 ChangePinName(C13, 2, 2)
 ChangePinName(C13, 1, 1)
 
-# Start of element CONN5
-ChangePinName(CONN5, 8, 8)
-ChangePinName(CONN5, 7, 7)
-ChangePinName(CONN5, 6, 6)
-ChangePinName(CONN5, 5, 5)
-ChangePinName(CONN5, 4, 4)
-ChangePinName(CONN5, 3, 3)
-ChangePinName(CONN5, 2, 2)
-ChangePinName(CONN5, 1, 1)
-
 # Start of element C15
 ChangePinName(C15, 2, 2)
 ChangePinName(C15, 1, 1)
