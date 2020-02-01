@@ -660,10 +660,6 @@ ChangePinName(COMPASS1, 3, 3)
 ChangePinName(COMPASS1, 2, 2)
 ChangePinName(COMPASS1, 1, 1)
 
-# Start of element C1
-ChangePinName(C1, 2, -)
-ChangePinName(C1, 1, +)
-
 # Start of element C2
 ChangePinName(C2, 2, 2)
 ChangePinName(C2, 1, 1)
