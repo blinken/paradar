@@ -37,13 +37,13 @@ class Compass:
   _REG_RESULT = 0x24
 
   _READ_OFFSET = 0x80
-  _INSTRUCTION_SLEEP = 0.03
+  _INSTRUCTION_SLEEP = 0.01
 
   _RES_DRDY = 0x80
 
   _GPIO_CHIP_SELECT = 24
   _GPIO_DRDY = 23
-  _SPI_FREQ = 1000000 # 1Mhz
+  _SPI_FREQ = 100000 # 1Mhz
 
   def __init__(self):
     GPIO.setup(self._GPIO_CHIP_SELECT, GPIO.OUT)
@@ -67,7 +67,7 @@ class Compass:
     self._write(self._REG_TMRC, 0x98)
     self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x71)
 
-    self._debug()
+    #self._debug()
 
     self.update()
 
@@ -147,8 +147,8 @@ class Compass:
     return self._azimuth
 
   def update(self):
-    #while GPIO.input(self._GPIO_DRDY) == 0:
-    #  time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
+    while GPIO.input(self._GPIO_DRDY) == 0:
+      time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
 
     x, y, z = self.get_raw_measurements()
     self._azimuth = (180/math.pi * math.atan2(y, x)) % 360
@@ -217,14 +217,14 @@ class GPS:
 
 class Display:
   _GPIO_DATA = board.D18
-  _PIXEL_COUNT = 3
+  _PIXEL_COUNT = 36
   _PIXEL_ANGLE_OFFSET = 0
 
   _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
 
-  _COLOUR_COMPASS_NORTH = (0, 0, 50) # blue
-  _COLOUR_COMPASS_EAST = (0, 50, 0) # green
-  _COLOUR_COMPASS_WEST = (50, 50, 50) # white
+  _COLOUR_COMPASS_NORTH = (0, 0, 255) # blue
+  _COLOUR_COMPASS_EAST = (0, 255, 0) # green
+  _COLOUR_COMPASS_WEST = (255, 255, 255) # white
 
   def __init__(self):
     self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3)
@@ -247,7 +247,7 @@ class Display:
 
   def off(self):
     for i in range(self._PIXEL_COUNT):
-      self.pixels[i] = (255, 255, 255)
+      self.pixels[i] = (0, 0, 0)
 
   # Refresh the display with the value of self.pixels
   def update(self, compass, gps, aircraft_list):
