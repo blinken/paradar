@@ -37,39 +37,80 @@ class Compass:
   _REG_RESULT = 0x24
 
   _READ_OFFSET = 0x80
-  _INSTRUCTION_SLEEP = 0.01
+  _SPI_FREQ = 500000
+  _INSTRUCTION_SLEEP = 1.0/_SPI_FREQ
 
   _RES_DRDY = 0x80
 
   _GPIO_CHIP_SELECT = 24
   _GPIO_DRDY = 23
-  _SPI_FREQ = 100000 # 1Mhz
+  _CLK = 11
+  _MISO = 9
+  _MOSI = 10
+
 
   def __init__(self):
     GPIO.setup(self._GPIO_CHIP_SELECT, GPIO.OUT)
+    GPIO.setup(self._MISO, GPIO.IN)
+    GPIO.setup(self._MOSI, GPIO.OUT)
+    GPIO.setup(self._CLK, GPIO.OUT)
+
     GPIO.output(self._GPIO_CHIP_SELECT, GPIO.HIGH)
 
     GPIO.setup(self._GPIO_DRDY, GPIO.IN)
 
-    self.spi = SpiDev()
-    self.spi.open(0, 0)
-    self.spi.max_speed_hz = self._SPI_FREQ
-    self.spi.cshigh = False
+    self._clk_idle()
+
+    #self.spi = SpiDev()
+    #self.spi.open(0, 0)
+    #self.spi.max_speed_hz = self._SPI_FREQ
+    #self.spi.cshigh = False
 
     # Clear REG_POLL & reg_cmm
-    self._write(self._REG_POLL, 0x00)
-    self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00)
+    #self._write(self._REG_POLL, 0x00)
+    #self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00)
+    self._soft_write_bytes([self._REG_POLL, 0x00])
+    self._soft_write_bytes([self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00])
 
     # Set cycle count
     self._set_cycle_count()
 
     # Activate continuous measurement
-    self._write(self._REG_TMRC, 0x98)
-    self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x71)
+    self._soft_write_bytes([self._REG_TMRC, 0x94])
+    self._soft_write_bytes([self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x79])
+    #self._write(self._REG_TMRC, 0x96)
+    #self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x79)
+
+    print(hex(self._soft_read_reg(0x8b)))
+    print(hex(self._soft_read_reg(0x81)))
+    #print(hex(self._read(0x8b)))
+    #print(hex(self._read(0x81)))
 
     #self._debug()
 
     self.update()
+
+  def _raw_cs(self, state):
+    time.sleep(self._INSTRUCTION_SLEEP)
+    if state:
+      GPIO.output(self._GPIO_CHIP_SELECT, GPIO.LOW)
+    else:
+      GPIO.output(self._GPIO_CHIP_SELECT, GPIO.HIGH)
+    time.sleep(self._INSTRUCTION_SLEEP)
+
+  def _soft_write_bytes(self, w_bytes):
+    self._raw_cs(True)
+    for b in w_bytes:
+      self._soft_write(b, 8)
+    self._raw_cs(False)
+
+  def _soft_read_reg(self, reg):
+    self._raw_cs(True)
+    self._soft_write(reg, 8)
+    result = self._soft_read(8)
+    self._raw_cs(False)
+
+    return result
 
   def _debug(self):
     print("Data ready: " + str(GPIO.input(self._GPIO_DRDY)))
@@ -102,20 +143,93 @@ class Compass:
 
     return decorator
 
-  @chip_select
   def _write(self, reg, value):
-    return self.spi.xfer2([reg, value])[0]
+    self._raw_cs(True)
+    result = self.spi.xfer2([reg, value])[0]
+    self._raw_cs(False)
+    return result
 
-  @chip_select
   def _read(self, reg):
-    return self.spi.xfer2([reg | _READ_OFFSET, 0x00])[1]
+    self._raw_cs(True)
+    result = self.spi.xfer2([reg | self._READ_OFFSET, 0x00])[1]
+    self._raw_cs(False)
+    return result
 
-  @chip_select
+  def _clk_active(self):
+    GPIO.output(self._CLK, GPIO.HIGH)
+
+  def _clk_idle(self):
+    GPIO.output(self._CLK, GPIO.LOW)
+
+  def _soft_write(self, data, numBits):
+    ''' Sends 1 Byte or less of data'''
+    data <<= (8 - numBits)
+    retVal = 0
+
+    self._clk_idle()
+    time.sleep(self._INSTRUCTION_SLEEP)
+
+    for bit in range(numBits):
+      # Set RPi's output bit high or low depending on highest bit of data field
+      if data & 0x80:
+        GPIO.output(self._MOSI, GPIO.HIGH)
+      else:
+        GPIO.output(self._MOSI, GPIO.LOW)
+      time.sleep(self._INSTRUCTION_SLEEP)
+
+      # Pulse the clock pin HIGH then immediately low
+      self._clk_active()
+      time.sleep(self._INSTRUCTION_SLEEP)
+
+      # Read 1 data bit in
+      if GPIO.input(self._MISO):
+        retVal |= 0x1
+
+      self._clk_idle()
+      time.sleep(self._INSTRUCTION_SLEEP)
+
+      # Advance input & data to next bit
+      retVal <<= 1
+      data <<= 1
+
+    # Divide by two to drop the NULL bit
+    retVal >>= 1
+    return retVal
+
+  def _soft_read(self, numBits):
+    '''Receives arbitrary number of bits'''
+    retVal = 0
+    time.sleep(self._INSTRUCTION_SLEEP)
+    GPIO.output(self._MOSI, GPIO.HIGH)
+
+    self._clk_idle()
+    time.sleep(self._INSTRUCTION_SLEEP)
+
+    for bit in range(numBits):
+      # Pulse clock pin
+      self._clk_active()
+      time.sleep(self._INSTRUCTION_SLEEP)
+
+      # Read 1 data bit in
+      if GPIO.input(self._MISO):
+        retVal |= 0x1
+      time.sleep(self._INSTRUCTION_SLEEP)
+
+      self._clk_idle()
+      time.sleep(self._INSTRUCTION_SLEEP)
+
+      # Advance input to next bit
+      retVal <<= 1
+
+    # Divide by two to drop the NULL bit
+    retVal >>= 1
+    return (retVal)
+
   def _set_cycle_count(self):
     cycle_count = 0xc8
     # Set the cycle count the same for x/y/z
-    self.spi.xfer2([
-      self._REG_CYCLE_COUNT_X_H,
+    self._soft_write_bytes([
+      0x04,
       0x00, cycle_count,
       0x00, cycle_count,
       0x00, cycle_count,
@@ -125,7 +239,6 @@ class Compass:
     x = bytearray(l + [0x00])
     return (struct.unpack(">i", x)[0] >>1)/46603.0
 
-  @chip_select
   def get_raw_measurements(self):
     # From the design guide --
     # Normally it is only necessary to send "A4", since the register value automatically
@@ -134,8 +247,15 @@ class Compass:
     # bytes for the Z axis measurement. After these 9 bytes have been clocked out, the subsequent
     # output data has no relevance.
 
-    self.spi.xfer2([self._REG_RESULT | self._READ_OFFSET])
-    results = self.spi.readbytes(9)
+    #self.spi.xfer2([self._REG_RESULT | self._READ_OFFSET])
+    #results = self.spi.readbytes(9)
+    self._raw_cs(True)
+    self._soft_write(0xa4, 8)
+    results = []
+    for i in range(9):
+      res = self._soft_read(8)
+      results = results + [res]
+    self._raw_cs(False)
 
     x = self._unpack_measurement(results[:3])
     y = self._unpack_measurement(results[3:6])
@@ -153,7 +273,7 @@ class Compass:
     x, y, z = self.get_raw_measurements()
     self._azimuth = (180/math.pi * math.atan2(y, x)) % 360
 
-    print(self._azimuth)
+    #print(self._azimuth)
     return self._azimuth
 
   def to_string(self):
@@ -226,8 +346,10 @@ class Display:
   _COLOUR_COMPASS_EAST = (0, 255, 0) # green
   _COLOUR_COMPASS_WEST = (255, 255, 255) # white
 
+  _BRIGHTNESS = 0.3
+
   def __init__(self):
-    self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3)
+    self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3, brightness=self._BRIGHTNESS)
     self.off()
     self._refresh()
 
@@ -325,11 +447,19 @@ t_gps.start()
 compass = Compass()
 display = Display()
 
-while True:
-  compass.update() # compass tracking is disabled until module is replaced
-  time.sleep(0.1)
 
+while True:
   if not gps.is_fresh():
     print("Warning: GPS position is not up-to-date")
 
-  display.update(compass, gps, Aircraft.positions)
+  t_start = time.time()
+  cycle_length = 100
+
+  for i in range(cycle_length):
+    compass.update()
+    display.update(compass, gps, Aircraft.positions)
+
+  t_end = time.time()
+  refresh_rate = cycle_length*1.0/(t_end - t_start)
+  print("Refresh rate: " + str(round(refresh_rate, 2)) + "Hz")
+
