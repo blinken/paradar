@@ -37,7 +37,8 @@ class Compass:
   _REG_RESULT = 0x24
 
   _READ_OFFSET = 0x80
-  _SPI_FREQ = 500000
+
+  _SPI_FREQ = 500000 # We won't actually achieve this because time.sleep only has a resolution down to ~1ms
   _INSTRUCTION_SLEEP = 1.0/_SPI_FREQ
 
   _RES_DRDY = 0x80
@@ -76,7 +77,7 @@ class Compass:
     self._set_cycle_count()
 
     # Activate continuous measurement
-    self._soft_write_bytes([self._REG_TMRC, 0x94])
+    self._soft_write_bytes([self._REG_TMRC, 0x92])
     self._soft_write_bytes([self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x79])
     #self._write(self._REG_TMRC, 0x96)
     #self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x79)
@@ -91,12 +92,10 @@ class Compass:
     self.update()
 
   def _raw_cs(self, state):
-    time.sleep(self._INSTRUCTION_SLEEP)
     if state:
       GPIO.output(self._GPIO_CHIP_SELECT, GPIO.LOW)
     else:
       GPIO.output(self._GPIO_CHIP_SELECT, GPIO.HIGH)
-    time.sleep(self._INSTRUCTION_SLEEP)
 
   def _soft_write_bytes(self, w_bytes):
     self._raw_cs(True)
@@ -175,9 +174,7 @@ class Compass:
         GPIO.output(self._MOSI, GPIO.HIGH)
       else:
         GPIO.output(self._MOSI, GPIO.LOW)
-      time.sleep(self._INSTRUCTION_SLEEP)
 
-      # Pulse the clock pin HIGH then immediately low
       self._clk_active()
       time.sleep(self._INSTRUCTION_SLEEP)
 
@@ -186,7 +183,6 @@ class Compass:
         retVal |= 0x1
 
       self._clk_idle()
-      time.sleep(self._INSTRUCTION_SLEEP)
 
       # Advance input & data to next bit
       retVal <<= 1
@@ -199,11 +195,9 @@ class Compass:
   def _soft_read(self, numBits):
     '''Receives arbitrary number of bits'''
     retVal = 0
-    time.sleep(self._INSTRUCTION_SLEEP)
-    GPIO.output(self._MOSI, GPIO.HIGH)
 
+    GPIO.output(self._MOSI, GPIO.HIGH)
     self._clk_idle()
-    time.sleep(self._INSTRUCTION_SLEEP)
 
     for bit in range(numBits):
       # Pulse clock pin
@@ -213,10 +207,8 @@ class Compass:
       # Read 1 data bit in
       if GPIO.input(self._MISO):
         retVal |= 0x1
-      time.sleep(self._INSTRUCTION_SLEEP)
 
       self._clk_idle()
-      time.sleep(self._INSTRUCTION_SLEEP)
 
       # Advance input to next bit
       retVal <<= 1
@@ -446,7 +438,6 @@ t_gps.start()
 
 compass = Compass()
 display = Display()
-
 
 while True:
   if not gps.is_fresh():
