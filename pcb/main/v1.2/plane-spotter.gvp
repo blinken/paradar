@@ -52,7 +52,7 @@
 	(cons 'color #(65535 65535 65535))
 	(cons 'alpha #(50629))
 )
-(define-layer! -1 (cons 'filename "/home/blinken/co/1090-detector/v1.2")
+(define-layer! -1 (cons 'filename "")
 	(cons 'color #(0 0 0))
 )
 (set-render-type! 3)
