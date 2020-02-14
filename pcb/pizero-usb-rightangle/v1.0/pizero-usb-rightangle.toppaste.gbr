@@ -1,7 +1,7 @@
 G04 start of page 10 for group -4015 idx -4015 *
 G04 Title: (unknown), toppaste *
 G04 Creator: pcb 4.2.0 *
-G04 CreationDate: Fri Feb 14 02:43:24 2020 UTC *
+G04 CreationDate: Fri Feb 14 14:13:11 2020 UTC *
 G04 For: blinken *
 G04 Format: Gerber/RS-274X *
 G04 PCB-Dimensions (mm): 65.00 56.00 *
@@ -9,8 +9,8 @@ G04 PCB-Coordinate-Origin: lower left *
 %MOMM*%
 %FSLAX43Y43*%
 %LNTOPPASTE*%
-%ADD45C,0.002*%
-G54D45*G36*
+%ADD47C,0.002*%
+G54D47*G36*
 X20200Y45700D02*X18900D01*
 Y43800D01*
 X20200D01*
