@@ -1,7 +1,7 @@
 # paradar: a portable, handheld ADS-B indicator and receiver
 
 <div align="center">
-<img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-withcase-800.png"><br/>
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-withcase-800.png" width="600"><br/>
 Preorder for April/May 2020 <del>£299</del> <b>£229</b><br/>
 <a href="mailto:blinken@gmail.com?subject=Paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£160) unit!
 </div>
@@ -76,7 +76,10 @@ release in April/May:
 
 # Design
 
-<p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-upper-800.png"> <img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-lower-800.png"></p>
+<p align="center">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-upper-800.png" width="400"> <img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-lower-800.png" width="400"><br/>
+<i>Board version v1.2 without the USB right-angle connector</i>
+</p>
 
 paradar is built around the Raspberry Pi Zero, a cheap and fast general purpose
 embedded computer (1GHz ARM, 512MB RAM) with built-in WiFi. The software runs
