@@ -3,10 +3,10 @@
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-withcase-800.png" width="600"><br/>
 Preorder for April/May 2020 <del>£299</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
-<a href="mailto:blinken@gmail.com?subject=Paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£170) unit! <a href="#buy-a-paradar">More information</a><br/>
+<a href="mailto:blinken@gmail.com?subject=paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£170) unit! <a href="#buy-a-paradar">More information</a><br/>
 </div>
 
-### Paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
+### paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
 
  * Compact, self contained receiver and display - can be used without a linked phone or tablet
  * Clearly indicates the direction of other aircraft in a ~10km radius
@@ -20,20 +20,20 @@ It can be used standalone (with or without a phone or tablet), on the ground as
 a handheld compass that indicates air traffic, or in the air on your flight
 deck to improve your situational awareness.
 
-Paradar receives ADS-B, the international standard for aircraft surveillance.
+paradar receives ADS-B, the international standard for aircraft surveillance.
 Support for the Open Glider Network (via a free software update) and possibly
 integrated FLARM (to see and be seen by other ultralight pilots) is planned in
 the future.
 
 This is a receive-only device: it doesn't transmit your location to other
-aircraft. For receive and transmit functionality in the UK, pairing it with the
+aircraft. For receive and transmit functionality in the UK, pairing paradar with the
 [uAvionix SkyEcho2](https://uavionix.com/products/skyecho/) ADS-B transmitter
-gives you highly portable and inexpensive setup with a convenient display,
+gives you a highly portable and inexpensive setup with a convenient display,
 suitable for paraglider, ultralight and fixed wing pilots.
 
-*Fully assembled units available below.*
+<a href="#buy-a-paradar">Fully assembled units available below.</a>
 
-**Paradar is open hardware and open source software under the GNU General
+**paradar is open hardware and open source software under the GNU General
 Public License**, which means all the design files and source code are
 available here for you to download. If you have the ability to solder SMD
 devices and 3D print a case, then you can build it yourself. [Bug reports, feedback](https://github.com/blinken/paradar/issues)
@@ -42,7 +42,7 @@ or patches to improve the software are always welcome.
 Project status: hardware design is complete, and the initial version for the
 firmware is done. **I'm currently seeking beta testers to put up with a few
 bugs and give me some honest feedback.** In return, you get early access and a
-fully assembled unit for a little over half price (£160). [Send me an email for more information.](mailto:blinken@gmail.com?subject=Paradar%20beta%20access) 
+fully assembled unit for a little over half price (£170). [Send me an email for more information.](mailto:blinken@gmail.com?subject=paradar%20beta%20access) 
 
 # Project news & roadmap
 
@@ -109,7 +109,7 @@ The concept here is pretty simple - securely connect a compass, GPS and LED ring
  * USB-C power supply with TPS61090 boost converter and MCP73871 LiPo battery charger. Allows powering the unit via USB-C @ 5V/2A (with the battery providing for load spikes if necessary), battery charging, and powering direct from battery. The TPS61090 handles the boost of battery voltage (~3V) to the 5V required by the Raspberry Pi. Includes a resettable fuse and a TVS diode to absorb voltage spikes on the USB line.
  * LEDs to indicate USB power connected, charging, charge done, low battery.
  * A 500mA LDO regulator supplies 3.3V to the compass and GPS (not connected to the Raspberry Pi 3.3V power supply)
- * A pad for a JST 6-GH connector is incorporated on the bottom of the board for future support of a FLARM Atom.
+ * A pad for a JST 6-GH connector is incorporated on the bottom of the board to permit future support of a FLARM Atom.
  * A variety of jumpers exposing GPIOs, power lines, serial & SPI to allow future expansion.
  * Mounting holes to suit an undermounted Pi 3 A+ or Pi Zero.
 
@@ -127,8 +127,9 @@ with QFN20 ICs. Soldering those was a journey through pain.
 I got the SPI MISO/MOSI pins for the compass backwards *no less than three
 times*.
 
-Pic
-*The first iteration of the design consisted of a plastic lid velcroed to a Raspberry Pi*
+<div align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-prototype-201911-600.png" width="600"><br/>
+The first iteration of the design consisted of a plastic lid velcroed to a Raspberry Pi.
+</div>
 
 ## USB adapter PCB
 
@@ -165,14 +166,14 @@ Feedback is particularly welcome. Please raise an issue on [GitHub](https://gith
 
 # Buy a paradar
 
-**Please read the disclaimer and license section below. By purchasing Paradar,
+**Please read the disclaimer and license section below. By purchasing paradar,
 you are indicating that you have read and agree to the disclaimer and
 license.**
 
-Paradar is an open hardware project, and you can build it yourself. I also sell
+paradar is an open hardware project, and you can build it yourself. I also sell
 pre-assembled units.
 
-As of February 2020, you have two options to purchase Paradar:
+As of February 2020, you have two options to purchase paradar:
 
 1. **Preorder for April/May 2020** ~~£299~~ £229 (25% discount!)
 
@@ -189,15 +190,15 @@ As of February 2020, you have two options to purchase Paradar:
     slightly buggier software. I'll publish software updates on this project page
     with instructions to install them.
 
-    [Send me an email](mailto:blinken@gmail.com?subject=Paradar%20beta%20access") for more
+    [Send me an email](mailto:blinken@gmail.com?subject=paradar%20beta%20access") for more
     information. There's only 10 units available at this price.
 
-Each Paradar will come assembled in a 3D-printed case, with usage instructions and
+Each paradar will come assembled in a 3D-printed case, with usage instructions and
 software updates via this project page. Shipping in the UK is free.
 
 # Disclaimer and license
 
-**Paradar does not replace your responsibility to look for, see and avoid other
+**paradar does not replace your responsibility to look for, see and avoid other
 aircraft. This device will not save your life. It is intended only to provide
 additional situational awareness of traffic around you when flying VFR. It is
 not designed for and must not be used for IFR flight, and you must not rely on
@@ -209,12 +210,12 @@ all applicable laws.**
 
 Copyright (C) 2020 Patrick Coleman
 
-Paradar is free software; you can redistribute it and/or modify
+paradar is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 3 of the License, or
 (at your option) any later version.
 
-Paradar is distributed in the hope that it will be useful,
+paradar is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
