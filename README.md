@@ -3,7 +3,7 @@
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-withcase-800.png" width="600"><br/>
 Preorder for April/May 2020 <del>£299</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
-<a href="mailto:blinken@gmail.com?subject=Paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£160) unit! <a href="#buy-a-paradar">More information</a><br/>
+<a href="mailto:blinken@gmail.com?subject=Paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£170) unit! <a href="#buy-a-paradar">More information</a><br/>
 </div>
 
 ### Paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
@@ -174,27 +174,25 @@ pre-assembled units.
 
 As of February 2020, you have two options to purchase Paradar:
 
-1. **Preorder for April/May 2020 ~~£299~~ £229 (25% discount!)**
+1. **Preorder for April/May 2020** ~~£299~~ £229 (25% discount!)
 
-    [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8XXSATNMDTR9N) (free UK postage)
-    
-    [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AMLXSVQQYQXPY) (£5 international postage)
+    [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8XXSATNMDTR9N) (free UK shipping)
+
+    [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AMLXSVQQYQXPY) (£5 international shipping)
 
 1. **Help me beta test the first ten units**
 
-		You'll get a prototype unit for the discounted price of **£170**, on the
+    You'll get a prototype unit for the discounted price of **£170**, on the
     condition you give me some detailed & honest feedback.
-   
+
 	  Hardware on prototype units is the same as finished units - just with
     slightly buggier software. I'll publish software updates on this project page
     with instructions to install them.
-   
-    [Send me an email](mailto:blinken@gmail.com?subject=Paradar%20beta%20access") for more
-    information.
-   
-    There's only 10 units available at this price.
 
-Each unit will come assembled in a 3D-printed case, with usage instructions and
+    [Send me an email](mailto:blinken@gmail.com?subject=Paradar%20beta%20access") for more
+    information. There's only 10 units available at this price.
+
+Each Paradar will come assembled in a 3D-printed case, with usage instructions and
 software updates via this project page. Shipping in the UK is free.
 
 # Disclaimer and license
