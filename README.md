@@ -1,7 +1,10 @@
 # paradar: a portable, handheld ADS-B indicator and receiver
 
-<div align="center">Preorder for April/May 2020 <del>£299</del> <b>£229</b></div>
-<div align="center"><a href="mailto:blinken@gmail.com?subject=Paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£160) unit!</div>
+<div align="center">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-withcase-800.png"><br/>
+Preorder for April/May 2020 <del>£299</del> <b>£229</b><br/>
+<a href="mailto:blinken@gmail.com?subject=Paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£160) unit!
+</div>
 
 ### Paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
 
@@ -73,20 +76,22 @@ release in April/May:
 
 # Design
 
+<p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-upper-800.png"> <img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-lower-800.png"></p>
+
 paradar is built around the Raspberry Pi Zero, a cheap and fast general purpose
 embedded computer (1GHz ARM, 512MB RAM) with built-in WiFi. The software runs
 on an SD card booting Linux (based on Raspbian), which provides drivers for the
-Software Defined Radio receiver and supporting software.
+SDR and supporting software.
 
 | Photo  | Part                | Where to buy  |
 | ------ |:--------------------| -----:|
 | pic    | Raspberry Pi Zero W | [Adafruit](https://www.adafruit.com/product/3400), [Pi Supply](https://uk.pi-supply.com/products/raspberry-pi-zero-w) |
 | pic    | paradar main PCB   | [Order on PCBway](https://www.pcbway.com/project/shareproject/paradar__a_portable__handheld_ADS_B_indicator_and_receiver.html), or [shoot me an email](mailto:blinken@gmail.com) |
-| pic    | paradar USB adapter PCB (fits the SDR neatly next to the Pi Zero)    | Order on PCBway, or [shoot me an email](mailto:blinken@gmail.com) |
+| pic    | paradar USB adapter PCB (fits the SDR neatly next to the Pi Zero)    | [Order on PCBway](https://www.pcbway.com/project/shareproject/Raspverry_Pi_Zero_USB_right_angle_adapter.html), or [shoot me an email](mailto:blinken@gmail.com) |
 | pic    | Nooelec NESDR SMArt v4 SDR | [Amazon](https://www.amazon.co.uk/Nooelec-NESDR-SMArt-SDR-R820T2-Based/dp/B01HA642SW), [Nooelec](https://www.nooelec.com/store/sdr/sdr-receivers/nesdr/nesdr-smart-sdr.html) |
 | pic    | 2x20 2.54mm header  | [RS](https://uk.rs-online.com/web/p/pcb-headers/8281563/), [Amazon](https://www.amazon.co.uk/William-Lee-2-54mm-Break-away-Header-Raspberry/dp/B07TK1CLCZ/) and many other suppliers |
 
-The major components are the Raspberry Pi, PNI RM3100 high-resolution compass module, Quectel L86 GPS, WS2813A LED ring and Nooelec NESDR USB SDR.
+The major SMD components are the PNI RM3100 high-resolution compass module, Quectel L86 GPS, and 36x WS2813A LEDs.
 
 ## Main PCB / Pi shield
 
