@@ -2,8 +2,8 @@
 
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-withcase-800.png" width="600"><br/>
-Preorder for April/May 2020 <del>£299</del> <b>£229</b><br/>
-<a href="mailto:blinken@gmail.com?subject=Paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£160) unit!
+Preorder for April/May 2020 <del>£299</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
+<a href="mailto:blinken@gmail.com?subject=Paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£160) unit! <a href="#buy-a-paradar">More information</a><br/>
 </div>
 
 ### Paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
@@ -20,7 +20,7 @@ It can be used standalone (with or without a phone or tablet), on the ground as
 a handheld compass that indicates air traffic, or in the air on your flight
 deck to improve your situational awareness.
 
-Paradar receives ADS-B, the international standard for aircraft survellience.
+Paradar receives ADS-B, the international standard for aircraft surveillance.
 Support for the Open Glider Network (via a free software update) and possibly
 integrated FLARM (to see and be seen by other ultralight pilots) is planned in
 the future.
@@ -158,4 +158,70 @@ for M2.5 hex screws.
 Still being finalised but dimensions are approximately 77mm x 77mm x 25mm.
 
 Both bottom and lid are printed in ABS (the lid is translucent).
+
+# Support, bug reports, and feedback
+
+Feedback is particularly welcome. Please raise an issue on [GitHub](https://github.com/blinken/paradar/issues).
+
+# Buy a paradar
+
+**Please read the disclaimer and license section below. By purchasing Paradar,
+you are indicating that you have read and agree to the disclaimer and
+license.**
+
+Paradar is an open hardware project, and you can build it yourself. I also sell
+pre-assembled units.
+
+As of February 2020, you have two options to purchase Paradar:
+
+1. **Preorder for April/May 2020 ~~£299~~ £229 (25% discount!)**
+
+    [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8XXSATNMDTR9N) (free UK postage)
+    
+    [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AMLXSVQQYQXPY) (£5 international postage)
+
+1. **Help me beta test the first ten units**
+
+		You'll get a prototype unit for the discounted price of **£170**, on the
+    condition you give me some detailed & honest feedback.
+   
+	  Hardware on prototype units is the same as finished units - just with
+    slightly buggier software. I'll publish software updates on this project page
+    with instructions to install them.
+   
+    [Send me an email](mailto:blinken@gmail.com?subject=Paradar%20beta%20access") for more
+    information.
+   
+    There's only 10 units available at this price.
+
+Each unit will come assembled in a 3D-printed case, with usage instructions and
+software updates via this project page. Shipping in the UK is free.
+
+# Disclaimer and license
+
+**Paradar does not replace your responsibility to look for, see and avoid other
+aircraft. This device will not save your life. It is intended only to provide
+additional situational awareness of traffic around you when flying VFR. It is
+not designed for and must not be used for IFR flight, and you must not rely on
+it when flying in any conditions.**
+
+**The pilot is responsible for the safe conduct of any flight, and for obeying
+all applicable laws.**
+
+
+Copyright (C) 2020 Patrick Coleman
+
+Paradar is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
+
+Paradar is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
