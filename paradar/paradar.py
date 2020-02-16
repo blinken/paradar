@@ -52,7 +52,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 while True:
   t_start = time.time()
-  cycle_length = 100
+  cycle_length = 1000
 
   for i in range(cycle_length):
     compass.update()
@@ -61,4 +61,10 @@ while True:
   t_end = time.time()
   refresh_rate = cycle_length*1.0/(t_end - t_start)
   print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, local position is ({:3.6f}, {:3.6f})".format(refresh_rate, len(Aircraft.positions), gps.latitude, gps.longitude))
+
+  if ac.freq == 1090:
+    ac.set_freq(978)
+  else:
+    ac.set_freq(1090)
+
 

@@ -35,12 +35,14 @@ class Aircraft:
     self.proc = None
     self.freq = 1090
     self.gps = gps
-    self._stop = False
 
-    self._start()
+    self.start()
 
-  def _start(self):
+  def start(self):
+    '''Start or restart the dump1090 subprocess'''
+
     self.shutdown()
+    self._stop = False
 
     args = ["/usr/bin/dump1090-fa", "--raw", "--freq", "{0}".format(self.freq)]
     self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
@@ -49,9 +51,16 @@ class Aircraft:
     self._stop = True
 
     if self.proc:
-      print("aircraft: shutting down dump1090")
+      print("aircraft: shutting down")
       self.proc.kill()
       self.proc.wait()
+
+  def set_freq(self, freq):
+    if not freq in [978, 1090]:
+      raise ValueError("Frequency must be one of 978Mhz or 1090Mhz")
+
+    self.freq = freq
+    self.start()
 
   def _parse(self, msg_ascii):
     if not msg_ascii or msg_ascii[0] != '*':
@@ -112,11 +121,12 @@ class Aircraft:
               del Aircraft.positions[ac_id]
           t_last_cleanup = datetime.now()
       
-      # The thread has been asked to exit
+      # If the thread has been asked to exit, don't attempt to restart
+      # dump1090. Otherwise, just loop slowly
       if self._stop:
-        return
-
-      print("aircraft: dump1090 stopped, restarting it")
-      self._start()
+        time.sleep(1)
+      else:
+        print("aircraft: dump1090 stopped, restarting it")
+        self.start()
 
 
