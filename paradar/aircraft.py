@@ -16,49 +16,107 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
+import signal
 import socket
 import time
+import subprocess
+import pyModeS as pms
 
 from datetime import datetime, timedelta
-from geographiclib.geodesic import Geodesic
-
 
 class Aircraft:
   positions = {}
 
-  def __init__(self):
-    self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.sock.connect(("127.0.0.1", 30003))
+  def __init__(self, gps):
+    print("aircraft: starting up")
+    os.system("pkill dump1090-fa")
 
-  def _parse(self, line):
-    try:
-      # ['MSG', '3', '1', '1', '3C66B3', '1', '2019/11/26', '16:37:53.908', '2019/11/26', '16:37:53.950', '', '8650', '', '', '51.64426', '0.10422', '', '', '', '', '', '0\n']
-      (msg_class, msg_type, _, _, ac_id, _, ac_date, ac_time, _, _, _, _, _, _, ac_lat, ac_lon, _) = line.split(",", 16)
+    self.proc = None
+    self.freq = 1090
+    self.gps = gps
+    self._stop = False
 
-      if msg_class != "MSG" or msg_type != "3":
-        return None
+    self._start()
 
-      ac_datetime = datetime.strptime(ac_date + " " + ac_time, "%Y/%m/%d %H:%M:%S.%f")
-      ac_lat = float(ac_lat)
-      ac_lon = float(ac_lon)
-    except ValueError:
-      print("Bad coordinate string: '{}'".format(line))
-      return None
+  def _start(self):
+    self.shutdown()
 
-    return {ac_id: (ac_datetime, ac_lat, ac_lon)}
+    args = ["/usr/bin/dump1090-fa", "--raw", "--freq", "{0}".format(self.freq)]
+    self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+
+  def shutdown(self):
+    self._stop = True
+
+    if self.proc:
+      print("aircraft: shutting down dump1090")
+      self.proc.kill()
+      self.proc.wait()
+
+  def _parse(self, msg_ascii):
+    if not msg_ascii or msg_ascii[0] != '*':
+      raise ValueError
+
+    msg_hex = msg_ascii[1:].split(';', 1)[0]
+
+    icao = pms.adsb.icao(msg_hex)
+    downlink_format = pms.df(msg_hex)
+    type_code = pms.adsb.typecode(msg_hex)
+
+    # An aircraft airborne position message has downlink format 17 (or 18) with
+    # type code from 9 to 18
+    # ref https://mode-s.org/decode/adsb/airborne-position.html
+    if downlink_format < 17 or downlink_format > 18:
+      raise ValueError
+
+    if type_code < 9 or type_code > 18:
+      raise ValueError
+
+    if not self.gps.is_fresh():
+      print("aircraft: not updating {0} df={1} tc={2} as my GPS position is unknown ({3})".format(icao, downlink_format, type_code, msg_hex))
+      raise ValueError
+
+    # Use the known location of the receiver to calculate the aircraft position
+    # from one messsage
+    ac_lat, ac_lon = pms.adsb.position_with_ref(msg_hex, self.gps.latitude, self.gps.longitude)
+    print("aircraft: update {0} df={1} tc={2} {3}, {4} ({5})".format(icao, downlink_format, type_code, ac_lat, ac_lon, msg_hex))
+
+    return {icao: (datetime.now(), ac_lat, ac_lon)}
 
   def track_aircraft(self):
+    t_last_cleanup = datetime.now()
+
     while True:
-      ac_result = self._parse(self.sock.makefile(buffering=1024000).readline().strip())
+      n_lines = 0
+      for line in iter(self.proc.stdout.readline, b''):
+        n_lines += 1
 
-      if ac_result == None:
-        continue
+        if n_lines == 5:
+          print("aircraft: listening on {0}Mhz".format(self.freq))
 
-      Aircraft.positions.update(ac_result)
+        msg_ascii = line.decode('utf-8').strip()
+        if not msg_ascii or msg_ascii[0] != '*':
+          continue
 
-      # Clean up values older than 300 seconds
-      for ac_id, value in Aircraft.positions.copy().items():
-        if (datetime.now() - value[0]) > timedelta(minutes=1):
-          print("Removing expired aircraft " + ac_id)
-          del Aircraft.positions[ac_id]
+        try:
+          Aircraft.positions.update(self._parse(msg_ascii))
+        except ValueError:
+          pass
+          #print("Unable to parse message '{0}'".format(msg_ascii))
+
+        # Clean up values older than 300 seconds
+        if (datetime.now() - t_last_cleanup) > timedelta(seconds=30):
+          for ac_id, value in Aircraft.positions.copy().items():
+            if (datetime.now() - value[0]) > timedelta(minutes=1):
+              print("Removing expired aircraft " + ac_id)
+              del Aircraft.positions[ac_id]
+          t_last_cleanup = datetime.now()
+      
+      # The thread has been asked to exit
+      if self._stop:
+        return
+
+      print("aircraft: dump1090 stopped, restarting it")
+      self._start()
+
 

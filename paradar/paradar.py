@@ -28,27 +28,29 @@ from gps import GPS
 from compass import Compass
 from display import Display
 
-# Clean up GPIOs on exit
-def signal_handler(sig, frame):
-  GPIO.cleanup()
-  sys.exit(0)
-signal.signal(signal.SIGINT, signal_handler)
-
-ac = Aircraft()
-t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
-t_ac.start()
-
 gps = GPS()
 t_gps = threading.Thread(target=gps.track_gps, args=(), daemon=True)
 t_gps.start()
 
+ac = Aircraft(gps)
+t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
+t_ac.start()
+
 compass = Compass()
 display = Display()
 
-while True:
-  if not gps.is_fresh():
-    print("Warning: GPS position is not up-to-date")
+# Clean up GPIOs on exit
+def signal_handler(sig, frame):
+  global ac
 
+  # Make sure dump1090 exits cleanly
+  ac.shutdown()
+
+  GPIO.cleanup()
+  sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+
+while True:
   t_start = time.time()
   cycle_length = 100
 
