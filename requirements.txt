@@ -1,0 +1,6 @@
+pyModeS
+geographiclib
+pynmea2
+spidev
+adafruit-circuitpython-neopixel
+RPi.GPIO
