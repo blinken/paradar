@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #
 # This file is part of paradar (https://github.com/blinken/paradar).
 #
@@ -17,33 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import io
-import struct
 import math
-import pynmea2
-import serial
-import signal
-import socket
-import sys
-import threading
 import time
-import traceback
 import RPi.GPIO as GPIO
-
-from datetime import datetime, timedelta
-from geographiclib.geodesic import Geodesic
 from spidev import SpiDev
-
-import board
-import neopixel
-
-GPIO.setmode(GPIO.BCM)
-
-# Clean up GPIOs on exit
-def signal_handler(sig, frame):
-  GPIO.cleanup()
-  sys.exit(0)
-signal.signal(signal.SIGINT, signal_handler)
 
 class Compass:
   _REG_POLL = 0x00
@@ -68,6 +44,8 @@ class Compass:
 
 
   def __init__(self):
+    GPIO.setmode(GPIO.BCM)
+
     GPIO.setup(self._GPIO_CHIP_SELECT, GPIO.OUT)
     GPIO.setup(self._MISO, GPIO.IN)
     GPIO.setup(self._MOSI, GPIO.OUT)
@@ -287,187 +265,4 @@ class Compass:
 
   def to_string(self):
     return str(round(self._azimuth, 1))
-
-class GPS:
-  DEVICE = "/dev/ttyAMA0"
-  SPEED = 9600
-  TIMEOUT = 3.0
-
-  def __init__(self):
-    self._raw_port = serial.Serial(self.DEVICE, baudrate=self.SPEED, timeout=self.TIMEOUT)
-    self.port = io.TextIOWrapper(io.BufferedRWPair(self._raw_port, self._raw_port), encoding='ascii')
-
-    self.latitude = 0.0
-    self.longitude = 0.0
-    self.updated = datetime(1970,1,1)
-
-  def __del__(self):
-    self._raw_port.close()
-
-  def track_gps(self):
-    while True:
-      try:
-        line = self.port.readline().strip()
-        if not line or line[0] != '$':
-          # Serial can be very noisy. Silently ignore non-ASCII characters with
-          # UnicodeDecodeError below
-          continue
-
-        msg = pynmea2.parse(line)
-        if msg.sentence_type == 'GGA':
-          self.latitude = msg.latitude
-          self.longitude = msg.longitude
-        elif msg.sentence_type == 'RMC':
-          self.updated = msg.datetime
-        else:
-          continue
-
-      except UnicodeDecodeError:
-        pass
-      except serial.SerialException as e:
-        print("Serial exception (" + str(e) + "), resetting port")
-
-        if self._raw_port:
-          self._raw_port.close()
-          self._raw_port = serial.Serial(self.DEVICE, baudrate=self.SPEED, timeout=self.TIMEOUT)
-          self.port = io.TextIOWrapper(io.BufferedRWPair(self._raw_port, self._raw_port), encoding='ascii')
-      except pynmea2.nmea.ChecksumError:
-        pass
-      except pynmea2.nmea.ParseError:
-        print("GPS: unparseable string '" + line + "'")
-      except Exception as e:
-        print("Unknown exception parsing NMEA - " + str(e))
-        traceback.print_exc()
-        time.sleep(0.2)
-
-  def is_fresh(self):
-    print("GPS fix is " + str(datetime.today() - self.updated) + " old")
-    return (datetime.today() - self.updated) < timedelta(minutes=2)
-
-class Display:
-  _GPIO_DATA = board.D18
-  _PIXEL_COUNT = 36
-  _PIXEL_ANGLE_OFFSET = 0
-
-  _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
-
-  _COLOUR_COMPASS_NORTH = (0, 0, 255) # blue
-  _COLOUR_COMPASS_EAST = (0, 255, 0) # green
-  _COLOUR_COMPASS_WEST = (255, 255, 255) # white
-
-  _BRIGHTNESS = 0.3
-
-  def __init__(self):
-    self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3, brightness=self._BRIGHTNESS)
-    self.off()
-    self._refresh()
-
-  def _refresh(self):
-    self.pixels.show()
-
-  def _pixel_for_bearing(self, bearing):
-    uncorrected_pixel = (self._PIXEL_COUNT - 1) + int(bearing/self._DEGREES_PER_PIXEL)
-
-    return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
-
-  def _calculate_bearing(ac_value, compass_angle, gps):
-    result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], gps.latitude, gps.longitude)
-
-    bearing = ((result['azi1']+180) + compass_angle) % 360
-    return (bearing, result['s12'])
-
-  def off(self):
-    for i in range(self._PIXEL_COUNT):
-      self.pixels[i] = (0, 0, 0)
-
-  # Refresh the display with the value of self.pixels
-  def update(self, compass, gps, aircraft_list):
-    self.off()
-
-    # Indicate compass north
-    self.pixels[self._pixel_for_bearing(compass.get_azimuth())] = self._COLOUR_COMPASS_NORTH
-    #self.pixels[self._pixel_for_bearing(compass.get_azimuth()+90)] = self._COLOUR_COMPASS_EAST
-    #self.pixels[self._pixel_for_bearing(compass.get_azimuth()-90)] = self._COLOUR_COMPASS_WEST
-
-    vectors = [ Display._calculate_bearing(value, compass.get_azimuth(), gps) for value in list(aircraft_list.values()) ]
-    # Order the list of vectors to aircraft by distance, descending - so closer
-    # aircraft are displayed over farther ones.
-    vectors.sort(key=lambda x: x[1], reverse=True)
-
-    for ac_bearing, ac_distance in vectors:
-      if ac_distance > 100000.0:
-        # squelch aircraft too distant
-        continue
-
-      next_pixel = self._pixel_for_bearing(ac_bearing)
-      next_brightness = int(max(0, min(255, ((15000-ac_distance)*255/10000.0))))
-
-      self.pixels[next_pixel] = (next_brightness, 10, 00)
-
-    self._refresh()
-
-class Aircraft:
-  positions = {}
-
-  def __init__(self):
-    self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #self.sock.connect(("127.0.0.1", 30003))
-
-  def _parse(self, line):
-    try:
-      # ['MSG', '3', '1', '1', '3C66B3', '1', '2019/11/26', '16:37:53.908', '2019/11/26', '16:37:53.950', '', '8650', '', '', '51.64426', '0.10422', '', '', '', '', '', '0\n']
-      (msg_class, msg_type, _, _, ac_id, _, ac_date, ac_time, _, _, _, _, _, _, ac_lat, ac_lon, _) = line.split(",", 16)
-
-      if msg_class != "MSG" or msg_type != "3":
-        return None
-
-      ac_datetime = datetime.strptime(ac_date + " " + ac_time, "%Y/%m/%d %H:%M:%S.%f")
-      ac_lat = float(ac_lat)
-      ac_lon = float(ac_lon)
-    except ValueError:
-      print("Bad coordinate string: '{}'".format(line))
-      return None
-
-    return {ac_id: (ac_datetime, ac_lat, ac_lon)}
-
-  def track_aircraft(self):
-    while True:
-      ac_result = self._parse(self.sock.makefile(buffering=1024000).readline().strip())
-
-      if ac_result == None:
-        continue
-
-      Aircraft.positions.update(ac_result)
-
-      # Clean up values older than 300 seconds
-      for ac_id, value in Aircraft.positions.copy().items():
-        if (datetime.now() - value[0]) > timedelta(minutes=1):
-          print("Removing expired aircraft " + ac_id)
-          del Aircraft.positions[ac_id]
-
-ac = Aircraft()
-t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
-t_ac.start()
-
-gps = GPS()
-t_gps = threading.Thread(target=gps.track_gps, args=(), daemon=True)
-t_gps.start()
-
-compass = Compass()
-display = Display()
-
-while True:
-  if not gps.is_fresh():
-    print("Warning: GPS position is not up-to-date")
-
-  t_start = time.time()
-  cycle_length = 100
-
-  for i in range(cycle_length):
-    compass.update()
-    display.update(compass, gps, Aircraft.positions)
-
-  t_end = time.time()
-  refresh_rate = cycle_length*1.0/(t_end - t_start)
-  print("Refresh rate: " + str(round(refresh_rate, 2)) + "Hz")
 
