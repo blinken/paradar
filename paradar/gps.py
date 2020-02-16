@@ -29,6 +29,8 @@ class GPS:
   TIMEOUT = 3.0
 
   def __init__(self):
+    print("gps: starting up")
+
     self._raw_port = serial.Serial(self.DEVICE, baudrate=self.SPEED, timeout=self.TIMEOUT)
     self.port = io.TextIOWrapper(io.BufferedRWPair(self._raw_port, self._raw_port), encoding='ascii')
 
@@ -60,7 +62,7 @@ class GPS:
       except UnicodeDecodeError:
         pass
       except serial.SerialException as e:
-        print("Serial exception (" + str(e) + "), resetting port")
+        print("gps: serial exception (" + str(e) + "), resetting port")
 
         if self._raw_port:
           self._raw_port.close()
@@ -69,13 +71,13 @@ class GPS:
       except pynmea2.nmea.ChecksumError:
         pass
       except pynmea2.nmea.ParseError:
-        print("GPS: unparseable string '" + line + "'")
+        print("gps: unparseable string '" + line + "'")
       except Exception as e:
-        print("Unknown exception parsing NMEA - " + str(e))
+        print("gps: Unknown exception parsing NMEA - " + str(e))
         traceback.print_exc()
         time.sleep(0.2)
 
   def is_fresh(self):
-    print("GPS fix is " + str(datetime.today() - self.updated) + " old")
-    return (datetime.today() - self.updated) < timedelta(minutes=2)
+    print("gps: fix is " + float(str(datetime.today() - self.updated)) + "s old")
+    return (datetime.today() - self.updated) < timedelta(minutes=3)
 

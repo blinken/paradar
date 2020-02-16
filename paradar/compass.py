@@ -45,6 +45,8 @@ class Compass:
 
 
   def __init__(self):
+    print("compass: starting up")
+
     GPIO.setmode(GPIO.BCM)
 
     GPIO.setup(self._GPIO_CHIP_SELECT, GPIO.OUT)
@@ -75,15 +77,8 @@ class Compass:
     # Activate continuous measurement
     self._soft_write_bytes([self._REG_TMRC, 0x92])
     self._soft_write_bytes([self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x79])
-    #self._write(self._REG_TMRC, 0x96)
-    #self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x79)
 
-    print(hex(self._soft_read_reg(0x8b)))
-    print(hex(self._soft_read_reg(0x81)))
-    #print(hex(self._read(0x8b)))
-    #print(hex(self._read(0x81)))
-
-    #self._debug()
+    print("compass: tmrc={0} cmm={1}".format(hex(self._soft_read_reg(0x8b)), hex(self._soft_read_reg(0x81))))
 
     self.update()
 

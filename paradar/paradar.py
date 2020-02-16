@@ -58,5 +58,5 @@ while True:
 
   t_end = time.time()
   refresh_rate = cycle_length*1.0/(t_end - t_start)
-  print("Refresh rate: " + str(round(refresh_rate, 2)) + "Hz")
+  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, local position is ({:3.6f}, {:3.6f})".format(refresh_rate, len(Aircraft.positions), gps.latitude, gps.longitude))
 

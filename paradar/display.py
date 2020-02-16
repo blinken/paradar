@@ -20,6 +20,8 @@ import board
 import neopixel
 import RPi.GPIO as GPIO
 
+from geographiclib.geodesic import Geodesic
+
 class Display:
   _GPIO_DATA = board.D18
   _PIXEL_COUNT = 36
@@ -34,6 +36,7 @@ class Display:
   _BRIGHTNESS = 1.0
 
   def __init__(self):
+    print("display: starting up")
     GPIO.setmode(GPIO.BCM)
 
     self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3, brightness=self._BRIGHTNESS)
