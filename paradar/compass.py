@@ -78,7 +78,9 @@ class Compass:
     self._soft_write_bytes([self._REG_TMRC, 0x92])
     self._soft_write_bytes([self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x79])
 
-    print("compass: tmrc={0} cmm={1}".format(hex(self._soft_read_reg(0x8b)), hex(self._soft_read_reg(0x81))))
+    r_tmrc = hex(self._soft_read_reg(0x8b))
+    r_cmm = hex(self._soft_read_reg(0x81))
+    print("compass: tmrc={} cmm={} ({})".format(r_tmrc, r_cmm, "borked!" if (r_tmrc == "0x00" or r_cmm == "0x00") else "healthy"))
 
     self.update()
 
