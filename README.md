@@ -2,6 +2,7 @@
 
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-withcase-800.png" width="600"><br/>
+<i>(shown without the translucent top case)</i><br/><br/>
 Preorder for April/May 2020 <del>£299</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
 <a href="mailto:blinken@gmail.com?subject=paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£170) unit! <a href="#buy-a-paradar">More information</a><br/>
 </div>
