@@ -3,8 +3,8 @@ Description=Paradar main process
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -u /opt/paradar/paradar/paradar.py
-WorkingDirectory=/opt/paradar/paradar
+ExecStart=/opt/paradar/bin/python3 -u /opt/paradar/paradar/paradar.py
+WorkingDirectory=/opt/paradar
 Restart=always
 StandardInput=null
 StandardOutput=journal
