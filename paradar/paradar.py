@@ -50,6 +50,8 @@ def signal_handler(sig, frame):
   sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
+display.start()
+
 while True:
   t_start = time.time()
   cycle_length = 1000

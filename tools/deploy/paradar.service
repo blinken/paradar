@@ -1,0 +1,16 @@
+[Unit]
+Description=Paradar main process
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /opt/paradar/paradar/paradar.py
+WorkingDirectory=/opt/paradar/paradar
+Restart=always
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=paradar
+
+
+[Install]
+WantedBy=multi-user.target

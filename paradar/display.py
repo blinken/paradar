@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import time
 import board
 import neopixel
 import RPi.GPIO as GPIO
@@ -42,6 +43,23 @@ class Display:
     self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3, brightness=self._BRIGHTNESS)
     self.off()
     self._refresh()
+
+  def start(self):
+    '''Display a startup animation'''
+
+    for i in range(self._PIXEL_COUNT):
+      self.off()
+      self.pixels[i] = (255, 255, 255)
+      self._refresh()
+      time.sleep(0.1)
+
+    self.off()
+    for i in range(self._PIXEL_COUNT):
+      self.pixels[i] = (255, 255, 255)
+
+    self._refresh()
+    time.sleep(1)
+    self.off()
 
   def _refresh(self):
     self.pixels.show()
