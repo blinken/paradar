@@ -21,6 +21,7 @@ import time
 import pynmea2
 import serial
 import traceback
+from datetime import datetime, timedelta
 
 class GPS:
   DEVICE = "/dev/ttyAMA0"

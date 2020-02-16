@@ -31,7 +31,7 @@ class Display:
   _COLOUR_COMPASS_EAST = (0, 255, 0) # green
   _COLOUR_COMPASS_WEST = (255, 255, 255) # white
 
-  _BRIGHTNESS = 0.3
+  _BRIGHTNESS = 1.0
 
   def __init__(self):
     GPIO.setmode(GPIO.BCM)

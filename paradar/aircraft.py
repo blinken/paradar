@@ -28,7 +28,7 @@ class Aircraft:
 
   def __init__(self):
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #self.sock.connect(("127.0.0.1", 30003))
+    self.sock.connect(("127.0.0.1", 30003))
 
   def _parse(self, line):
     try:
