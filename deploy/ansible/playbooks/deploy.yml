@@ -115,6 +115,15 @@
       mode: 0644
     tags: system
 
+  - name: install console-setup config file
+    copy:
+      src: ../../system/default.console-setup
+      dest: /etc/default/console-setup
+      owner: root
+      group: root
+      mode: 0644
+    tags: system
+
   - name: ensure pps_ldisc kernel module is loaded at boot
     lineinfile:
       path: /etc/modules
