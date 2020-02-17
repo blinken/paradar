@@ -106,13 +106,32 @@
       mode: 0644
     tags: system
 
+  - name: install chrony config file
+    copy:
+      src: ../../system/chrony.conf
+      dest: /etc/chrony/chrony.conf
+      owner: root
+      group: root
+      mode: 0644
+    tags: system
+
+  - name: ensure pps_ldisc kernel module is loaded at boot
+    lineinfile:
+      path: /etc/modules
+      line: pps_ldisc
+    tags: system
+
   - name: ask systemd to reload config
     systemd:
       daemon_reload: yes
     tags: system
 
-  - name: restart gpsd
+  - name: restart services
     systemd:
-      name: gpsd
+      name: "{{ item }}"
       state: restarted
+    with_items:
+      - gpsd
+      - chrony
+      - paradar
     tags: system
