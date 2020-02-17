@@ -87,7 +87,8 @@ class Aircraft:
 
     # Use the known location of the receiver to calculate the aircraft position
     # from one messsage
-    ac_lat, ac_lon = pms.adsb.position_with_ref(msg_hex, self.gps.latitude, self.gps.longitude)
+    my_latitude, my_longitude = self.gps.position()
+    ac_lat, ac_lon = pms.adsb.position_with_ref(msg_hex, my_latitude, my_longitude)
     print("aircraft: update {0} df={1} tc={2} {3}, {4} ({5})".format(icao, downlink_format, type_code, ac_lat, ac_lon, msg_hex))
 
     return {icao: (datetime.now(), ac_lat, ac_lon)}

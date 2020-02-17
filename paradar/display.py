@@ -70,7 +70,8 @@ class Display:
     return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
 
   def _calculate_bearing(ac_value, compass_angle, gps):
-    result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], gps.latitude, gps.longitude)
+    my_latitude, my_longitude = gps.position()
+    result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], my_latitude, my_longitude)
 
     bearing = ((result['azi1']+180) + compass_angle) % 360
     return (bearing, result['s12'])

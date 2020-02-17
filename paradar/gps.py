@@ -16,68 +16,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import io
+import gpsd
 import time
-import pynmea2
-import serial
-import traceback
 from datetime import datetime, timedelta
 
 class GPS:
-  DEVICE = "/dev/ttyAMA0"
-  SPEED = 9600
-  TIMEOUT = 3.0
-
   def __init__(self):
     print("gps: starting up")
+    gpsd.connect()
 
-    self._raw_port = serial.Serial(self.DEVICE, baudrate=self.SPEED, timeout=self.TIMEOUT)
-    self.port = io.TextIOWrapper(io.BufferedRWPair(self._raw_port, self._raw_port), encoding='ascii')
-
-    self.latitude = 0.0
-    self.longitude = 0.0
-    self.updated = datetime(1970,1,1)
-
-  def __del__(self):
-    self._raw_port.close()
-
-  def track_gps(self):
-    while True:
-      try:
-        line = self.port.readline().strip()
-        if not line or line[0] != '$':
-          # Serial can be very noisy. Silently ignore non-ASCII characters with
-          # UnicodeDecodeError below
-          continue
-
-        msg = pynmea2.parse(line)
-        if msg.sentence_type == 'GGA':
-          self.latitude = msg.latitude
-          self.longitude = msg.longitude
-        elif msg.sentence_type == 'RMC':
-          self.updated = msg.datetime
-        else:
-          continue
-
-      except UnicodeDecodeError:
-        pass
-      except serial.SerialException as e:
-        print("gps: serial exception (" + str(e) + "), resetting port")
-
-        if self._raw_port:
-          self._raw_port.close()
-          self._raw_port = serial.Serial(self.DEVICE, baudrate=self.SPEED, timeout=self.TIMEOUT)
-          self.port = io.TextIOWrapper(io.BufferedRWPair(self._raw_port, self._raw_port), encoding='ascii')
-      except pynmea2.nmea.ChecksumError:
-        pass
-      except pynmea2.nmea.ParseError:
-        print("gps: unparseable string '" + line + "'")
-      except Exception as e:
-        print("gps: Unknown exception parsing NMEA - " + str(e))
-        traceback.print_exc()
-        time.sleep(0.2)
+    self.is_fresh()
 
   def is_fresh(self):
-    print("gps: fix is " + float(str(datetime.today() - self.updated)) + "s old")
-    return (datetime.today() - self.updated) < timedelta(minutes=3)
+    position = gpsd.get_current()
+    if position.mode == 0:
+      print("gps: no data received from GPS module (borked)")
+      return False
+    elif position.mode == 1:
+      print("gps: module connected, no fix (maybe borked)")
+      return False
+    elif position.mode == 2:
+      print("gps: module connected, 2D fix (healthy)")
+      return True
+    elif position.mode == 3:
+      print("gps: module connected, 3D fix (healthy)")
+      return True
+    else:
+      print("gps: unknown mode returned by, hoping for the best")
+      return True
+
+  def position(self):
+    return gpsd.get_current().position()
 

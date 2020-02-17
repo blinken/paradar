@@ -29,15 +29,13 @@ from compass import Compass
 from display import Display
 
 gps = GPS()
-t_gps = threading.Thread(target=gps.track_gps, args=(), daemon=True)
-t_gps.start()
+compass = Compass()
+display = Display()
 
 ac = Aircraft(gps)
 t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
 t_ac.start()
 
-compass = Compass()
-display = Display()
 
 # Clean up GPIOs on exit
 def signal_handler(sig, frame):
@@ -62,7 +60,8 @@ while True:
 
   t_end = time.time()
   refresh_rate = cycle_length*1.0/(t_end - t_start)
-  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, local position is ({:3.6f}, {:3.6f})".format(refresh_rate, len(Aircraft.positions), gps.latitude, gps.longitude))
+  my_latitude, my_longitude = gps.position()
+  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, local position is ({:3.6f}, {:3.6f})".format(refresh_rate, len(Aircraft.positions), my_latitude, my_longitude))
 
   if ac.freq == 1090:
     ac.set_freq(978)
