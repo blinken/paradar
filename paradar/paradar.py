@@ -17,12 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import cProfile
 import signal
 import sys
 import threading
 import time
 import RPi.GPIO as GPIO
 
+from gpsd import NoFixError
 from aircraft import Aircraft
 from gps import GPS
 from compass import Compass
@@ -35,7 +37,6 @@ display = Display()
 ac = Aircraft(gps)
 t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
 t_ac.start()
-
 
 # Clean up GPIOs on exit
 def signal_handler(sig, frame):
@@ -50,22 +51,27 @@ signal.signal(signal.SIGINT, signal_handler)
 
 display.start()
 
-while True:
+for i in range(1000):
   t_start = time.time()
-  cycle_length = 1000
+  cycle_length = 50
 
   for i in range(cycle_length):
-    compass.update()
-    display.update(compass, gps, Aircraft.positions)
+      compass.update()
+      display.update(compass, gps, Aircraft.positions)
 
   t_end = time.time()
   refresh_rate = cycle_length*1.0/(t_end - t_start)
-  my_latitude, my_longitude = gps.position()
-  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, local position is ({:3.6f}, {:3.6f})".format(refresh_rate, len(Aircraft.positions), my_latitude, my_longitude))
 
-  if ac.freq == 1090:
-    ac.set_freq(978)
-  else:
-    ac.set_freq(1090)
+  try:
+      my_latitude, my_longitude = gps.position()
+      gps_msg = "local position is ({:3.6f}, {:3.6f})".format(my_latitude, my_longitude)
+  except NoFixError:
+      gps_msg = "GPS does not have a fix"
 
+  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, {}".format(refresh_rate, len(Aircraft.positions), gps_msg))
 
+  # TODO, GPIO to enable frequency auto-switch
+  #if ac.freq == 1090:
+  #    ac.set_freq(978)
+  #else:
+  #    ac.set_freq(1090)

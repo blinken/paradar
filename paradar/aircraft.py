@@ -44,7 +44,8 @@ class Aircraft:
     self.shutdown()
     self._stop = False
 
-    args = ["/usr/bin/dump1090-fa", "--raw", "--freq", "{0}".format(self.freq)]
+    # dump1090-fa expects the frequecy argument in Hz
+    args = ["/usr/bin/dump1090-fa", "--raw", "--freq", "{0}".format(self.freq*1000000)]
     self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
 
   def shutdown(self):
@@ -82,7 +83,7 @@ class Aircraft:
       raise ValueError
 
     if not self.gps.is_fresh():
-      print("aircraft: not updating {0} df={1} tc={2} as my GPS position is unknown ({3})".format(icao, downlink_format, type_code, msg_hex))
+      #print("aircraft: not updating {0} df={1} tc={2} as my GPS position is unknown ({3})".format(icao, downlink_format, type_code, msg_hex))
       raise ValueError
 
     # Use the known location of the receiver to calculate the aircraft position
@@ -106,13 +107,14 @@ class Aircraft:
 
         msg_ascii = line.decode('utf-8').strip()
         if not msg_ascii or msg_ascii[0] != '*':
+          print("aircraft: ignoring message '{}'".format(msg_ascii))
           continue
 
         try:
           Aircraft.positions.update(self._parse(msg_ascii))
         except ValueError:
-          pass
           #print("Unable to parse message '{0}'".format(msg_ascii))
+          pass
 
         # Clean up values older than 300 seconds
         if (datetime.now() - t_last_cleanup) > timedelta(seconds=30):
@@ -128,6 +130,7 @@ class Aircraft:
         time.sleep(1)
       else:
         print("aircraft: dump1090 stopped, restarting it")
+        time.sleep(1)
         self.start()
 
 

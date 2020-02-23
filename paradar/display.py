@@ -17,6 +17,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import time
+from gpsd import NoFixError
+from datetime import datetime, timedelta
 import board
 import neopixel
 import RPi.GPIO as GPIO
@@ -39,6 +41,9 @@ class Display:
   def __init__(self):
     print("display: starting up")
     GPIO.setmode(GPIO.BCM)
+
+    self._vectors = None
+    self._vectors_last_update = datetime(1970, 1, 1, 0, 0, 0)
 
     self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3, brightness=self._BRIGHTNESS)
     self.off()
@@ -69,12 +74,12 @@ class Display:
 
     return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
 
-  def _calculate_bearing(ac_value, compass_angle, gps):
+  # Throws GPS.NoFixError if the GPS is not yet running
+  def _calculate_bearing(ac_value, gps):
     my_latitude, my_longitude = gps.position()
     result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], my_latitude, my_longitude)
 
-    bearing = ((result['azi1']+180) + compass_angle) % 360
-    return (bearing, result['s12'])
+    return (result['azi1']+180, result['s12'])
 
   def off(self):
     for i in range(self._PIXEL_COUNT):
@@ -89,17 +94,29 @@ class Display:
     #self.pixels[self._pixel_for_bearing(compass.get_azimuth()+90)] = self._COLOUR_COMPASS_EAST
     #self.pixels[self._pixel_for_bearing(compass.get_azimuth()-90)] = self._COLOUR_COMPASS_WEST
 
-    vectors = [ Display._calculate_bearing(value, compass.get_azimuth(), gps) for value in list(aircraft_list.values()) ]
-    # Order the list of vectors to aircraft by distance, descending - so closer
-    # aircraft are displayed over farther ones.
-    vectors.sort(key=lambda x: x[1], reverse=True)
+    if self._vectors and (datetime.now() - self._vectors_last_update) < timedelta(seconds=30):
+      vectors = self._vectors
+    else:
+      try:
+        vectors = [ Display._calculate_bearing(value, gps) for value in list(aircraft_list.values()) ]
+      except NoFixError:
+        print("display: error calculating bearings - GPS does not have a fix")
+        vectors = []
+
+      # Order the list of vectors to aircraft by distance, descending - so closer
+      # aircraft are displayed over farther ones.
+      vectors.sort(key=lambda x: x[1], reverse=True)
+
+      self._vectors = vectors
+      self._vectors_last_update = datetime.now()
 
     for ac_bearing, ac_distance in vectors:
       if ac_distance > 100000.0:
         # squelch aircraft too distant
         continue
 
-      next_pixel = self._pixel_for_bearing(ac_bearing)
+      bearing = (ac_bearing + compass.get_azimuth()) % 360
+      next_pixel = self._pixel_for_bearing(bearing)
       next_brightness = int(max(0, min(255, ((15000-ac_distance)*255/10000.0))))
 
       self.pixels[next_pixel] = (next_brightness, 10, 00)

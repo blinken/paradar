@@ -18,33 +18,57 @@
 
 import gpsd
 import time
+import warnings
 from datetime import datetime, timedelta
 
 class GPS:
   def __init__(self):
+
     print("gps: starting up")
     gpsd.connect()
 
+    self.cached_position = None
     self.is_fresh()
 
   def is_fresh(self):
-    position = gpsd.get_current()
-    if position.mode == 0:
-      print("gps: no data received from GPS module (borked)")
+    try:
+      position = gpsd.get_current()
+      mode = position.mode
+    except UserWarning:
+      mode = 0
+    except gpsd.NoFixError:
+      mode = 1
+
+    if mode == 0:
+      print("gps: no data received from GPS module/not connected (borked)")
       return False
-    elif position.mode == 1:
+    elif mode == 1:
       print("gps: module connected, no fix (maybe borked)")
       return False
-    elif position.mode == 2:
+    elif mode == 2:
       print("gps: module connected, 2D fix (healthy)")
       return True
-    elif position.mode == 3:
+    elif mode == 3:
       print("gps: module connected, 3D fix (healthy)")
       return True
     else:
-      print("gps: unknown mode returned by, hoping for the best")
+      print("gps: unknown mode returned by gpsd, hoping for the best")
       return True
 
   def position(self):
-    return gpsd.get_current().position()
+    if self.cached_position and (datetime.now() - self.cached_position_updated) < timedelta(seconds=30):
+      return self.cached_position
+    else:
+      try:
+        self.cached_position = gpsd.get_current().position()
+        self.cached_position_updated = datetime.now()
+        return self.cached_position
+      except ConnectionResetError:
+        if self.cached_position:
+          print("gps: connection reset while reading, returning stale cached position")
+          return self.cached_position
+        else:
+          print("gps: connection reset while reading, no cached position. Will retry")
+          # rethrow as something our callers will handle
+          raise gpsd.NoFixError
 
