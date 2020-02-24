@@ -16,16 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# Don't load things that depend on Raspberry Pi hardware when we're not on a
-# Pi, to allow modules to be imported for testing purposes.
-import os
-if os.uname()[4][:3] == 'arm':
-  from RPi.GPIO import GPIO
-  from .display import Display
-else:
-  from .gpio_stub import GPIO
+from . import GPIO
 
-from .compass import Compass
-from .gps import GPS
-from .aircraft import Aircraft
+# Maps wiring (GPIO pin) to function
+MAPPING = {
+  "high_brightness": 21,
+  "wifi_enabled": 20,
+  "track_home": 16,
+  "show_north": 13,
+  "led_test": 6,
+  "unused": 5,
+}
 
+class ConfigType(type):
+  def __getattr__(cls, name):
+    if name in MAPPING.keys():
+      return lambda: (bool(GPIO.input(MAPPING[name])))
+    else:
+      raise AttributeError()
+
+class Config(metaclass=ConfigType):
+  pass

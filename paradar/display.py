@@ -19,14 +19,13 @@
 import time
 from gpsd import NoFixError
 from datetime import datetime, timedelta
-import board
 import neopixel
-import RPi.GPIO as GPIO
 
+from . import GPIO
 from geographiclib.geodesic import Geodesic
 
 class Display:
-  _GPIO_DATA = board.D18
+  _GPIO_DATA = 18
   _PIXEL_COUNT = 36
   _PIXEL_ANGLE_OFFSET = 0
 
@@ -45,7 +44,7 @@ class Display:
     self._vectors = None
     self._vectors_last_update = datetime(1970, 1, 1, 0, 0, 0)
 
-    self.pixels = neopixel.NeoPixel(board.D18, self._PIXEL_COUNT, auto_write=False, bpp=3, brightness=self._BRIGHTNESS)
+    self.pixels = neopixel.NeoPixel(18, self._PIXEL_COUNT, auto_write=False, bpp=3, brightness=self._BRIGHTNESS)
     self.off()
     self._refresh()
 

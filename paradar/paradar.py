@@ -22,13 +22,9 @@ import signal
 import sys
 import threading
 import time
-import RPi.GPIO as GPIO
 
+from . import GPIO, Aircraft, GPS, Compass, Display
 from gpsd import NoFixError
-from aircraft import Aircraft
-from gps import GPS
-from compass import Compass
-from display import Display
 
 gps = GPS()
 compass = Compass()

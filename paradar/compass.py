@@ -19,8 +19,8 @@
 import struct
 import math
 import time
-import RPi.GPIO as GPIO
-from spidev import SpiDev
+#from spidev import SpiDev
+from . import GPIO
 
 class Compass:
   _REG_POLL = 0x00
