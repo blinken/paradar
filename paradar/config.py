@@ -23,12 +23,13 @@ except ImportError:
 
 # Maps wiring (GPIO pin) to function
 MAPPING = {
-  "high_brightness": 21,
-  "wifi_enabled": 20,
-  "track_home": 16,
-  "show_north": 13,
-  "led_test": 6,
-  "enable_978": 5,
+  # In order of the GPIO switch 1->6
+  "high_brightness": 5,
+  "wifi_enabled": 6,
+  "track_home": 13,
+  "show_north": 16,
+  "led_test": 20,
+  "enable_978": 21,
 }
 
 class ConfigType(type):
@@ -38,7 +39,8 @@ class ConfigType(type):
 
   def __getattr__(cls, name):
     if name in MAPPING.keys():
-      return lambda: (bool(GPIO.input(MAPPING[name])))
+      # Value read is logic low when switch is on
+      return lambda: (not bool(GPIO.input(MAPPING[name])))
     else:
       raise AttributeError()
 
