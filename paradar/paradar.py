@@ -51,7 +51,11 @@ for i in range(1000):
   t_start = time.time()
   cycle_length = 50
 
-  for i in range(cycle_length):
+  if Config.led_test():
+    display.self_test()
+    time.sleep(0.75)
+  else:
+    for i in range(cycle_length):
       compass.update()
       display.update(compass, gps, Aircraft.positions)
 
@@ -59,15 +63,20 @@ for i in range(1000):
   refresh_rate = cycle_length*1.0/(t_end - t_start)
 
   try:
-      my_latitude, my_longitude = gps.position()
-      gps_msg = "local position is ({:3.6f}, {:3.6f})".format(my_latitude, my_longitude)
+    my_latitude, my_longitude = gps.position()
+    gps_msg = "local position is ({:3.6f}, {:3.6f})".format(my_latitude, my_longitude)
   except NoFixError:
-      gps_msg = "GPS does not have a fix"
+    gps_msg = "GPS does not have a fix"
 
   print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, {}".format(refresh_rate, len(Aircraft.positions), gps_msg))
 
-  # TODO, GPIO to enable frequency auto-switch
-  #if ac.freq == 1090:
-  #    ac.set_freq(978)
-  #else:
-  #    ac.set_freq(1090)
+  if Config.enable_978():
+    # In regions where 978MHz exists, traffic may be advertised on either
+    # 978MHz or 1090MHz
+    if ac.freq == 1090:
+      ac.set_freq(978)
+    else:
+      ac.set_freq(1090)
+  else:
+    ac.set_freq(1090)
+

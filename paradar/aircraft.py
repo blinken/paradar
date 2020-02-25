@@ -57,6 +57,9 @@ class Aircraft:
       self.proc.wait()
 
   def set_freq(self, freq):
+    if freq == self.freq:
+      return
+
     if not freq in [978, 1090]:
       raise ValueError("Frequency must be one of 978Mhz or 1090Mhz")
 
@@ -98,12 +101,13 @@ class Aircraft:
     t_last_cleanup = datetime.now()
 
     while True:
-      n_lines = 0
+      startup_lines = 5
       for line in iter(self.proc.stdout.readline, b''):
-        n_lines += 1
 
-        if n_lines == 5:
+        if startup_lines == 0:
           print("aircraft: listening on {0}Mhz".format(self.freq))
+        else:
+          startup_lines -= 1
 
         msg_ascii = line.decode('utf-8').strip()
         if not msg_ascii or msg_ascii[0] != '*':
@@ -123,7 +127,7 @@ class Aircraft:
               print("Removing expired aircraft " + ac_id)
               del Aircraft.positions[ac_id]
           t_last_cleanup = datetime.now()
-      
+
       # If the thread has been asked to exit, don't attempt to restart
       # dump1090. Otherwise, just loop slowly
       if self._stop:

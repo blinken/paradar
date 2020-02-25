@@ -25,7 +25,7 @@ MAPPING = {
   "track_home": 16,
   "show_north": 13,
   "led_test": 6,
-  "unused": 5,
+  "enable_978": 5,
 }
 
 class ConfigType(type):

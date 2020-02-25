@@ -19,6 +19,7 @@
 import time
 from gpsd import NoFixError
 from datetime import datetime, timedelta
+from itertools import cycle
 import neopixel
 
 from . import GPIO, Config
@@ -31,9 +32,23 @@ class Display:
 
   _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
 
-  _COLOUR_COMPASS_NORTH = (0, 0, 255) # blue
-  _COLOUR_COMPASS_EAST = (0, 255, 0) # green
-  _COLOUR_COMPASS_WEST = (255, 255, 255) # white
+  _COLOUR_COMPASS_NORTH = (128, 128, 128) # white
+  _COLOUR_AIRCRAFT_FAR = (0, 0, 255) # blue
+  _COLOUR_AIRCRAFT_NEAR = (255, 0, 0) # red
+  _COLOUR_HOME = (128, 128, 255) # light blue
+  _COLOUR_STARTUP = (128, 128, 255) # light blue
+
+  # Ignore aircraft more than this many meters away
+  _DISTANCE_SQUELCH = 50 * 1000.0
+  # Begin to fade the LED to COLOUR_AIRCRAFT_NEAR from this distance (meters)
+  _DISTANCE_WARNING = 20 * 1000.0
+
+  _TEST_COLOURS = (
+    (255,0,0),     # R
+    (0,255,0),     # G
+    (0,0,255),     # B
+    (255,255,255), # W
+  )
 
   _HIGH_BRIGHTNESS = 1.0
   _LOW_BRIGHTNESS = 0.6
@@ -44,6 +59,8 @@ class Display:
 
     self._vectors = None
     self._vectors_last_update = datetime(1970, 1, 1, 0, 0, 0)
+    self._test_cycle = cycle(self._TEST_COLOURS)
+    self._home_location = None
 
     self.pixels = neopixel.NeoPixel(18, self._PIXEL_COUNT,
       auto_write=False,
@@ -58,13 +75,12 @@ class Display:
 
     for i in range(self._PIXEL_COUNT):
       self.off()
-      self.pixels[i] = (255, 255, 255)
+      self.pixels[i] = self._COLOUR_STARTUP
       self._refresh()
       time.sleep(0.1)
 
     self.off()
-    for i in range(self._PIXEL_COUNT):
-      self.pixels[i] = (255, 255, 255)
+    self.pixels.fill(self._COLOUR_STARTUP)
 
     self._refresh()
     time.sleep(1)
@@ -86,18 +102,51 @@ class Display:
 
     return (result['azi1']+180, result['s12'])
 
+  def _colour_for_distance(distance):
+    # Colour gradient is nonlinear: aircraft that are within squelch but
+    # outside warning are all displayed the same colour.
+    if distance > self._DISTANCE_WARNING:
+      return self._COLOUR_AIRCRAFT_FAR
+
+    # Otherwise, interpolate evenly from the far to the near distance
+    multiplier = distance/self._DISTANCE_WARNING
+    far_component = [x*multiplier for x in self.COLOUR_AIRCRAFT_FAR]
+    near_component = [x*(1-multiplier) for x in self.COLOUR_AIRCRAFT_FAR]
+    return [sum(x) for x in zip(near_component, far_component)]
+
   def off(self):
-    for i in range(self._PIXEL_COUNT):
-      self.pixels[i] = (0, 0, 0)
+    self.pixels.fill((0, 0, 0))
+
+  # Cycles through one of a number of colours on each call
+  def self_test():
+    self.pixels.fill(next(self._test_cycle))
+    self.pixels.show()
 
   # Refresh the display with the value of self.pixels
   def update(self, compass, gps, aircraft_list):
+    if Config.led_test():
+      return
+
     self.off()
 
     # Indicate compass north
-    self.pixels[self._pixel_for_bearing(compass.get_azimuth())] = self._COLOUR_COMPASS_NORTH
-    #self.pixels[self._pixel_for_bearing(compass.get_azimuth()+90)] = self._COLOUR_COMPASS_EAST
-    #self.pixels[self._pixel_for_bearing(compass.get_azimuth()-90)] = self._COLOUR_COMPASS_WEST
+    if Config.show_north():
+      self.pixels[self._pixel_for_bearing(compass.get_azimuth())] = self._COLOUR_COMPASS_NORTH
+
+    # Indicate bearing to home if enabled, and we know where home is.
+    # Otherwise, attempt to update the home location (track_home switch has
+    # just been enabled)
+    if Config.track_home() and self._home_location:
+      bearing = Display._calculate_bearing(self._home_location, gps)
+      self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME
+    elif Config.track_home() and not self._home_location:
+      try:
+        self._home_location = gps.position()
+        print("display: updated home location to {}".format(self._home_location))
+      except NoFixError:
+        pass
+    else:
+      self._home_location = None
 
     if self._vectors and (datetime.now() - self._vectors_last_update) < timedelta(seconds=30):
       vectors = self._vectors
@@ -116,15 +165,12 @@ class Display:
       self._vectors_last_update = datetime.now()
 
     for ac_bearing, ac_distance in vectors:
-      if ac_distance > 100000.0:
-        # squelch aircraft too distant
+      if ac_distance > self._SQUELCH_DISTANCE:
         continue
 
       bearing = (ac_bearing + compass.get_azimuth()) % 360
       next_pixel = self._pixel_for_bearing(bearing)
-      next_brightness = int(max(0, min(255, ((15000-ac_distance)*255/10000.0))))
-
-      self.pixels[next_pixel] = (next_brightness, 10, 00)
+      self.pixels[next_pixel] = self._colour_for_distance(ac_distance)
 
     self._refresh()
 
