@@ -9,3 +9,8 @@ class GPIO:
 
   def setmode(mode):
     return
+
+class board:
+  def D18():
+    pass
+  D18.id = 18

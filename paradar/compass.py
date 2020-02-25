@@ -20,7 +20,12 @@ import struct
 import math
 import time
 #from spidev import SpiDev
-from . import GPIO
+
+try:
+  from RPi import GPIO
+except ImportError:
+  from .gpio_stub import GPIO
+
 
 class Compass:
   _REG_POLL = 0x00

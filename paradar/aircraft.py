@@ -106,6 +106,7 @@ class Aircraft:
 
         if startup_lines == 0:
           print("aircraft: listening on {0}Mhz".format(self.freq))
+          startup_lines -= 1
         else:
           startup_lines -= 1
 

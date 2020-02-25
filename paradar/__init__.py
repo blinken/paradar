@@ -18,11 +18,10 @@
 
 # Don't load things that depend on Raspberry Pi hardware when we're not on a
 # Pi, to allow modules to be imported for testing purposes.
-import os
-if os.uname()[4][:3] == 'arm':
-  from RPi.GPIO import GPIO
+try:
+  from RPi import GPIO
   from .display import Display
-else:
+except ImportError:
   from .gpio_stub import GPIO
 
 from .compass import Compass

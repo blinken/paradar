@@ -23,8 +23,18 @@ import sys
 import threading
 import time
 
-from . import GPIO, Aircraft, GPS, Compass, Display
 from gpsd import NoFixError
+
+try:
+  from RPi import GPIO
+except ImportError:
+  from gpio_stub import GPIO
+
+from aircraft import Aircraft
+from gps import GPS
+from compass import Compass
+from display import Display
+from config import Config
 
 gps = GPS()
 compass = Compass()
@@ -47,9 +57,9 @@ signal.signal(signal.SIGINT, signal_handler)
 
 display.start()
 
-for i in range(1000):
+while True:
   t_start = time.time()
-  cycle_length = 50
+  cycle_length = 500
 
   if Config.led_test():
     display.self_test()

@@ -17,16 +17,27 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import time
+import neopixel
+
 from gpsd import NoFixError
 from datetime import datetime, timedelta
 from itertools import cycle
-import neopixel
-
-from . import GPIO, Config
 from geographiclib.geodesic import Geodesic
 
+try:
+  from RPi import GPIO
+except ImportError:
+  from gpio_stub import GPIO
+
+try:
+  import board
+except ImportError:
+  from gpio_stub import board
+
+from config import Config
+
 class Display:
-  _GPIO_DATA = 18
+  _GPIO_DATA = board.D18
   _PIXEL_COUNT = 36
   _PIXEL_ANGLE_OFFSET = 0
 
@@ -52,6 +63,7 @@ class Display:
 
   _HIGH_BRIGHTNESS = 1.0
   _LOW_BRIGHTNESS = 0.6
+  _SELFTEST_BRIGHTNESS = 0.03
 
   def __init__(self):
     print("display: starting up")
@@ -62,7 +74,7 @@ class Display:
     self._test_cycle = cycle(self._TEST_COLOURS)
     self._home_location = None
 
-    self.pixels = neopixel.NeoPixel(18, self._PIXEL_COUNT,
+    self.pixels = neopixel.NeoPixel(self._GPIO_DATA, self._PIXEL_COUNT,
       auto_write=False,
       bpp=3,
     )
@@ -118,8 +130,9 @@ class Display:
     self.pixels.fill((0, 0, 0))
 
   # Cycles through one of a number of colours on each call
-  def self_test():
+  def self_test(self):
     self.pixels.fill(next(self._test_cycle))
+    self.brightness = self._SELFTEST_BRIGHTNESS
     self.pixels.show()
 
   # Refresh the display with the value of self.pixels

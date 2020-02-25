@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from . import GPIO
+try:
+  from RPi import GPIO
+except ImportError:
+  from gpio_stub import GPIO
 
 # Maps wiring (GPIO pin) to function
 MAPPING = {
@@ -29,6 +32,10 @@ MAPPING = {
 }
 
 class ConfigType(type):
+  def __init__(cls, name, bases, dct):
+    for pin in MAPPING.values():
+      GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
   def __getattr__(cls, name):
     if name in MAPPING.keys():
       return lambda: (bool(GPIO.input(MAPPING[name])))
