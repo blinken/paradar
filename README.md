@@ -49,6 +49,26 @@ fully assembled unit for a little over half price (£170). [Send me an email for
 
 ### Hardware
 
+**2020-02-25** DHL confirms that the first run of boards has _arrived in the
+UK!_ With luck, they'll be with me by the end of the week. Assuming there's no
+unexpected hardware issues, there should then be enough boards and components
+to make up the set of 10 units for the beta test group over the weekend.
+
+Case design has also been ticking along, and my ghetto towel-covered 3D printer
+has been working overtime to print up prototypes. So many broken prototypes. 3D
+design is hard. The good news is that I've settled on a case that
+encapsulates a larger but less-power-hungry SDR, featuring a sturdier SMA
+connector. It's a touch larger overall but worth it from a reliability perspective.
+
+<p align="center">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/3d-printer-towel.jpg" width="250">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/20200225-cases.jpg" width="250">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/20200223-prototype.jpg" width="250">
+</p>
+
+The next step is to print some cases in transparent ABS to verify the LEDs can
+be clearly seen. Not much left to do here!
+
 **2020-02-12** After (too) many iterations, the final, tested PCB layout is
 done :tada: :tada: and has been sent for an initial manufacturing run of 40
 boards.
@@ -57,6 +77,24 @@ The case design is close to complete, but requires some tweaking to add holes
 for the SD card and antenna.
 
 ### Software
+
+**2020-02-25** We're just about feature-complete! 978MHz ADS-B is working, LED
+colours are now red/green-colourblind-friendly, take-me-home feature is
+implemented and working. The user can configure the following features via the
+six configuration switches on the top of the board:
+ * high_brightness: switch LEDs between medium and high brightness
+ * wifi_enabled: enable/disable Wifi AP mode (for SkyDemon) - to be implemented
+ * track_home: enable/disable recording GPS location at startup (or when switch is activated), and indicate the direction with a light blue LED.
+ * show_north: enable/disable indication of compass north as a white LED on the display
+ * led_test: enable/disable test mode, which cycles through red/green/blue/white to help with manufacturing (spotting dead LEDs)
+ * enable_978: enable/disable 978MHz reception. The device only has one radio,
+   so when this mode is enabled it will listen for about 10 seconds at a time
+   on each frequency. Aircraft broadcast their position every 1-2 seconds, so
+   there's a low probability that any will be missed. This is only useful in
+   the USA, where 978MHz is in use.
+
+The main remaining feature here is GDL90/SkyDemon support and testing. It's
+really exciting to be so close to the finish line!
 
 **2020-02-12** The software supports receiving ADS-B on 1090Mhz (EU frequency),
 indicating it on the display, and mapping the display to the user's position
