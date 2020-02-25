@@ -21,6 +21,7 @@ import signal
 import socket
 import time
 import subprocess
+import gpsd
 import pyModeS as pms
 
 from datetime import datetime, timedelta
@@ -91,9 +92,14 @@ class Aircraft:
 
     # Use the known location of the receiver to calculate the aircraft position
     # from one messsage
-    my_latitude, my_longitude = self.gps.position()
+    try:
+      my_latitude, my_longitude = self.gps.position()
+    except gpsd.NoFixError:
+      # a rare race condition
+      raise ValueError
+
     ac_lat, ac_lon = pms.adsb.position_with_ref(msg_hex, my_latitude, my_longitude)
-    print("aircraft: update {0} df={1} tc={2} {3}, {4} ({5})".format(icao, downlink_format, type_code, ac_lat, ac_lon, msg_hex))
+    #print("aircraft: update {0} df={1} tc={2} {3}, {4} ({5})".format(icao, downlink_format, type_code, ac_lat, ac_lon, msg_hex))
 
     return {icao: (datetime.now(), ac_lat, ac_lon)}
 
@@ -125,7 +131,7 @@ class Aircraft:
         if (datetime.now() - t_last_cleanup) > timedelta(seconds=30):
           for ac_id, value in Aircraft.positions.copy().items():
             if (datetime.now() - value[0]) > timedelta(minutes=1):
-              print("Removing expired aircraft " + ac_id)
+              print("aircraft: removing expired " + ac_id)
               del Aircraft.positions[ac_id]
           t_last_cleanup = datetime.now()
 

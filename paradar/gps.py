@@ -55,6 +55,7 @@ class GPS:
       print("gps: unknown mode returned by gpsd, hoping for the best")
       return True
 
+  # Throws gpsd.NoFixError if a fix cannot be obtained
   def position(self):
     if self.cached_position and (datetime.now() - self.cached_position_updated) < timedelta(seconds=30):
       return self.cached_position

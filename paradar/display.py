@@ -17,13 +17,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import time
-import math
 import neopixel
 
+from math import sin, asin, cos, atan2, sqrt, floor, degrees, radians, isclose
 from gpsd import NoFixError
 from datetime import datetime, timedelta
 from itertools import cycle
-from geographiclib.geodesic import Geodesic
 
 try:
   from RPi import GPIO
@@ -50,10 +49,15 @@ class Display:
   _COLOUR_HOME = (128, 128, 255) # light blue
   _COLOUR_STARTUP = (128, 128, 255) # light blue
 
-  # Ignore aircraft more than this many meters away
+  # Ignore aircraft more than this many meters away.
+  # Some research suggests that the best humans can spot is a B747 10->50km
+  # away in perfect conditions. In most cases (small aircraft, low contrast
+  # against busy background) humans can see the aircraft 1->5km distant.
+  # https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0005594
   _DISTANCE_SQUELCH = 30 * 1000.0
-  # Begin to fade the LED to COLOUR_AIRCRAFT_NEAR from this distance (meters)
-  _DISTANCE_WARNING = 20 * 1000.0
+  # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
+  # distance (meters)
+  _DISTANCE_WARNING = 15 * 1000.0
 
   _TEST_COLOURS = (
     (255,0,0),     # R
@@ -104,16 +108,54 @@ class Display:
     self.pixels.show()
 
   def _pixel_for_bearing(self, bearing):
-    uncorrected_pixel = (self._PIXEL_COUNT - 1) + int(math.floor(bearing/self._DEGREES_PER_PIXEL))
+    uncorrected_pixel = (self._PIXEL_COUNT - 1) + int(floor(bearing/self._DEGREES_PER_PIXEL))
 
     return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
 
-  # Throws GPS.NoFixError if the GPS is not yet running
-  def _calculate_bearing(ac_value, gps):
-    my_latitude, my_longitude = gps.position()
-    result = Geodesic.WGS84.Inverse(ac_value[1], ac_value[2], my_latitude, my_longitude)
+  def _haversine(self, lat1, lon1, lat2, lon2):
+    # shamelessly stolen from SO, https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
 
-    return (result['azi1']+180, result['s12'])
+    R = 6372.8 # earth radius, km
+
+    dLat = radians(lat2 - lat1)
+    dLon = radians(lon2 - lon1)
+    lat1 = radians(lat1)
+    lat2 = radians(lat2)
+
+    a = sin(dLat/2)**2 + cos(lat1)*cos(lat2)*sin(dLon/2)**2
+    c = 2*asin(sqrt(a))
+
+    return R * c
+
+  # Throws GPS.NoFixError if the GPS is not yet running
+  def _calculate_bearing(self, ac_location, gps):
+    # We're point A, and AC is point B
+    (my_lat, my_lon) = gps.position()
+    (ac_lat, ac_lon) = ac_location
+
+    # Special case when track_home starts up
+    if isclose(my_lat, ac_lat) and isclose(my_lon, ac_lon):
+      return (0, 0)
+
+    delta_lon = radians(ac_lon - my_lon)
+    my_lat_r = radians(my_lat)
+    ac_lat_r = radians(ac_lat)
+
+    x = cos(ac_lat_r) * sin(delta_lon)
+    y = cos(my_lat_r) * sin(ac_lat_r) - sin(my_lat_r) * cos(ac_lat_r) * cos(delta_lon)
+    bearing = degrees(atan2(x,y))
+
+    distance = self._haversine(my_lat, my_lon, ac_lat, ac_lon)
+    bearing = (degrees(atan2(x, y)) + 360) % 360
+
+    #print("display: bearing ({:.6f}, {:.6f}) -> ({:.6f}, {:.6f}) is {:.1f}, distance={:.2f}km".format(
+    #  my_lat, my_lon,
+    #  ac_lat, ac_lon,
+    #  bearing,
+    #  distance,
+    #))
+
+    return (bearing, distance)
 
   def _colour_for_distance(self, distance):
     # Colour gradient is nonlinear: aircraft that are within squelch but
@@ -151,7 +193,7 @@ class Display:
     # Otherwise, attempt to update the home location (track_home switch has
     # just been enabled)
     if Config.track_home() and self._home_location:
-      bearing = Display._calculate_bearing(self._home_location, gps)
+      (bearing, distance) = self._calculate_bearing(self._home_location, gps)
       self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME
     elif Config.track_home() and not self._home_location:
       try:
@@ -162,21 +204,18 @@ class Display:
     else:
       self._home_location = None
 
-    if self._vectors and (datetime.now() - self._vectors_last_update) < timedelta(seconds=30):
-      vectors = self._vectors
-    else:
-      try:
-        vectors = [ Display._calculate_bearing(value, gps) for value in list(aircraft_list.values()) ]
-      except NoFixError:
-        print("display: error calculating bearings - GPS does not have a fix")
-        vectors = []
+    try:
+      vectors = [ self._calculate_bearing((value[1], value[2]), gps) for value in list(aircraft_list.values()) ]
+    except NoFixError:
+      print("display: error calculating bearings - GPS does not have a fix")
+      vectors = []
 
-      # Order the list of vectors to aircraft by distance, descending - so closer
-      # aircraft are displayed over farther ones.
-      vectors.sort(key=lambda x: x[1], reverse=True)
+    # Order the list of vectors to aircraft by distance, descending - so closer
+    # aircraft are displayed over farther ones.
+    vectors.sort(key=lambda x: x[1], reverse=True)
 
-      self._vectors = vectors
-      self._vectors_last_update = datetime.now()
+    #self._vectors = vectors
+    #self._vectors_last_update = datetime.now()
 
     for ac_bearing, ac_distance in vectors:
       if ac_distance > self._DISTANCE_SQUELCH:
