@@ -46,10 +46,10 @@ class GPS:
       print("gps: module connected, no fix (maybe borked)")
       return False
     elif mode == 2:
-      print("gps: module connected, 2D fix (healthy)")
+      # module connected, 2D fix (healthy)
       return True
     elif mode == 3:
-      print("gps: module connected, 3D fix (healthy)")
+      # module connected, 3D fix (healthy)
       return True
     else:
       print("gps: unknown mode returned by gpsd, hoping for the best")

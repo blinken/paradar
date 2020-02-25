@@ -50,7 +50,7 @@ class Display:
   _COLOUR_STARTUP = (128, 128, 255) # light blue
 
   # Ignore aircraft more than this many meters away
-  _DISTANCE_SQUELCH = 50 * 1000.0
+  _DISTANCE_SQUELCH = 30 * 1000.0
   # Begin to fade the LED to COLOUR_AIRCRAFT_NEAR from this distance (meters)
   _DISTANCE_WARNING = 20 * 1000.0
 
@@ -114,7 +114,7 @@ class Display:
 
     return (result['azi1']+180, result['s12'])
 
-  def _colour_for_distance(distance):
+  def _colour_for_distance(self, distance):
     # Colour gradient is nonlinear: aircraft that are within squelch but
     # outside warning are all displayed the same colour.
     if distance > self._DISTANCE_WARNING:
@@ -122,9 +122,9 @@ class Display:
 
     # Otherwise, interpolate evenly from the far to the near distance
     multiplier = distance/self._DISTANCE_WARNING
-    far_component = [x*multiplier for x in self.COLOUR_AIRCRAFT_FAR]
-    near_component = [x*(1-multiplier) for x in self.COLOUR_AIRCRAFT_FAR]
-    return [sum(x) for x in zip(near_component, far_component)]
+    far_component = [x*multiplier for x in self._COLOUR_AIRCRAFT_FAR]
+    near_component = [x*(1-multiplier) for x in self._COLOUR_AIRCRAFT_NEAR]
+    return [int(sum(x)) for x in zip(near_component, far_component)]
 
   def off(self):
     self.pixels.fill((0, 0, 0))
@@ -178,7 +178,7 @@ class Display:
       self._vectors_last_update = datetime.now()
 
     for ac_bearing, ac_distance in vectors:
-      if ac_distance > self._SQUELCH_DISTANCE:
+      if ac_distance > self._DISTANCE_SQUELCH:
         continue
 
       bearing = (ac_bearing + compass.get_azimuth()) % 360
