@@ -39,7 +39,10 @@ from config import Config
 class Display:
   _GPIO_DATA = board.D18
   _PIXEL_COUNT = 36
-  _PIXEL_ANGLE_OFFSET = 0
+  # compass module north points towards the left of the board, though maybe the
+  # datasheet is wrong - we're 180 degrees off magnetic north.
+  # This number is given in pixels (1 pixel = 10 degrees)
+  _PIXEL_ANGLE_OFFSET = 18
 
   _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
 
@@ -55,6 +58,7 @@ class Display:
   # against busy background) humans can see the aircraft 1->5km distant.
   # https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0005594
   _DISTANCE_SQUELCH = 30 * 1000.0
+
   # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
   # distance (meters)
   _DISTANCE_WARNING = 15 * 1000.0
@@ -185,9 +189,12 @@ class Display:
 
     self.off()
 
+    # One call to compass means less display weirdness on update
+    azimuth = compass.get_azimuth()
+
     # Indicate compass north
     if Config.show_north():
-      self.pixels[self._pixel_for_bearing(compass.get_azimuth())] = self._COLOUR_COMPASS_NORTH
+      self.pixels[self._pixel_for_bearing(azimuth)] = self._COLOUR_COMPASS_NORTH
 
     # Indicate bearing to home if enabled, and we know where home is.
     # Otherwise, attempt to update the home location (track_home switch has
@@ -221,7 +228,7 @@ class Display:
       if ac_distance > self._DISTANCE_SQUELCH:
         continue
 
-      bearing = (ac_bearing + compass.get_azimuth()) % 360
+      bearing = (ac_bearing + azimuth) % 360
       next_pixel = self._pixel_for_bearing(bearing)
       self.pixels[next_pixel] = self._colour_for_distance(ac_distance)
 
