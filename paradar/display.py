@@ -21,7 +21,7 @@ from gpsd import NoFixError
 from datetime import datetime, timedelta
 import neopixel
 
-from . import GPIO
+from . import GPIO, Config
 from geographiclib.geodesic import Geodesic
 
 class Display:
@@ -35,7 +35,8 @@ class Display:
   _COLOUR_COMPASS_EAST = (0, 255, 0) # green
   _COLOUR_COMPASS_WEST = (255, 255, 255) # white
 
-  _BRIGHTNESS = 1.0
+  _HIGH_BRIGHTNESS = 1.0
+  _LOW_BRIGHTNESS = 0.6
 
   def __init__(self):
     print("display: starting up")
@@ -44,7 +45,11 @@ class Display:
     self._vectors = None
     self._vectors_last_update = datetime(1970, 1, 1, 0, 0, 0)
 
-    self.pixels = neopixel.NeoPixel(18, self._PIXEL_COUNT, auto_write=False, bpp=3, brightness=self._BRIGHTNESS)
+    self.pixels = neopixel.NeoPixel(18, self._PIXEL_COUNT,
+      auto_write=False,
+      bpp=3,
+    )
+
     self.off()
     self._refresh()
 
@@ -66,6 +71,7 @@ class Display:
     self.off()
 
   def _refresh(self):
+    self.pixels.brightness=(self._HIGH_BRIGHTNESS if Config.high_brightness() else self._LOW_BRIGHTNESS)
     self.pixels.show()
 
   def _pixel_for_bearing(self, bearing):
