@@ -17,6 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import time
+import math
 import neopixel
 
 from gpsd import NoFixError
@@ -103,7 +104,7 @@ class Display:
     self.pixels.show()
 
   def _pixel_for_bearing(self, bearing):
-    uncorrected_pixel = (self._PIXEL_COUNT - 1) + int(bearing/self._DEGREES_PER_PIXEL)
+    uncorrected_pixel = (self._PIXEL_COUNT - 1) + int(math.floor(bearing/self._DEGREES_PER_PIXEL))
 
     return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
 
