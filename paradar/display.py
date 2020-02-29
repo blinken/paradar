@@ -86,6 +86,7 @@ class Display:
     self.pixels = neopixel.NeoPixel(self._GPIO_DATA, self._PIXEL_COUNT,
       auto_write=False,
       bpp=3,
+      brightness=self._LOW_BRIGHTNESS,
     )
 
     self.off()
@@ -175,6 +176,7 @@ class Display:
 
   def off(self):
     self.pixels.fill((0, 0, 0))
+    self._refresh()
 
   # Cycles through one of a number of colours on each call
   def self_test(self):

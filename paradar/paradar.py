@@ -40,6 +40,8 @@ gps = GPS()
 compass = Compass()
 display = Display()
 
+display.start()
+
 ac = Aircraft(gps)
 t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
 t_ac.start()
@@ -55,7 +57,6 @@ def signal_handler(sig, frame):
   sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
-display.start()
 
 while True:
   t_start = time.time()

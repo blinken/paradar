@@ -85,9 +85,7 @@ class Compass:
 
     r_tmrc = hex(self._soft_read_reg(0x8b))
     r_cmm = hex(self._soft_read_reg(0x81))
-    print("compass: tmrc={} cmm={} ({})".format(r_tmrc, r_cmm, "borked!" if (r_tmrc == "0x00" or r_cmm == "0x00") else "healthy"))
-
-    self.update()
+    print("compass: tmrc={} cmm={} ({})".format(r_tmrc, r_cmm, "borked!" if (r_tmrc == "0x0" or r_cmm == "0x0") else "healthy"))
 
   def _raw_cs(self, state):
     if state:
