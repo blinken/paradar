@@ -1283,7 +1283,7 @@ refdes=C10
 T 46900 32000 5 10 0 0 90 0 1
 symversion=0.1
 T 47700 32400 5 10 1 1 0 0 1
-value=0.1uF
+value=22uF
 T 47800 31800 5 10 0 1 0 0 1
 footprint=1206
 }
@@ -2286,7 +2286,7 @@ refdes=C1
 T 48600 32000 5 10 0 0 90 0 1
 symversion=0.1
 T 49400 32400 5 10 1 1 0 0 1
-value=22uF
+value=0.1uF
 T 49500 31800 5 10 0 1 0 0 1
 footprint=1206
 }
