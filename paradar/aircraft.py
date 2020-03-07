@@ -21,8 +21,9 @@ import signal
 import socket
 import time
 import subprocess
-import gpsd
-import pyModeS as pms
+
+from gpsd import NoFixError
+from pyModeS import adsb, df
 
 from datetime import datetime, timedelta
 
@@ -73,9 +74,9 @@ class Aircraft:
 
     msg_hex = msg_ascii[1:].split(';', 1)[0]
 
-    icao = pms.adsb.icao(msg_hex)
-    downlink_format = pms.df(msg_hex)
-    type_code = pms.adsb.typecode(msg_hex)
+    icao = adsb.icao(msg_hex)
+    downlink_format = df(msg_hex)
+    type_code = adsb.typecode(msg_hex)
 
     # An aircraft airborne position message has downlink format 17 (or 18) with
     # type code from 9 to 18
@@ -94,11 +95,11 @@ class Aircraft:
     # from one messsage
     try:
       my_latitude, my_longitude = self.gps.position()
-    except gpsd.NoFixError:
+    except NoFixError:
       # a rare race condition
       raise ValueError
 
-    ac_lat, ac_lon = pms.adsb.position_with_ref(msg_hex, my_latitude, my_longitude)
+    ac_lat, ac_lon = adsb.position_with_ref(msg_hex, my_latitude, my_longitude)
     #print("aircraft: update {0} df={1} tc={2} {3}, {4} ({5})".format(icao, downlink_format, type_code, ac_lat, ac_lon, msg_hex))
 
     return {icao: (datetime.now(), ac_lat, ac_lon)}

@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import gpsd
+from gpsd import connect, get_current, NoFixError
 import time
 import warnings
 from datetime import datetime, timedelta
@@ -25,18 +25,18 @@ class GPS:
   def __init__(self):
 
     print("gps: starting up")
-    gpsd.connect()
+    connect()
 
     self.cached_position = None
     self.is_fresh()
 
   def is_fresh(self):
     try:
-      position = gpsd.get_current()
+      position = get_current()
       mode = position.mode
     except UserWarning:
       mode = 0
-    except gpsd.NoFixError:
+    except NoFixError:
       mode = 1
 
     if mode == 0:
@@ -55,13 +55,13 @@ class GPS:
       print("gps: unknown mode returned by gpsd, hoping for the best")
       return True
 
-  # Throws gpsd.NoFixError if a fix cannot be obtained
+  # Throws NoFixError if a fix cannot be obtained
   def position(self):
     if self.cached_position and (datetime.now() - self.cached_position_updated) < timedelta(seconds=30):
       return self.cached_position
     else:
       try:
-        self.cached_position = gpsd.get_current().position()
+        self.cached_position = get_current().position()
         self.cached_position_updated = datetime.now()
         return self.cached_position
       except ConnectionResetError:
@@ -71,5 +71,5 @@ class GPS:
         else:
           print("gps: connection reset while reading, no cached position. Will retry")
           # rethrow as something our callers will handle
-          raise gpsd.NoFixError
+          raise NoFixError
 

@@ -37,11 +37,12 @@ from display import Display
 from config import Config
 
 gps = GPS()
-compass = Compass()
 display = Display()
 
 # Blocks until the GPS is ready
 display.start(gps)
+
+compass = Compass()
 
 ac = Aircraft(gps)
 t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
