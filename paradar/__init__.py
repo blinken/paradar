@@ -27,4 +27,4 @@ except ImportError:
 from .compass import Compass
 from .gps import GPS
 from .aircraft import Aircraft
-
+from .gdl90 import GDL90
