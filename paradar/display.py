@@ -46,22 +46,22 @@ class Display:
 
   _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
 
-  _COLOUR_COMPASS_NORTH = (128, 128, 128) # white
+  _COLOUR_COMPASS_NORTH = (255, 255, 255) # white
   _COLOUR_AIRCRAFT_FAR = (0, 0, 255) # blue
   _COLOUR_AIRCRAFT_NEAR = (255, 0, 0) # red
-  _COLOUR_HOME = (128, 128, 255) # light blue
-  _COLOUR_STARTUP = (128, 128, 255) # light blue
+  _COLOUR_HOME = (64, 255, 30) # light green
+  _COLOUR_STARTUP = (255, 255, 255) # white
 
-  # Ignore aircraft more than this many meters away.
+  # Ignore aircraft more than this many kilometers away.
   # Some research suggests that the best humans can spot is a B747 10->50km
   # away in perfect conditions. In most cases (small aircraft, low contrast
   # against busy background) humans can see the aircraft 1->5km distant.
   # https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0005594
-  _DISTANCE_SQUELCH = 30 * 1000.0
+  _DISTANCE_SQUELCH = 30.0
 
   # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
-  # distance (meters)
-  _DISTANCE_WARNING = 15 * 1000.0
+  # distance (kilometers)
+  _DISTANCE_WARNING = 15.0
 
   _TEST_COLOURS = (
     (255,0,0),     # R
@@ -92,21 +92,24 @@ class Display:
     self.off()
     self._refresh()
 
-  def start(self):
+  def start(self, gps):
     '''Display a startup animation'''
 
-    for i in range(self._PIXEL_COUNT):
-      self.off()
-      self.pixels[i] = self._COLOUR_STARTUP
-      self._refresh()
-      time.sleep(0.1)
+    while True:
+      for i in range(self._PIXEL_COUNT):
+        if not gps.is_fresh():
+          self.off()
+        self.pixels[i] = self._COLOUR_STARTUP
+        self._refresh()
+        time.sleep(0.02)
+      
+      if gps.is_fresh():
+        break
+     
+    time.sleep(0.5)
 
     self.off()
-    self.pixels.fill(self._COLOUR_STARTUP)
-
     self._refresh()
-    time.sleep(1)
-    self.off()
 
   def _refresh(self):
     self.pixels.brightness=(self._HIGH_BRIGHTNESS if Config.high_brightness() else self._LOW_BRIGHTNESS)
@@ -176,7 +179,6 @@ class Display:
 
   def off(self):
     self.pixels.fill((0, 0, 0))
-    self._refresh()
 
   # Cycles through one of a number of colours on each call
   def self_test(self):

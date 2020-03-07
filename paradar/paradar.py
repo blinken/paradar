@@ -40,7 +40,8 @@ gps = GPS()
 compass = Compass()
 display = Display()
 
-display.start()
+# Blocks until the GPS is ready
+display.start(gps)
 
 ac = Aircraft(gps)
 t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
