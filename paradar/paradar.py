@@ -42,11 +42,15 @@ display = Display()
 # Blocks until the GPS is ready
 display.start(gps)
 
-compass = Compass()
-
 ac = Aircraft(gps)
 t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
 t_ac.start()
+
+gdl90 = GDL90(gps, ac)
+t_gdl90 = threading.Thread(target=gdl90.transmit_gdl90, args=(), daemon=True)
+t_gdl90.start()
+
+compass = Compass()
 
 # Clean up GPIOs on exit
 def signal_handler(sig, frame):
@@ -58,7 +62,6 @@ def signal_handler(sig, frame):
   GPIO.cleanup()
   sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
-
 
 while True:
   t_start = time.time()

@@ -16,8 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import sched
+import traceback
 from struct import pack, unpack
 from datetime import datetime
+from socket import socket, bind, setsockopt
 
 class GDL90:
   '''
@@ -45,9 +48,33 @@ class GDL90:
   _EC_SURFACE_SERVICE = 18
   _EC_POINT_OBSTACLE = 19
 
-  def __init__(self):
+  _NET_BROADCAST_PORT = 4000
+
+  # Delay between transmission of respective message types (seconds)
+  _INTERVAL_HEARTBEAT = 1
+  _INTERVAL_OWNSHIP = 1
+  _INTERVAL_TRAFFIC = 1 # All aircraft
+  _INTERVAL_TRAFFIC_DELAY = 0.01 # Delay between aircraft transmissions
+
+  def __init__(self, gps, aircraft):
     self._crc_table = {}
     self._crc_init()
+
+    self._gps = gps
+    self._aircraft = aircraft
+
+    self._sched = None
+
+		self._sock = socket(AF_INET, SOCK_DGRAM)
+		self._sock.bind(('', 0))
+		self._sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+
+  def _periodic(self, interval, func):
+    '''Set up a function to run periodically on an interval.
+    '''
+
+    self._sched.enter(interval, 1, _periodic, (self, interval, func))
+    func()
 
   def _crc_init(self):
     for i in range(256):
@@ -94,7 +121,7 @@ class GDL90:
   def msg_id(self, msg):
     return msg[1] & 0xef
 
-  def heartbeat(self, gps):
+  def heartbeat(self):
     '''Generate and return a heartbeat message'''
     msg = bytearray([0x00])
 
@@ -105,7 +132,7 @@ class GDL90:
 
     status1 = 0x00
     # 7 GPS Position Valid
-    status1 |= 0x80 if gps.is_fresh() else 0x00
+    status1 |= 0x80 if self._gps.is_fresh() else 0x00
     # 6 Maintenance required: not implemented (ADS-B out)
     # 5 IDENT talkback: not implemented (ADS-B out)
     # 4 SW Mode C: not implemented (ADS-B out)
@@ -122,7 +149,7 @@ class GDL90:
     # 5 CSA not available: not implemented
     # 4..1 Reserved
     # 0 UTC ok (assume valid GPS equals valid time)
-    status2 |= 0x01 if gps.is_fresh() else 0x00
+    status2 |= 0x01 if self._gps.is_fresh() else 0x00
 
     msg.extend([status1, status2])
 
@@ -132,11 +159,11 @@ class GDL90:
     # Received message counts: TODO implement this
     msg.extend([0x00, 0x00])
 
-    return self._assemble_message(msg)
+    self._transmit(self._assemble_message(msg))
 
   # Uplink Data messages are not implemented (TODO?)
 
-  def ownship(self, gps):
+  def ownship(self):
     '''Generate an ownship report message'''
 
     # TODO, make this configurable?
@@ -145,7 +172,7 @@ class GDL90:
     msg = bytearray([0x0a])
 
     try:
-      gps_p = gps.position_detailed()
+      gps_p = self._gps.position_detailed()
       (my_lat, my_lon) = gps_p.position()
       (_, track, _) = gps_p.movement()
       track_b = int(track * (255/360.0))
@@ -162,9 +189,16 @@ class GDL90:
       # If no GPS, all zeros here except the category
       msg.extend(self._traffic_report_generic(emitter_category=my_ec))
 
-    return self._assemble_message(msg)
+    self._transmit(self._assemble_message(msg))
 
-  def traffic(self, icao, ac):
+  def traffic(self):
+    '''Generate a traffic report message for all aircraft
+    '''
+		for icao, ac in self._aircraft.positions:
+			self._transmit(self._single_traffic(icao, ac))
+			time.sleep(self._INTERVAL_TRAFFIC_DELAY)
+
+  def _single_traffic(self, icao, ac):
     '''Generate a traffic report message for one aircraft'''
 
     print(ac[2])
@@ -208,7 +242,7 @@ class GDL90:
       # altitude the spec permits).
       return [0xff, 0xf0]
 
-    alt_gdl90 = (altitude * 25 - 1000) * 0xfff
+    alt_gdl90 = (altitude * 25 - 1000) & 0xfff
 
     # Miscellaneous indicators are set in the last word of the altitude - set
     # them zero here and they can be overridden if necessary.
@@ -277,6 +311,27 @@ class GDL90:
     msg.append(0x00)
 
     return msg
+
+    def _transmit(self, data):
+      self._sock.sendto(data, ('<broadcast>', self._NET_BROADCAST_PORT))
+
+    def transmit_gdl90(self):
+      '''Continuously transmit GDL90 messages as UDP broadcasts at the
+      appropriate intervals per the spec (usually once per second).
+      '''
+
+      while True:
+        try:
+          self._sched = sched.scheduler()
+          _periodic(self._INTERVAL_HEARTBEAT, heartbeat)
+          _periodic(self._INTERVAL_OWNSHIP, ownship)
+          _periodic(self._INTERVAL_TRAFFIC, traffic)
+
+          self._sched.run()
+        except Exception, e:
+          print("gdl90: scheduler threw an exception, restarting.")
+					traceback.print_exc(file=sys.stdout)
+					time.sleep(2)
 
 if __name__ == "__main__":
   class WorkingGPS:
