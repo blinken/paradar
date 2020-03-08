@@ -73,3 +73,5 @@ class GPS:
           # rethrow as something our callers will handle
           raise NoFixError
 
+  def position_detailed(self):
+    return get_current()
