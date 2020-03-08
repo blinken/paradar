@@ -17,10 +17,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sched
+import socket
+import sys
+import time
 import traceback
+from gpsd import NoFixError
 from struct import pack, unpack
 from datetime import datetime
-from socket import socket, bind, setsockopt
 
 class GDL90:
   '''
@@ -65,15 +68,15 @@ class GDL90:
 
     self._sched = None
 
-		self._sock = socket(AF_INET, SOCK_DGRAM)
-		self._sock.bind(('', 0))
-		self._sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+    self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    self._sock.bind(('', 0))
+    self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
   def _periodic(self, interval, func):
     '''Set up a function to run periodically on an interval.
     '''
 
-    self._sched.enter(interval, 1, _periodic, (self, interval, func))
+    self._sched.enter(interval, 1, self._periodic, (interval, func))
     func()
 
   def _crc_init(self):
@@ -160,6 +163,7 @@ class GDL90:
     msg.extend([0x00, 0x00])
 
     self._transmit(self._assemble_message(msg))
+    print("gdl90: sent heartbeat")
 
   # Uplink Data messages are not implemented (TODO?)
 
@@ -185,32 +189,35 @@ class GDL90:
         track = track_b,
         emitter_category=my_ec,
       ))
-    except NoFixError:
+    except (NoFixError, UserWarning):
       # If no GPS, all zeros here except the category
       msg.extend(self._traffic_report_generic(emitter_category=my_ec))
 
     self._transmit(self._assemble_message(msg))
+    print("gdl90: sent ownship")
 
   def traffic(self):
     '''Generate a traffic report message for all aircraft
     '''
-		for icao, ac in self._aircraft.positions:
-			self._transmit(self._single_traffic(icao, ac))
-			time.sleep(self._INTERVAL_TRAFFIC_DELAY)
+    try:
+      for icao, ac in self._aircraft.positions.items():
+        self._transmit(self._single_traffic(icao, ac))
+        print("gdl90: sent traffic for {}".format(icao))
+        time.sleep(self._INTERVAL_TRAFFIC_DELAY)
+    except RuntimeError:
+      # If the dictionary changes size during iteration, ignore - we will
+      # retransmit soon enough
+      pass
 
   def _single_traffic(self, icao, ac):
     '''Generate a traffic report message for one aircraft'''
 
-    print(ac[2])
-    print(bytearray.fromhex(icao))
     msg = bytearray([0x14])
-    print(msg)
     report = self._traffic_report_generic(
       address=bytearray.fromhex(icao),
       lat=ac[1], lon=ac[2],
     )
 
-    print(report)
     msg.extend(report)
 
     # Todo, add velocity, callsign and altitude
@@ -248,7 +255,7 @@ class GDL90:
     # them zero here and they can be overridden if necessary.
     alt_gdl90 <<= 4
 
-    return list(alt_gdl90.to_bytes(2, byte_order='big'))
+    return list(alt_gdl90.to_bytes(2, byteorder='big'))
 
   def _traffic_report_generic(self,
     address=(0x0, 0x0, 0x0), lat=0.0, lon=0.0, altitude=0,
@@ -312,26 +319,26 @@ class GDL90:
 
     return msg
 
-    def _transmit(self, data):
-      self._sock.sendto(data, ('<broadcast>', self._NET_BROADCAST_PORT))
+  def _transmit(self, data):
+    self._sock.sendto(data, ('<broadcast>', self._NET_BROADCAST_PORT))
 
-    def transmit_gdl90(self):
-      '''Continuously transmit GDL90 messages as UDP broadcasts at the
-      appropriate intervals per the spec (usually once per second).
-      '''
+  def transmit_gdl90(self):
+    '''Continuously transmit GDL90 messages as UDP broadcasts at the
+    appropriate intervals per the spec (usually once per second).
+    '''
 
-      while True:
-        try:
-          self._sched = sched.scheduler()
-          _periodic(self._INTERVAL_HEARTBEAT, heartbeat)
-          _periodic(self._INTERVAL_OWNSHIP, ownship)
-          _periodic(self._INTERVAL_TRAFFIC, traffic)
+    while True:
+      try:
+        self._sched = sched.scheduler()
+        self._periodic(self._INTERVAL_HEARTBEAT, self.heartbeat)
+        self._periodic(self._INTERVAL_OWNSHIP, self.ownship)
+        self._periodic(self._INTERVAL_TRAFFIC, self.traffic)
 
-          self._sched.run()
-        except Exception, e:
-          print("gdl90: scheduler threw an exception, restarting.")
-					traceback.print_exc(file=sys.stdout)
-					time.sleep(2)
+        self._sched.run()
+      except Exception as e:
+        print("gdl90: scheduler threw an exception, restarting.")
+        traceback.print_exc(file=sys.stdout)
+        time.sleep(2)
 
 if __name__ == "__main__":
   class WorkingGPS:

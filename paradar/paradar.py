@@ -35,6 +35,7 @@ from gps import GPS
 from compass import Compass
 from display import Display
 from config import Config
+from gdl90 import GDL90
 
 gps = GPS()
 display = Display()
