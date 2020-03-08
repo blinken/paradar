@@ -84,7 +84,7 @@ class GPS:
         return (0, 50, 0)
 
       def altitude():
-        return 50
+        return 10000
 
       def speed():
         return 50

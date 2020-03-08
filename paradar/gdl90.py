@@ -59,6 +59,19 @@ class GDL90:
   _INTERVAL_TRAFFIC = 1 # All aircraft
   _INTERVAL_TRAFFIC_DELAY = 0.01 # Delay between aircraft transmissions
 
+  # If we don't know something, these are the values we send (per the spec)
+  _DEFAULT_TRAFFIC_LAT = 0.0
+  _DEFAULT_TRAFFIC_LON = 0.0
+  _DEFAULT_TRAFFIC_ALTITUDE = 0
+  _DEFAULT_TRAFFIC_TRACK = 0.0
+  _DEFAULT_TRAFFIC_SPEED_H = 0
+  _DEFAULT_TRAFFIC_SPEED_V = 0
+  _DEFAULT_TRAFFIC_TRACK_SOURCE = None
+  _DEFAULT_TRAFFIC_SPEED_H_SOURCE = None
+  _DEFAULT_TRAFFIC_SPEED_V_SOURCE = None
+  _DEFAULT_TRAFFIC_NIC = None
+  _DEFAULT_TRAFFIC_NAC_P = None
+
   def __init__(self, gps, aircraft):
     self._crc_table = {}
     self._crc_init()
@@ -179,15 +192,19 @@ class GDL90:
       gps_p = self._gps.position_detailed()
       (my_lat, my_lon) = gps_p.position()
       (_, track, _) = gps_p.movement()
-      track_b = int(track * (255/360.0))
 
       msg.extend(self._traffic_report_generic(
         lat=my_lat, lon=my_lon,
         altitude=gps_p.altitude(),
-        velocity_h=gps_p.speed(),
-        velocity_v=gps_p.speed_vertical(),
-        track = track_b,
+        speed_h=gps_p.speed(),
+        speed_v=gps_p.speed_vertical(),
+        speed_h_source="GS",
+        speed_v_source="GNSS",
+        track=track,
+        track_source="true_north",
         emitter_category=my_ec,
+        nic=10, # meters. TODO, update these from GPS accuracy
+        nac_p=10,
       ))
     except (NoFixError, UserWarning):
       # If no GPS, all zeros here except the category
@@ -196,13 +213,36 @@ class GDL90:
     self._transmit(self._assemble_message(msg))
     print("gdl90: sent ownship")
 
+  def ownship_geometric_altitude(self):
+    '''Generate an ownship geometric altitude message'''
+
+    msg = bytearray([0x0b])
+    try:
+      gps_p = self._gps.position_detailed()
+      alt_gdl90 = int(gps_p.altitude()/5)
+      r = bytearray(pack('>i', alt_gdl90))
+      msg.append(r[2])
+      msg.append(r[3])
+    except (NoFixError, UserWarning):
+      # If no GPS, all zeros here except the category
+      msg.extend(self._traffic_report_generic(emitter_category=my_ec))
+
+    # Vertical warning (MSB) is 1 always as we don't support this
+    # VFOM (15 bits) is 0x7FFF for "not available"
+    msg.append(0xff)
+    msg.append(0xff)
+
+    self._transmit(self._assemble_message(msg))
+    print("gdl90: sent ownship geometric altitude")
+
   def traffic(self):
     '''Generate a traffic report message for all aircraft
     '''
     try:
       for icao, ac in self._aircraft.positions.items():
-        self._transmit(self._single_traffic(icao, ac))
-        print("gdl90: sent traffic for {}".format(icao))
+        traffic = self._single_traffic(icao, ac)
+        self._transmit(traffic)
+        print("gdl90: sent traffic for {} {}\n{}".format(icao, ac, traffic.hex()))
         time.sleep(self._INTERVAL_TRAFFIC_DELAY)
     except RuntimeError:
       # If the dictionary changes size during iteration, ignore - we will
@@ -215,12 +255,22 @@ class GDL90:
     msg = bytearray([0x14])
     report = self._traffic_report_generic(
       address=bytearray.fromhex(icao),
-      lat=ac[1], lon=ac[2],
+      lat=ac.get("lat", self._DEFAULT_TRAFFIC_LAT),
+      lon=ac.get("lon", self._DEFAULT_TRAFFIC_LON),
+      altitude=ac.get("altitude", self._DEFAULT_TRAFFIC_ALTITUDE),
+      speed_h=ac.get("speed_h", self._DEFAULT_TRAFFIC_SPEED_H),
+      speed_v=ac.get("speed_v", self._DEFAULT_TRAFFIC_SPEED_V),
+      track=ac.get("track", self._DEFAULT_TRAFFIC_TRACK),
+      speed_h_source=ac.get("speed_h_source", self._DEFAULT_TRAFFIC_SPEED_H_SOURCE),
+      speed_v_source=ac.get("speed_v_source", self._DEFAULT_TRAFFIC_SPEED_V_SOURCE),
+      track_source=ac.get("track_source", self._DEFAULT_TRAFFIC_TRACK_SOURCE),
+      nic=ac.get("nic", self._DEFAULT_TRAFFIC_NIC),
+      nac_p=ac.get("nac_p", self._DEFAULT_TRAFFIC_NAC_P),
     )
 
     msg.extend(report)
 
-    # Todo, add velocity, callsign and altitude
+    # Todo, add velocity, callsign
     return self._assemble_message(msg)
 
   def _latitude_gdl90(self, lat):
@@ -238,7 +288,7 @@ class GDL90:
     if lon < 0:
       lon = (0x1000000 +lon) & 0xffffff
 
-    return list(lon.to_bytes(3, byteorder='big'))
+    return bytearray(lon.to_bytes(3, byteorder='big'))
 
   def _altitude_gdl90(self, altitude):
     # Offset with a magic formula, see the spec
@@ -249,25 +299,31 @@ class GDL90:
       # altitude the spec permits).
       return [0xff, 0xf0]
 
-    alt_gdl90 = (altitude * 25 - 1000) & 0xfff
+    if int((altitude + 1000)/25) < 0:
+      alt_gdl90 = 0
+    else:
+      alt_gdl90 = int((altitude + 1000)/25) & 0xfff
 
     # Miscellaneous indicators are set in the last word of the altitude - set
     # them zero here and they can be overridden if necessary.
     alt_gdl90 <<= 4
 
-    return list(alt_gdl90.to_bytes(2, byteorder='big'))
+    r = bytearray(alt_gdl90.to_bytes(2, byteorder='big'))
+    return r
 
   def _traffic_report_generic(self,
     address=(0x0, 0x0, 0x0), lat=0.0, lon=0.0, altitude=0,
-    misc=0x0, nic=0, nacp=0,
-    velocity_h=0, velocity_v=0, track=0x0,
+    misc=0x0,
+    speed_h=0, speed_v=0, track=0x0,
+    speed_h_source=None, speed_v_source=None, track_source=None,
+    nic=None, nac_p=None,
     emitter_category=0x0, callsign='        ', emergency_priority=0x0,
   ):
     msg = bytearray()
 
-    # 7..4 Traffic alert
+    # 7..4 Traffic alert (0=False, 1=True)
     # 3..0 Address type (we only support ADS-B/IACO)
-    msg.append(0x00)
+    msg.append(0x10)
     # Address (24 bits)
     msg.append(address[0])
     msg.append(address[1])
@@ -285,27 +341,94 @@ class GDL90:
     #  01: Track represents True Track Angle
     #  10: Track represents Magnetic Heading
     #  11: Track represents True Heading
-    alt_b[1] &= 0xfff0
-    alt_b[1] |= 0b1000 # TODO, set the track bits correctly
+    alt_b[1] &= 0xf0
+    if track_source == "true_north":
+      alt_b[1] |= 0b1011
+    elif track_source == "mag_north":
+      alt_b[1] |= 0b1010
+    else:
+      # Track not valid
+      alt_b[1] |= 0b1000
 
     msg.extend(alt_b)
 
-    # Integrity and accuracy are always set unknown (one word each)
-    # TODO, can we pull this from received data?
-    msg.append(0x00)
+    # Integrity and accuracy - NIC/NACp
+    nic_hex = 0x0
+    if nic:
+      if nic < 186:
+        nic_hex = 0x08
+      elif nic < 371:
+        nic_hex = 0x07
+      elif nic < 1112:
+        nic_hex = 0x06
+      elif nic < 1852:
+        nic_hex = 0x05
+      elif nic < 3704:
+        nic_hex = 0x04
+      elif nic < 7408:
+        nic_hex = 0x03
+      elif nic < 14816:
+        nic_hex = 0x02
+      elif nic < 37040:
+        nic_hex = 0x01
+
+    nac_p_hex = 0x00
+    print("nac_p: {}".format(nac_p))
+
+    # I don't fully understand why this is sometimes a tuple and sometimes an
+    # int, but all we need to do is bucket it appropriately.
+    if type(nac_p) == tuple:
+      nac_p = nac_p[0]
+
+    if nac_p:
+      if nac_p <= 3:
+        nac_p_hex = 0x0B
+      elif nac_p <= 10:
+        nac_p_hex = 0x0A
+      elif nac_p <= 30:
+        nac_p_hex = 0x09
+      elif nac_p < 93:
+        nac_p_hex = 0x08
+      elif nac_p < 186:
+        nac_p_hex = 0x07
+      elif nac_p < 371:
+        nac_p_hex = 0x06
+      elif nac_p < 1112:
+        nac_p_hex = 0x05
+      elif nac_p < 1852:
+        nac_p_hex = 0x04
+      elif nac_p < 3704:
+        nac_p_hex = 0x03
+      elif nac_p < 7408:
+        nac_p_hex = 0x02
+      elif nac_p < 14816:
+        nac_p_hex = 0x01
+
+    #print("nic_hex: {}, nac_p_hex: {}".format(nic_hex, nac_p_hex))
+
+    msg.append(nic_hex << 4 | nac_p_hex)
 
     # Horizontal velocity is 12-bit unsigned in knots. 0xfff represents unknown.
-    # TODO, can we pull this from received data?
+    if speed_h_source:
+      speed_hex = 0x000000 if speed_h < 0 else ((speed_h & 0xfff) << 12)
+    else:
+      speed_hex = 0xfff000
 
     # Vertical velocity is 12-bit signed in 64-feet per minute. 0x800
     # represents unknown.
-    msg.extend([0xff, 0xf8, 0x00])
+    if speed_v_source:
+      speed_v_adj = int(speed_v/64)
+      speed_hex |= (speed_v_adj & 0xfff)
+    else:
+      speed_hex |= 0x800
 
-    # We don't yet support track (TODO)
+    msg.extend(bytearray(speed_hex.to_bytes(3, byteorder="big")))
+
     # The Track/Heading field "tt" provides an 8-bit angular weighted value.
     # The resolution is in units of 360/256 degrees (approximately 1.4
     # degrees).
-    msg.append(0x00)
+    track_b = int(track * (255/360.0))
+    msg.append(track_b)
 
     # Emitter category
     msg.append(emitter_category & 0xff)
@@ -332,6 +455,7 @@ class GDL90:
         self._sched = sched.scheduler()
         self._periodic(self._INTERVAL_HEARTBEAT, self.heartbeat)
         self._periodic(self._INTERVAL_OWNSHIP, self.ownship)
+        self._periodic(self._INTERVAL_OWNSHIP, self.ownship_geometric_altitude)
         self._periodic(self._INTERVAL_TRAFFIC, self.traffic)
 
         self._sched.run()
