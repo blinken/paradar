@@ -1522,7 +1522,9 @@ refdes=R9
 T 49300 36600 5 10 0 1 0 0 1
 footprint=1206
 T 50000 36800 5 10 1 1 0 0 1
-value=0R
+value=2.21k
+T 50500 36800 5 10 1 1 0 0 1
+comment=1%
 }
 C 50700 35800 1 90 0 resistor-1.sym
 {
@@ -1545,10 +1547,10 @@ T 51000 36000 5 10 1 1 90 0 1
 refdes=R15
 T 51300 35800 5 10 0 1 0 0 1
 footprint=1206
-T 51300 36500 5 10 1 1 0 0 1
-value=180k
+T 51300 36600 5 10 1 1 0 0 1
+value=100k
 T 51300 36300 5 10 1 1 0 0 1
-comment=0.1%
+comment=1%
 }
 N 48700 36700 49300 36700 4
 {
@@ -1563,9 +1565,10 @@ T 51600 35200 5 10 1 1 0 0 1
 netname=0V
 }
 N 51200 35800 51200 35200 4
-T 51800 36100 9 10 1 0 0 0 2
-B=3630, Rseries=0, Rparallel=180k
-Gives 1.98-42.22°C charge range
+T 51800 36100 9 10 1 0 0 0 3
+B=3630, Rseries=2.21k, Rparallel=100k
+Gives ~0-60 degree charge range
+(as measured at the charger)
 N 43700 28100 43700 28900 4
 C 51700 38200 1 90 0 resistor-1.sym
 {
