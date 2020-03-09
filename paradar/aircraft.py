@@ -92,7 +92,11 @@ class Aircraft:
         ac_data["nic"] = adsb.nic_v1(msg_hex, ac_data["nic_s"])
 
       if (type_code >= 1 and type_code <= 4):
-        ac_data["callsign"] = adsb.callsign(msg_hex)
+        # Slightly normalise the callsign - it's supposed to only be [0-9A-Z]
+        # with space padding. PyModeS uses _ padding, which I think is an older
+        # version of the spec.
+        ac_data["callsign"] = adsb.callsign(msg_hex).upper().replace("_", " ")[:8]
+        ac_data["emitter_category"] = adsb.category(msg_hex)
       elif (type_code >= 9 and type_code <= 18) or (type_code >= 20 and type_code <= 22):
         nuc_p = None
         if ac_data.get("version", None) == 0:

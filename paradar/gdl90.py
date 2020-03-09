@@ -72,6 +72,7 @@ class GDL90:
   _DEFAULT_TRAFFIC_NIC = None
   _DEFAULT_TRAFFIC_NAC_P = None
   _DEFAULT_TRAFFIC_CALLSIGN = '        '
+  _DEFAULT_TRAFFIC_EMITTER_CATEGORY = 0
 
   def __init__(self, gps, aircraft):
     self._crc_table = {}
@@ -243,7 +244,7 @@ class GDL90:
       for icao, ac in self._aircraft.positions.items():
         traffic = self._single_traffic(icao, ac)
         self._transmit(traffic)
-        print("gdl90: sent traffic for {} {}\n{}".format(icao, ac, traffic.hex()))
+        print("gdl90: sent traffic for {} {}".format(icao, ac))
         time.sleep(self._INTERVAL_TRAFFIC_DELAY)
     except RuntimeError:
       # If the dictionary changes size during iteration, ignore - we will
@@ -268,6 +269,7 @@ class GDL90:
       nic=ac.get("nic", self._DEFAULT_TRAFFIC_NIC),
       nac_p=ac.get("nac_p", self._DEFAULT_TRAFFIC_NAC_P),
       callsign=ac.get("callsign", self._DEFAULT_TRAFFIC_CALLSIGN),
+      emitter_category=ac.get("emitter_category", self._DEFAULT_TRAFFIC_EMITTER_CATEGORY),
     )
 
     msg.extend(report)
