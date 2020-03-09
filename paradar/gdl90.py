@@ -178,7 +178,7 @@ class GDL90:
     msg.extend([0x00, 0x00])
 
     self._transmit(self._assemble_message(msg))
-    print("gdl90: sent heartbeat")
+    #print("gdl90: sent heartbeat")
 
   # Uplink Data messages are not implemented (TODO?)
 
@@ -213,7 +213,7 @@ class GDL90:
       msg.extend(self._traffic_report_generic(emitter_category=my_ec))
 
     self._transmit(self._assemble_message(msg))
-    print("gdl90: sent ownship")
+    #print("gdl90: sent ownship")
 
   def ownship_geometric_altitude(self):
     '''Generate an ownship geometric altitude message'''
@@ -235,7 +235,7 @@ class GDL90:
     msg.append(0xff)
 
     self._transmit(self._assemble_message(msg))
-    print("gdl90: sent ownship geometric altitude")
+    #print("gdl90: sent ownship geometric altitude")
 
   def traffic(self):
     '''Generate a traffic report message for all aircraft
@@ -244,7 +244,7 @@ class GDL90:
       for icao, ac in self._aircraft.positions.items():
         traffic = self._single_traffic(icao, ac)
         self._transmit(traffic)
-        print("gdl90: sent traffic for {} {}".format(icao, ac))
+        #print("gdl90: sent traffic for {} {}".format(icao, ac))
         time.sleep(self._INTERVAL_TRAFFIC_DELAY)
     except RuntimeError:
       # If the dictionary changes size during iteration, ignore - we will

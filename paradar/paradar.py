@@ -22,6 +22,7 @@ import signal
 import sys
 import threading
 import time
+import os
 
 from gpsd import NoFixError
 
@@ -36,6 +37,8 @@ from compass import Compass
 from display import Display
 from config import Config
 from gdl90 import GDL90
+
+os.nice(5)
 
 gps = GPS()
 display = Display()

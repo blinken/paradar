@@ -47,8 +47,17 @@ class Aircraft:
     self._stop = False
 
     # dump1090-fa expects the frequecy argument in Hz
-    args = ["/usr/bin/dump1090-fa", "--raw", "--freq", "{0}".format(self.freq*1000000)]
-    self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+    # nice it to 10 - aircraft messages are repeated every second, so we don't
+    # need to recieve 100%. Better to spend our limitied CPU cycles displaying
+    # information to the user in a timely manner.
+    args = ["/usr/bin/dump1090-fa", "--raw", "--freq", "{0}".format(int(self.freq*1000000))]
+    self.proc = subprocess.Popen(
+      args,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+      stdin=subprocess.DEVNULL,
+      preexec_fn=lambda: os.nice(10),
+    )
 
   def shutdown(self):
     self._stop = True
