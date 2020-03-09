@@ -71,6 +71,7 @@ class GDL90:
   _DEFAULT_TRAFFIC_SPEED_V_SOURCE = None
   _DEFAULT_TRAFFIC_NIC = None
   _DEFAULT_TRAFFIC_NAC_P = None
+  _DEFAULT_TRAFFIC_CALLSIGN = '        '
 
   def __init__(self, gps, aircraft):
     self._crc_table = {}
@@ -266,6 +267,7 @@ class GDL90:
       track_source=ac.get("track_source", self._DEFAULT_TRAFFIC_TRACK_SOURCE),
       nic=ac.get("nic", self._DEFAULT_TRAFFIC_NIC),
       nac_p=ac.get("nac_p", self._DEFAULT_TRAFFIC_NAC_P),
+      callsign=ac.get("callsign", self._DEFAULT_TRAFFIC_CALLSIGN),
     )
 
     msg.extend(report)
@@ -373,7 +375,6 @@ class GDL90:
         nic_hex = 0x01
 
     nac_p_hex = 0x00
-    print("nac_p: {}".format(nac_p))
 
     # I don't fully understand why this is sometimes a tuple and sometimes an
     # int, but all we need to do is bucket it appropriately.

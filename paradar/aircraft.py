@@ -89,9 +89,11 @@ class Aircraft:
       # type code from 9 to 18 (baro altitude) or 20 to 22 (GNSS altitude)
       # ref https://mode-s.org/decode/adsb/airborne-position.html
       if ac_data.get("version", None) == 1 and ac_data.get("nic_s", None):
-        ac_data["nic"] = adsb.nic_v1(msg, ac_data["nic_s"])
+        ac_data["nic"] = adsb.nic_v1(msg_hex, ac_data["nic_s"])
 
-      if (type_code >= 9 and type_code <= 18) or (type_code >= 20 and type_code <= 22):
+      if (type_code >= 1 and type_code <= 4):
+        ac_data["callsign"] = adsb.callsign(msg_hex)
+      elif (type_code >= 9 and type_code <= 18) or (type_code >= 20 and type_code <= 22):
         nuc_p = None
         if ac_data.get("version", None) == 0:
           # In ADSB version 0, the type code encodes the nuc_p (navigational
