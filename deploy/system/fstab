@@ -1,0 +1,7 @@
+proc            /proc           proc    defaults               0       0
+/dev/mmcblk0p1  /boot           vfat    defaults,ro            0       2
+/dev/mmcblk0p2  /               ext4    defaults,noatime,ro    0       1
+/dev/mmcblk0p3  /storage        ext4    defaults,noatime,sync  0       2
+tmpfs           /tmp            tmpfs   nosuid,nodev           0       0
+tmpfs           /var/log        tmpfs   nosuid,nodev           0       0
+tmpfs           /var/tmp        tmpfs   nosuid,nodev           0       0

@@ -1,0 +1,3 @@
+# 32MB log ring buffer
+SYSLOG_OPTS="-C32"
+KLOG_OPTS=""

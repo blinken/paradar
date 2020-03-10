@@ -1,0 +1,6 @@
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/touch /tmp/random-seed
+ExecStart=/lib/systemd/systemd-random-seed load
+ExecStop=/lib/systemd/systemd-random-seed save

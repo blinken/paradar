@@ -7,6 +7,34 @@
       that:
        - ansible_lsb.id == "Raspbian"
 
+  - name: ensure we're mounted read-write
+    mount:
+      opts: rw
+      state: remounted
+      path: "{{ item }}"
+    with_items:
+      - /
+      - /boot
+    changed_when: false
+
+  - name: remove default user
+    user:
+      name: pi
+      state: absent
+      remove: yes
+    tags: system
+
+  - name: create admin user
+    user:
+      name: blinken
+      comment: Paradar admin
+      uid: 1001
+      group: adm
+      groups: sudo,audio,video,plugdev,users,input,netdev,spi,i2c,gpio
+      update_password: always
+      password: "$6$dbTCVDJCXt0PRaCd$ipa64clklUjHNQdemX71xgkJgvtwsp/sG6/tNzKYF89nF8ygSAaK99/z64BbjgUbHzbm6OTPyVw6GtUoOznFl0"
+    tags: system
+
   - name: check out the git repo
     git:
       repo: "https://github.com/blinken/paradar.git"
@@ -24,7 +52,9 @@
     apt:
       pkg:
       - bind9-host
+      - busybox-syslogd
       - chrony
+      - ferm
       - firmware-brcm80211
       - firmware-misc-nonfree
       - firmware-realtek
@@ -63,6 +93,7 @@
       - python-virtualenv
       - python3-virtualenv
       - raspi-config
+      - rsyslogd
       - triggerhappy
       - x11-common
     tags: apt
@@ -88,19 +119,45 @@
       virtualenv_python: /usr/bin/python4
     tags: python
 
-  - name: install systemd unit file
+  - name: install /etc/
     copy:
-      src: ../../system/paradar.service
-      dest: /etc/systemd/system/paradar.service
+      src: "../../system/etc.{{ item }}"
+      dest: "/etc/{{ item }}"
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - hosts
+      - hostname
+    tags: system
+
+  - name: install defaults files
+    copy:
+      src: "../../system/default.{{ item }}"
+      dest: "/etc/default/{{ item }}"
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - ferm
+      - gpsd
+      - console-setup
+      - busybox-syslogd
+    tags: system
+
+  - name: install /etc/ssh/sshd_config
+    copy:
+      src: "../../system/etc.ssh.sshd_config"
+      dest: "/etc/ssh/sshd_config"
       owner: root
       group: root
       mode: 0644
     tags: system
 
-  - name: install gpsd config file
+  - name: install /etc/ferm/ferm.conf
     copy:
-      src: ../../system/default.gpsd
-      dest: /etc/default/gpsd
+      src: "../../system/etc.ferm.conf"
+      dest: "/etc/ferm/ferm.conf"
       owner: root
       group: root
       mode: 0644
@@ -115,19 +172,59 @@
       mode: 0644
     tags: system
 
-  - name: install console-setup config file
+  - name: ensure pps_ldisc kernel module is loaded at boot
+    lineinfile:
+      path: /etc/modules
+      line: pps_ldisc
+    tags: system
+
+  - name: install /boot/cmdline.txt file with readonly root
     copy:
-      src: ../../system/default.console-setup
-      dest: /etc/default/console-setup
+      src: ../../system/cmdline.txt
+      dest: /boot/cmdline.txt
+      owner: root
+      group: root
+      mode: 0755
+    tags: system
+
+  - name: install fstab
+    copy:
+      src: ../../system/fstab
+      dest: /etc/fstab
       owner: root
       group: root
       mode: 0644
     tags: system
 
-  - name: ensure pps_ldisc kernel module is loaded at boot
-    lineinfile:
-      path: /etc/modules
-      line: pps_ldisc
+  - name: install sudoers
+    copy:
+      src: ../../system/sudoers
+      dest: /etc/sudoers
+      owner: root
+      group: root
+      mode: 0440
+    tags: system
+
+  - name: disable dump1090 and lighttpd services
+    systemd:
+      name: "{{ item }}"
+      state: stopped
+      enabled: no
+    with_items:
+      - lighttpd
+      - dump1090-fa
+    tags: system
+
+  - name: install systemd unit files
+    copy:
+      src: "../../system/{{ item }}"
+      dest: "/etc/systemd/system/{{ item }}"
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - systemd.paradar.service
+      - systemd.random-seed.service
     tags: system
 
   - name: ask systemd to reload config
@@ -138,9 +235,73 @@
   - name: restart services
     systemd:
       name: "{{ item }}"
+      enabled: yes
       state: restarted
     with_items:
       - gpsd
       - chrony
       - paradar
     tags: system
+
+  - name: clear ephemeral files and directories
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /tmp
+      - /var/tmp
+      - /var/log
+      - /var/lib/dhcp
+      - /var/lib/dhcpcd5
+      - /var/spool
+      - /var/lib/systemd/random-seed
+
+  - name: recreate temporary directories
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: root
+      group: root
+      mode: "1777"
+    with_items:
+      - /tmp
+      - /var/tmp
+
+  - name: recreate log directories
+    file:
+      path: /var/log
+      state: directory
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: link emphemeral config to /tmp
+    file:
+      path: "{{ item }}"
+      src: /tmp
+      state: link
+    with_items:
+      - /var/lib/dhcp
+      - /var/lib/dhcpcd5
+      - /var/spool
+
+  - name: create ephemeral random seed
+    file:
+      path: /var/lib/systemd/random-seed
+      src: /tmp/random-seed
+      state: link
+      force: yes
+
+  - name: create ro/rw binaries
+    copy:
+      src: "../../system/bin.{{ item }}"
+      dest: "/bin/{{ item }}"
+      owner: root
+      group: root
+      mode: 0755
+    with_items:
+      - ro
+      - rw
+    tags: system
+
+# TODO: SSH host keys should be regenerated per-device
