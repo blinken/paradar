@@ -181,8 +181,16 @@ class Aircraft:
 
         # v0 nuc_p is determined by type_code above
         if version == 1:
-          nuc_p = adsb.nuc_p(msg_hex)
-          nuc_v = adsb.nuc_v(msg_hex)
+          try:
+            # Is this the right place for nucp? The docs say yes, but one error
+            # I've received says 8d3c5ee6f81300000039283c21cf: Not a surface
+            # position message (5<TC<8), airborne position message (8<TC<19),
+            # or airborne position with GNSS height (20<TC<22)
+            nuc_p = adsb.nuc_p(msg_hex)
+            nuc_v = adsb.nuc_v(msg_hex)
+          except RuntimeError as e:
+            print("aircraft: error parsing v1 NUC: {}".format(e))
+            raise ValueError
 
           ac_data["nic_s"] = nic_s
           ac_data["nuc_p"] = nuc_p
