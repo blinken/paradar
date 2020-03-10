@@ -243,6 +243,16 @@
       - paradar
     tags: system
 
+  - name: ensure temporary directories are unmounted
+    mount:
+      state: unmounted
+      path: "{{ item }}"
+    with_items:
+      - /tmp
+      - /var/tmp
+      - /var/log
+    tags: system
+
   - name: clear ephemeral files and directories
     file:
       path: "{{ item }}"
@@ -255,6 +265,7 @@
       - /var/lib/dhcpcd5
       - /var/spool
       - /var/lib/systemd/random-seed
+    tags: system
 
   - name: recreate temporary directories
     file:
@@ -266,6 +277,7 @@
     with_items:
       - /tmp
       - /var/tmp
+    tags: system
 
   - name: recreate log directories
     file:
@@ -274,6 +286,7 @@
       owner: root
       group: root
       mode: 0644
+    tags: system
 
   - name: link emphemeral config to /tmp
     file:
@@ -284,6 +297,7 @@
       - /var/lib/dhcp
       - /var/lib/dhcpcd5
       - /var/spool
+    tags: system
 
   - name: create ephemeral random seed
     file:
@@ -291,6 +305,7 @@
       src: /tmp/random-seed
       state: link
       force: yes
+    tags: system
 
   - name: create ro/rw binaries
     copy:
