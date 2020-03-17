@@ -31,7 +31,6 @@ class GPS:
     self.is_fresh()
 
   def is_fresh(self):
-    return True
     try:
       position = get_current()
       mode = position.mode
@@ -41,7 +40,7 @@ class GPS:
       mode = 1
 
     if mode == 0:
-      #print("gps: no data received from GPS module/not connected (borked)")
+      print("gps: no data received from GPS module/not connected (borked)")
       return False
     elif mode == 1:
       #print("gps: module connected, no fix (maybe borked)")
@@ -58,7 +57,6 @@ class GPS:
 
   # Throws NoFixError if a fix cannot be obtained
   def position(self):
-    return (51.519559, -0.114227)
     if self.cached_position and (datetime.now() - self.cached_position_updated) < timedelta(seconds=30):
       return self.cached_position
     else:
@@ -76,23 +74,4 @@ class GPS:
           raise NoFixError
 
   def position_detailed(self):
-    class DummyGPS:
-      def position():
-        return (51.519559, -0.114227)
-
-      def movement():
-        return (0, 50, 0)
-
-      def altitude():
-        return 10000
-
-      def speed():
-        return 50
-
-      def speed_vertical():
-        return 50
-
-    # Testing
-    return DummyGPS
     return get_current()
-
