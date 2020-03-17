@@ -1,5 +1,6 @@
 [Unit]
 Description=Paradar main process
+DefaultDependencies=no
 
 [Service]
 Type=simple
@@ -11,6 +12,5 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=paradar
 
-
 [Install]
-WantedBy=basic.target
+WantedBy=sysinit.target

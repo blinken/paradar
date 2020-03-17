@@ -155,6 +155,21 @@
       mode: 0644
     tags: system
 
+  - name: clear SSH host keys
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /etc/ssh/ssh_host_dsa_key
+      - /etc/ssh/ssh_host_dsa_key.pub
+      - /etc/ssh/ssh_host_ecdsa_key
+      - /etc/ssh/ssh_host_ecdsa_key.pub
+      - /etc/ssh/ssh_host_ed25519_key
+      - /etc/ssh/ssh_host_ed25519_key.pub
+      - /etc/ssh/ssh_host_rsa_key
+      - /etc/ssh/ssh_host_rsa_key.pub
+    tags: system
+
   - name: install /etc/ferm/ferm.conf
     copy:
       src: "../../system/etc.ferm.conf"
@@ -236,6 +251,7 @@
     with_items:
       - systemd.paradar.service
       - systemd.paradar-logs.service
+      - systemd.paradar-keys.service
       - systemd.paradar-logs.timer
       - systemd.random-seed.service
     tags: system
@@ -254,6 +270,8 @@
       - gpsd
       - chrony
       - paradar
+      - paradar-logs
+      - paradar-keys
     tags: system
 
   - name: ensure temporary directories are unmounted
@@ -324,5 +342,3 @@
       - ro
       - rw
     tags: system
-
-# TODO: SSH host keys should be regenerated per-device

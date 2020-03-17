@@ -1,0 +1,11 @@
+[Unit]
+Description=Paradar - regenerate SSH keys
+Before=ssh.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/paradar/paradar/generate-ssh-keys.sh
+SyslogIdentifier=paradar-keys
+
+[Install]
+WantedBy=multi-user.target
