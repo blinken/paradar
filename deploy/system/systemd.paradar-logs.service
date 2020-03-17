@@ -1,0 +1,7 @@
+[Unit]
+Description=Paradar log collection
+
+[Service]
+Type=oneshot
+ExecStart=/opt/paradar/paradar/dump-logs.sh
+SyslogIdentifier=paradar-logs

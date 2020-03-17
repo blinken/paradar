@@ -178,13 +178,16 @@
       line: pps_ldisc
     tags: system
 
-  - name: install /boot/cmdline.txt file with readonly root
+  - name: install boot configuration
     copy:
-      src: ../../system/cmdline.txt
-      dest: /boot/cmdline.txt
+      src: "../../system/{{ item }}"
+      dest: "/boot/{{ item }}"
       owner: root
       group: root
       mode: 0755
+    with_items:
+      - cmdline.txt
+      - config.txt
     tags: system
 
   - name: install fstab
@@ -205,7 +208,7 @@
       mode: 0440
     tags: system
 
-  - name: disable dump1090, lighttpd and swapfile services
+  - name: disable dump1090, lighttpd, swapfile and various other unneeded services
     systemd:
       name: "{{ item }}"
       state: stopped
@@ -213,6 +216,13 @@
     with_items:
       - lighttpd
       - dump1090-fa
+      - dphys-swapfile
+      - keyboard-setup
+      - apt-daily
+      - logrotate.timer
+      - man-db.timer
+      - apt-daily-upgrade.timer
+      - apt-daily.timer
     tags: system
 
   - name: install systemd unit files
@@ -224,6 +234,8 @@
       mode: 0644
     with_items:
       - systemd.paradar.service
+      - systemd.paradar-logs.service
+      - systemd.paradar-logs.timer
       - systemd.random-seed.service
     tags: system
 
