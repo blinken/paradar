@@ -1,7 +1,11 @@
-proc            /proc           proc    defaults               0       0
-/dev/mmcblk0p1  /boot           vfat    defaults,ro            0       2
-/dev/mmcblk0p2  /               ext4    defaults,noatime,ro    0       1
-/dev/mmcblk0p3  /storage        ext4    defaults,noatime,sync  0       2
-tmpfs           /tmp            tmpfs   nosuid,nodev           0       0
-tmpfs           /var/log        tmpfs   nosuid,nodev           0       0
-tmpfs           /var/tmp        tmpfs   nosuid,nodev           0       0
+proc            /proc            proc    defaults 0 0
+/dev/mmcblk0p1  /boot            vfat    defaults,ro 0 2
+/dev/mmcblk0p2  /                ext4    defaults,noatime,ro 0 1
+/dev/mmcblk0p3  /storage         ext4    defaults,noatime,sync 0 2
+tmpfs           /tmp             tmpfs   defaults,noatime,nosuid,nodev,noexec,mode=1777,size=128M 0 0
+tmpfs           /var/tmp         tmpfs   defaults,noatime,nosuid,noexec,nodev,mode=1777,size=128M 0 0
+tmpfs           /var/log         tmpfs   defaults,noatime,nosuid,nodev,noexec,mode=0755,size=64M 0 0
+tmpfs           /var/spool       tmpfs   defaults,noatime,nosuid,nodev,noexec,mode=0755,size=32M 0 0
+tmpfs           /var/lib/dhcp    tmpfs   defaults,noatime,nosuid,nodev,noexec,mode=0755,size=32M 0 0
+tmpfs           /var/lib/dhcpcd5 tmpfs   defaults,noatime,nosuid,nodev,noexec,mode=0755,size=32M 0 0
+

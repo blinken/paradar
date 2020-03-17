@@ -205,7 +205,7 @@
       mode: 0440
     tags: system
 
-  - name: disable dump1090 and lighttpd services
+  - name: disable dump1090, lighttpd and swapfile services
     systemd:
       name: "{{ item }}"
       state: stopped
@@ -251,6 +251,9 @@
       - /tmp
       - /var/tmp
       - /var/log
+      - /var/spool
+      - /var/lib/dhcp
+      - /var/lib/dhcpcd5
     tags: system
 
   - name: clear ephemeral files and directories
@@ -273,30 +276,20 @@
       state: directory
       owner: root
       group: root
-      mode: "1777"
+      mode: 0644
     with_items:
       - /tmp
       - /var/tmp
-    tags: system
-
-  - name: recreate log directories
-    file:
-      path: /var/log
-      state: directory
-      owner: root
-      group: root
-      mode: 0644
-    tags: system
-
-  - name: link emphemeral config to /tmp
-    file:
-      path: "{{ item }}"
-      src: /tmp
-      state: link
-    with_items:
+      - /var/log
       - /var/lib/dhcp
       - /var/lib/dhcpcd5
       - /var/spool
+    tags: system
+
+  - name: create storage partition
+    file:
+      path: /storage
+      state: directory
     tags: system
 
   - name: create ephemeral random seed
