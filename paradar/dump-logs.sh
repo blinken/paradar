@@ -6,6 +6,6 @@
 date=`date +%Y%m%d.%H%M%S`
 journalctl | tail -n 200 | gzip > /storage/$date.log.gz
 
-# Remove all but the last 500 files - https://stackoverflow.com/questions/25785/delete-all-but-the-most-recent-x-files-in-bash
-ls -tp /storage/*.log.gz | grep -v '/$' | tail -n +500 | xargs -d '\n' -r rm --
+# Remove all but the last 1000 files - https://stackoverflow.com/questions/25785/delete-all-but-the-most-recent-x-files-in-bash
+ls -tp /storage/*.log.gz | grep -v '/$' | tail -n +1000 | xargs -d '\n' -r rm --
 
