@@ -216,7 +216,7 @@ class Display:
       self._home_location = None
 
     try:
-      vectors = [ self._calculate_bearing((value["lat"], value["lon"]), gps) for value in list(aircraft_list.values()) ]
+      vectors = [ self._calculate_bearing((value["lat"], value["lon"]), gps) for value in list(aircraft_list.values()) if ("lat" in value.keys()) ]
     except NoFixError:
       print("display: error calculating bearings - GPS does not have a fix")
       vectors = []
