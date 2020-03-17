@@ -90,6 +90,12 @@ while True:
 
   print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, {}".format(refresh_rate, len(Aircraft.positions), gps_msg))
 
+  try:
+    temp = int(open("/sys/class/thermal/thermal_zone0/temp", "r").read().strip())/1000.0
+    print("main: system temperature is {}°C".format(temp))
+  except Exception as e:
+    print("main: unable to read system temperature: {}".format(e))
+
   if Config.enable_978():
     # In regions where 978MHz exists, traffic may be advertised on either
     # 978MHz or 1090MHz
