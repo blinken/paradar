@@ -51,6 +51,9 @@ class GDL90:
   _EC_SURFACE_SERVICE = 18
   _EC_POINT_OBSTACLE = 19
 
+  # TODO, make this configurable?
+  _EC_MINE = _EC_PARAGLIDER
+
   _NET_BROADCAST_PORT = 4000
 
   # Delay between transmission of respective message types (seconds)
@@ -185,15 +188,12 @@ class GDL90:
   def ownship(self):
     '''Generate an ownship report message'''
 
-    # TODO, make this configurable?
-    my_ec = self._EC_PARAGLIDER
-
     msg = bytearray([0x0a])
 
     try:
       gps_p = self._gps.position_detailed()
       (my_lat, my_lon) = gps_p.position()
-      (_, track, _) = gps_p.movement()
+      mvmt = gps_p.movement()
 
       msg.extend(self._traffic_report_generic(
         lat=my_lat, lon=my_lon,
@@ -202,15 +202,15 @@ class GDL90:
         speed_v=gps_p.speed_vertical(),
         speed_h_source="GS",
         speed_v_source="GNSS",
-        track=track,
+        track=mvmt["track"],
         track_source="true_north",
-        emitter_category=my_ec,
+        emitter_category=self._EC_MINE,
         nic=10, # meters. TODO, update these from GPS accuracy
         nac_p=10,
       ))
     except (NoFixError, UserWarning):
       # If no GPS, all zeros here except the category
-      msg.extend(self._traffic_report_generic(emitter_category=my_ec))
+      msg.extend(self._traffic_report_generic(emitter_category=self._EC_MINE))
 
     self._transmit(self._assemble_message(msg))
     #print("gdl90: sent ownship")
@@ -227,7 +227,7 @@ class GDL90:
       msg.append(r[3])
     except (NoFixError, UserWarning):
       # If no GPS, all zeros here except the category
-      msg.extend(self._traffic_report_generic(emitter_category=my_ec))
+      msg.extend(self._traffic_report_generic(emitter_category=self._EC_MINE))
 
     # Vertical warning (MSB) is 1 always as we don't support this
     # VFOM (15 bits) is 0x7FFF for "not available"
@@ -413,7 +413,7 @@ class GDL90:
 
     # Horizontal velocity is 12-bit unsigned in knots. 0xfff represents unknown.
     if speed_h_source:
-      speed_hex = 0x000000 if speed_h < 0 else ((speed_h & 0xfff) << 12)
+      speed_hex = 0x000000 if speed_h < 0 else ((int(speed_h) & 0xfff) << 12)
     else:
       speed_hex = 0xfff000
 
