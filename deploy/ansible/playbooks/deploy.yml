@@ -129,6 +129,7 @@
     with_items:
       - hosts
       - hostname
+      - motd
     tags: system
 
   - name: install defaults files
