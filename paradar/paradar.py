@@ -38,13 +38,15 @@ from display import Display
 from config import Config
 from gdl90 import GDL90
 
-os.nice(5)
+os.nice(-5)
 
 gps = GPS()
 display = Display()
 
 # Blocks until the GPS is ready
 display.start(gps)
+
+os.nice(5)
 
 ac = Aircraft(gps)
 t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
