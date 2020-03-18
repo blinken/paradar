@@ -102,11 +102,16 @@ class Display:
         self.pixels[i] = self._COLOUR_STARTUP
         self._refresh()
         time.sleep(0.02)
-      
+
       if gps.is_fresh():
         break
-     
-    time.sleep(0.5)
+
+    for i in range(self._PIXEL_COUNT):
+      self.pixels[i] = self._COLOUR_STARTUP
+      self._refresh()
+      time.sleep(0.02)
+
+    time.sleep(0.1)
 
     self.off()
     self._refresh()
