@@ -59,6 +59,9 @@ class Display:
   # https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0005594
   _DISTANCE_SQUELCH = 30.0
 
+  # Ignore aircraft higher than this many ft
+  _ALTITUDE_SQUELCH = 15000
+
   # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
   # distance (kilometers)
   _DISTANCE_WARNING = 15.0
@@ -141,10 +144,14 @@ class Display:
     return R * c
 
   # Throws GPS.NoFixError if the GPS is not yet running
-  def _calculate_bearing(self, ac_location, gps):
+  def _calculate_bearing(self, ac, gps):
     # We're point A, and AC is point B
     (my_lat, my_lon) = gps.position()
-    (ac_lat, ac_lon) = ac_location
+    ac_lat = ac.get("lat", None)
+    ac_lon = ac.get("lon", None)
+
+    if not ac_lat or not ac_lon:
+      return
 
     # Special case when track_home starts up
     if isclose(my_lat, ac_lat) and isclose(my_lon, ac_lon):
@@ -158,8 +165,9 @@ class Display:
     y = cos(my_lat_r) * sin(ac_lat_r) - sin(my_lat_r) * cos(ac_lat_r) * cos(delta_lon)
     bearing = degrees(atan2(x,y))
 
-    distance = self._haversine(my_lat, my_lon, ac_lat, ac_lon)
-    bearing = (degrees(atan2(x, y)) + 360) % 360
+    ac["distance"] = self._haversine(my_lat, my_lon, ac_lat, ac_lon)
+    ac["bearing"] = (degrees(atan2(x, y)) + 360) % 360
+    ac["bearing_updated"] = datetime.now()
 
     #print("display: bearing ({:.6f}, {:.6f}) -> ({:.6f}, {:.6f}) is {:.1f}, distance={:.2f}km".format(
     #  my_lat, my_lon,
@@ -168,7 +176,7 @@ class Display:
     #  distance,
     #))
 
-    return (bearing, distance)
+    return ac
 
   def _colour_for_distance(self, distance):
     # Colour gradient is nonlinear: aircraft that are within squelch but
@@ -220,21 +228,25 @@ class Display:
     else:
       self._home_location = None
 
+
     try:
-      vectors = [ self._calculate_bearing((value["lat"], value["lon"]), gps) for value in list(aircraft_list.values()) if ("lat" in value.keys()) ]
+      for ac in aircraft_list.values():
+        self._calculate_bearing(ac, gps)
     except NoFixError:
-      print("display: error calculating bearings - GPS does not have a fix")
+      print("display: error updating bearings - GPS does not have a fix")
       vectors = []
 
     # Order the list of vectors to aircraft by distance, descending - so closer
-    # aircraft are displayed over farther ones.
+    # aircraft are displayed over farther ones. If we don't know the altitude
+    # yet, display the aircraft (assume 0)
+    vectors = [ (x["bearing"], x["distance"], x.get("altitude", 0)) for x in filter(lambda x: "bearing" in x.keys(), aircraft_list.values()) ]
     vectors.sort(key=lambda x: x[1], reverse=True)
 
-    #self._vectors = vectors
-    #self._vectors_last_update = datetime.now()
-
-    for ac_bearing, ac_distance in vectors:
+    for ac_bearing, ac_distance, ac_altitude in vectors:
       if ac_distance > self._DISTANCE_SQUELCH:
+        continue
+
+      if ac_altitude > self._ALTITUDE_SQUELCH:
         continue
 
       bearing = (ac_bearing + azimuth) % 360
