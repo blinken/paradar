@@ -235,12 +235,19 @@ class Display:
     except NoFixError:
       print("display: error updating bearings - GPS does not have a fix")
       vectors = []
+    except RuntimeError:
+      print("display: aircraft list changed during refresh, skipping update")
+      return
 
     # Order the list of vectors to aircraft by distance, descending - so closer
     # aircraft are displayed over farther ones. If we don't know the altitude
     # yet, display the aircraft (assume 0)
-    vectors = [ (x["bearing"], x["distance"], x.get("altitude", 0)) for x in filter(lambda x: "bearing" in x.keys(), aircraft_list.values()) ]
-    vectors.sort(key=lambda x: x[1], reverse=True)
+    try:
+      vectors = [ (x["bearing"], x["distance"], x.get("altitude", 0)) for x in filter(lambda x: "bearing" in x.keys(), aircraft_list.values()) ]
+      vectors.sort(key=lambda x: x[1], reverse=True)
+    except RuntimeError:
+      print("display: aircraft list changed during refresh, skipping update")
+      return
 
     for ac_bearing, ac_distance, ac_altitude in vectors:
       if ac_distance > self._DISTANCE_SQUELCH:
