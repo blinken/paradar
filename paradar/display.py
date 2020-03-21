@@ -60,7 +60,7 @@ class Display:
   _DISTANCE_SQUELCH = 30.0
 
   # Ignore aircraft higher than this many ft
-  _ALTITUDE_SQUELCH = 15000
+  _ALTITUDE_SQUELCH = 20000
 
   # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
   # distance (kilometers)
