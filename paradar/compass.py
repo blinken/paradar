@@ -19,6 +19,7 @@
 import struct
 import math
 import time
+import sys
 #from spidev import SpiDev
 
 try:
@@ -48,6 +49,8 @@ class Compass:
   _MISO = 9
   _MOSI = 10
 
+  _CAL_OFFSETS = (-0.1648, 0.6867, 0.1346)
+  _CAL_SCALING = (0.9951, 0.9467, 1.0652)
 
   def __init__(self):
     print("compass: starting up")
@@ -251,6 +254,48 @@ class Compass:
 
     return (x, y, z)
 
+  def calibrate(self):
+    measurements = 1000
+    print("Collecting {} measurements".format(measurements))
+
+    data_x = []
+    data_y = []
+    data_z = []
+    for i in range(measurements):
+      while GPIO.input(self._GPIO_DRDY) == 0:
+        time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
+
+      x,y,z = self.get_raw_measurements()
+      data_x.append(x)
+      data_y.append(y)
+      data_z.append(z)
+
+      if (i%10 == 0):
+        print(".", end=''),
+        sys.stdout.flush()
+
+    print()
+
+    # Ref https://github.com/kriswiner/MPU6050/wiki/Simple-and-Effective-Magnetometer-Calibration
+    # Hard iron correction
+    x_offset = (max(data_x) + min(data_x))/2
+    y_offset = (max(data_y) + min(data_y))/2
+    z_offset = (max(data_z) + min(data_z))/2
+
+    # Soft iron correction
+    x_radius = (max(data_x) - min(data_x))/2
+    y_radius = (max(data_y) - min(data_y))/2
+    z_radius = (max(data_z) - min(data_z))/2
+
+    avg_radius = (x_radius + y_radius + z_radius)/3
+
+    x_scale = avg_radius/x_radius
+    y_scale = avg_radius/y_radius
+    z_scale = avg_radius/z_radius
+
+    print("Offsets: {:3.4f} {:3.4f} {:3.4f}".format(x_offset, y_offset, z_offset))
+    print("Scaling: {:3.4f} {:3.4f} {:3.4f}".format(x_scale, y_scale, z_scale))
+
   def get_azimuth(self):
     return self._azimuth
 
@@ -259,9 +304,12 @@ class Compass:
       time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
 
     x, y, z = self.get_raw_measurements()
+    x = (x - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
+    y = (y - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
+    z = (z - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
+
     self._azimuth = (180/math.pi * math.atan2(y, x)) % 360
 
-    #print(self._azimuth)
     return self._azimuth
 
   def to_string(self):
