@@ -73,13 +73,9 @@ while True:
   t_start = time.time()
   cycle_length = 500
 
-  if Config.led_test():
-    display.self_test()
-    time.sleep(0.75)
-  else:
-    for i in range(cycle_length):
-      compass.update()
-      display.update(compass, gps, Aircraft.positions)
+  for i in range(cycle_length):
+    compass.update()
+    display.update(compass, gps, Aircraft.positions)
 
   t_end = time.time()
   refresh_rate = cycle_length*1.0/(t_end - t_start)
@@ -90,7 +86,7 @@ while True:
   except NoFixError:
     gps_msg = "GPS does not have a fix"
 
-  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft, {}".format(refresh_rate, len(Aircraft.positions), gps_msg))
+  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft (alt squelch {}), {}".format(refresh_rate, len(Aircraft.positions), "on" if Config.altitude_squelch() else "off", gps_msg))
 
   try:
     temp = int(open("/sys/class/thermal/thermal_zone0/temp", "r").read().strip())/1000.0

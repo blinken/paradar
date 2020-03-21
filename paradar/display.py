@@ -50,6 +50,7 @@ class Display:
   _COLOUR_AIRCRAFT_FAR = (0, 0, 255) # blue
   _COLOUR_AIRCRAFT_NEAR = (255, 0, 0) # red
   _COLOUR_HOME = (64, 255, 30) # light green
+  _COLOUR_HOME_NEAR = (64, 255, 255) # lighter green
   _COLOUR_STARTUP = (255, 255, 255) # white
 
   # Ignore aircraft more than this many kilometers away.
@@ -60,7 +61,7 @@ class Display:
   _DISTANCE_SQUELCH = 30.0
 
   # Ignore aircraft higher than this many ft
-  _ALTITUDE_SQUELCH = 20000
+  _ALTITUDE_SQUELCH = 10000
 
   # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
   # distance (kilometers)
@@ -155,7 +156,10 @@ class Display:
 
     # Special case when track_home starts up
     if isclose(my_lat, ac_lat) and isclose(my_lon, ac_lon):
-      return (0, 0)
+      ac["distance"] = 0
+      ac["bearing"] = 180
+      ac["bearing_updated"] = datetime.now()
+      return ac
 
     delta_lon = radians(ac_lon - my_lon)
     my_lat_r = radians(my_lat)
@@ -201,9 +205,6 @@ class Display:
 
   # Refresh the display with the value of self.pixels
   def update(self, compass, gps, aircraft_list):
-    if Config.led_test():
-      return
-
     self.off()
 
     # One call to compass means less display weirdness on update
@@ -217,11 +218,19 @@ class Display:
     # Otherwise, attempt to update the home location (track_home switch has
     # just been enabled)
     if Config.track_home() and self._home_location:
-      (bearing, distance) = self._calculate_bearing(self._home_location, gps)
-      self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME
+      self._calculate_bearing(self._home_location, gps)
+      bearing = (self._home_location["bearing"] + azimuth) % 360
+
+      if self._home_location["distance"] < 20:
+        self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME_NEAR
+      else:
+        self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME
     elif Config.track_home() and not self._home_location:
       try:
-        self._home_location = gps.position()
+        (lat, lon) = gps.position()
+        # The home location is recorded ~5m south of the current location, to
+        # avoid 
+        self._home_location = {"lat": lat, "lon": lon}
         print("display: updated home location to {}".format(self._home_location))
       except NoFixError:
         pass
@@ -253,7 +262,7 @@ class Display:
       if ac_distance > self._DISTANCE_SQUELCH:
         continue
 
-      if ac_altitude > self._ALTITUDE_SQUELCH:
+      if Config.altitude_squelch() and ac_altitude > self._ALTITUDE_SQUELCH:
         continue
 
       bearing = (ac_bearing + azimuth) % 360

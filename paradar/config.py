@@ -28,7 +28,7 @@ MAPPING = {
   "wifi_enabled": 6,
   "track_home": 13,
   "show_north": 16,
-  "led_test": 20,
+  "altitude_squelch": 20,
   "enable_978": 21,
 }
 
