@@ -453,7 +453,7 @@ class GDL90:
     return msg
 
   def _transmit(self, data):
-    self._sock.sendto(data, ('<broadcast>', self._NET_BROADCAST_PORT))
+    self._sock.sendto(data, ('10.48.87.255', self._NET_BROADCAST_PORT))
 
   def transmit_gdl90(self):
     '''Continuously transmit GDL90 messages as UDP broadcasts at the
