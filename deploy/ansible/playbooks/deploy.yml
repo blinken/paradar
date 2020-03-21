@@ -54,11 +54,13 @@
       - bind9-host
       - busybox-syslogd
       - chrony
+      - dnsmasq
       - ferm
       - firmware-brcm80211
       - firmware-misc-nonfree
       - firmware-realtek
       - gpsd
+      - hostapd
       - libbladerf1
       - librtlsdr-dev
       - librtlsdr0
@@ -146,6 +148,27 @@
       - busybox-syslogd
     tags: system
 
+  - name: install hostapd config
+    copy:
+      src: "../../system/etc.hostapd.{{ item }}"
+      dest: "/etc/hostapd/{{ item }}"
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - hostapd.wpa_psk
+      - hostapd.conf
+    tags: system
+
+  - name: install wpa_supplicant config
+    copy:
+      src: "../../system/etc.wpa_supplicant.conf"
+      dest: "/etc/wpa_supplicant/wpa_supplicant.conf"
+      owner: root
+      group: root
+      mode: 0644
+    tags: system
+
   - name: install /etc/ssh/sshd_config
     copy:
       src: "../../system/etc.ssh.sshd_config"
@@ -188,10 +211,13 @@
       mode: 0644
     tags: system
 
-  - name: ensure pps_ldisc kernel module is loaded at boot
+  - name: ensure certain kernel modules are loaded at boot
     lineinfile:
       path: /etc/modules
-      line: pps_ldisc
+      line: "{{ item }}"
+    with_items:
+      - pps_ldisc
+      - hostap
     tags: system
 
   - name: install boot configuration
@@ -239,6 +265,11 @@
       - man-db.timer
       - apt-daily-upgrade.timer
       - apt-daily.timer
+      - systemd-tmpfiles-setup.service
+      - systemd-update-utmp.service
+      - systemd-rfkill.service
+      - hostapd
+      - dnsmasq
     tags: system
 
   - name: install systemd unit files
