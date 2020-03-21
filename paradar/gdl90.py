@@ -25,6 +25,8 @@ from gpsd import NoFixError
 from struct import pack, unpack
 from datetime import datetime
 
+from config import Config
+
 class GDL90:
   '''
   Generates GDL90 compatible messages.
@@ -93,6 +95,11 @@ class GDL90:
   def _periodic(self, interval, func):
     '''Set up a function to run periodically on an interval.
     '''
+
+    if not Config.wifi_enabled():
+      # Stop the cycle if wifi is disabled
+      print("gdl90: wifi disabled, shutting down job {}".format(func.__name__))
+      return
 
     self._sched.enter(interval, 1, self._periodic, (interval, func))
     func()
@@ -454,6 +461,11 @@ class GDL90:
     '''
 
     while True:
+      while not Config.wifi_enabled():
+        # Sleep while the wifi is not enabled
+        time.sleep(1)
+
+      print("gdl90: starting up")
       try:
         self._sched = sched.scheduler()
         self._periodic(self._INTERVAL_HEARTBEAT, self.heartbeat)
