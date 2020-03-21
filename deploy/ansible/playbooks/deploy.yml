@@ -156,7 +156,6 @@
       group: root
       mode: 0644
     with_items:
-      - hostapd.wpa_psk
       - hostapd.conf
     tags: system
 
@@ -265,7 +264,6 @@
       - man-db.timer
       - apt-daily-upgrade.timer
       - apt-daily.timer
-      - systemd-tmpfiles-setup.service
       - systemd-update-utmp.service
       - systemd-rfkill.service
       - hostapd
@@ -282,8 +280,9 @@
     with_items:
       - systemd.paradar.service
       - systemd.paradar-logs.service
-      - systemd.paradar-keys.service
       - systemd.paradar-logs.timer
+      - systemd.paradar-keys.service
+      - systemd.paradar-network.service
       - systemd.random-seed.service
     tags: system
 
@@ -303,6 +302,7 @@
       - paradar
       - paradar-logs
       - paradar-keys
+      - paradar-network
     tags: system
 
   - name: ensure temporary directories are unmounted
