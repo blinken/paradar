@@ -39,10 +39,10 @@ from config import Config
 class Display:
   _GPIO_DATA = board.D18
   _PIXEL_COUNT = 36
-  # compass module north points towards the left of the board, though maybe the
-  # datasheet is wrong - we're 180 degrees off magnetic north.
+  # From testing, we're 180 degrees off magnetic north for bearing=0.
   # This number is given in pixels (1 pixel = 10 degrees)
-  _PIXEL_ANGLE_OFFSET = 18
+  # = 18 (180 degree rotation) + 4.5 (first pixel is top-left of board, not top-center)
+  _PIXEL_ANGLE_OFFSET = 18 + 4.5
 
   _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
 
@@ -125,9 +125,11 @@ class Display:
     self.pixels.show()
 
   def _pixel_for_bearing(self, bearing):
-    uncorrected_pixel = (self._PIXEL_COUNT - 1) + int(floor(bearing/self._DEGREES_PER_PIXEL))
+    uncorrected_pixel = (self._PIXEL_COUNT - 1) + bearing/self._DEGREES_PER_PIXEL
 
-    return (uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1)
+    # The offset is required because pixel 1 is at the top-left of the board,
+    # whereas the compass indicates 0 degrees at the top-center.
+    return int((uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1))
 
   def _haversine(self, lat1, lon1, lat2, lon2):
     # shamelessly stolen from SO, https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
