@@ -14,3 +14,7 @@ more information, see raspbian.org.
 Debian GNU/Linux and Paradar come with ABSOLUTELY NO WARRANTY, to the extent
 permitted by applicable law.
 
+alias cdop='cd /opt/paradar'
+alias paradar_logs='sudo journalctl -e -u paradar'
+alias paradar_syslog='sudo logread | less +G'
+
