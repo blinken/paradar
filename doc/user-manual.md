@@ -26,14 +26,25 @@ calculates the bearing from your position to the other aircraft, which is then
 indicated on a ring of bright LEDs. Because paradar relies on other aircraft
 transmitting their position, it will pick up many aircraft but not all: some
 older airframes are still not equipped with modern ADS-B transponders. This
-proportion is decreasing, however, as ADS-B is mandated by regulators
-around the world.
+proportion is decreasing, however, as ADS-B is mandated by regulators around
+the world. By 7th June 2020, all aircraft with a maximum take-off mass greater
+than 5,700kg or a maximum cruising airspeed greater than 250kts must transmit
+ADS-B in order to operate IFR/GAT in Europe.
 
-By 7th June 2020, all aircraft with a maximum take-off mass greater than
-5,700kg or a maximum cruising airspeed greater than 250kts must transmit ADS-B
-in order to operate IFR/GAT in Europe.
+paradar is open source hardware and software. If you have an idea for a
+feature or improvement, or encounter a bug, please report it at https://github.com/blinken/paradar/issues
+(see the bug reports section below for more information).
 
-### Getting started
+For general queries, including bulk order discounts, you're welcome to contact
+me at blinken@gmail.com.
+
+Happy flying!
+
+*-Patrick*
+
+<div style="page-break-after: always;"></div>
+
+## Getting started
 
 paradar is pretty easy to use!
 
@@ -101,6 +112,7 @@ aircraft - which are the kind of aircraft paramotor and drone pilots want to
 avoid at all costs!
 
 References and further information:
+
 * https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast
 * https://www.caa.co.uk/General-aviation/Aircraft-ownership-and-maintenance/Electronic-Conspicuity-devices/
 * https://www.faa.gov/nextgen/programs/adsb/
@@ -140,9 +152,10 @@ somewhat resistant to fuels. paradar is not waterproof. Wipe the case clean
 using a damp rag.
 
 For reliable operation:
+
 * paradar consumes 5W (1A) in operation, and up to 12W (2.5A) when charging. For
-  best results use a good quality USB power supply rated to at least 3A, and a
-  good quality USB-C cable. Weaker power supplies (eg, a laptop USB port) will
+  best results **use a good quality USB power supply rated to at least 3A, and a
+  good quality USB-C cable.** Weaker power supplies (eg, a laptop USB port) will
   work, though the battery may still discharge if paradar is running and
   charging at the same time (you'll still get a longer run time than battery alone).
 * Keep the device as level as possible to ensure the compass reading is accurate.
@@ -171,10 +184,13 @@ main board. Each switch has a number printed below.
 To turn a switch on, move it to the upper position (towards the ON marking). To
 turn it off, move it down.
 
-Warnings:
+**Warnings:**
+
 * The main LEDs may be damaged if you touch them with your finger or a sharp tool.
 * Some parts of the board get very hot in normal operation! Be wary.
 * Do not touch any electrical component when paradar is running.
+
+### Switch function overview
 
 | Switch # | Function | On | Off |
 |----------|----------|----|-----|
@@ -295,8 +311,8 @@ outside of the US.
 
 Caveat - the antenna supplied with paradar is tuned to 1090Mhz. It will still
 receive strong signals on 978Mhz, but reception will be weaker. However, even
-in the US the predominant frequency in use is 1090Mhz for air-to-air position
-transmission, and aircraft ADS-B transmitters are very powerful.
+in the US 1090MHz is the predominant frequency in use for air-to-air position
+transmission.
 
 ## Software updates
 
@@ -317,6 +333,7 @@ When a software update is released, it will come with instructions on what to
 do next.
 
 To re-install:
+
 1. Insert the microSD card, contacts facing down, back where it came from -
    make sure it's fully seated in the silver card holder. It's normal that it
    sticks out slightly, and it's a friction fit only (there's no "click", it
@@ -329,13 +346,28 @@ To re-install:
 1. Reinstall all four lid screws and gently tighten. They do not need to be
    very tight.
 
+## Bug reports, feature requests and support
+
+paradar is open hardware and open source software. This means that you can view
+all the source code and hardware design files online, at https://github.com/blinken/paradar.
+You can also contribute to development by raising a pull request.
+
+Feature requests and bug reports are welcome. Please open an issue at
+https://github.com/blinken/paradar/issues. For bug reports, please include as
+much information as you possibly can about what you were doing.
+
+For general queries (including bulk order discounts), you can contact Patrick
+directly at blinken@gmail.com.
+
+<div style="page-break-after: always;"></div>
+
 ## Disclaimer and license
 
 **paradar does not replace your responsibility to look for, see and avoid other
 aircraft. This device will not save your life. It is intended only to provide
-additional situational awareness of traffic around you when flying VFR. It is
-not designed for and must not be used for IFR flight, and you must not rely on
-it when flying in any conditions.**
+additional situational awareness of some traffic around you when flying VFR. It
+is not designed for and must not be used for IFR flight, and you must not rely
+on it when flying in any conditions.**
 
 **The pilot is responsible for the safe conduct of any flight, and for obeying
 all applicable laws.**
