@@ -255,7 +255,7 @@ interfere and good results are not guaranteed.**
 
 ### Guide-me-home
 
-This feature allows you to record your takeoff point, and pardar will calculate
+This feature allows you to record your takeoff point, and paradar will calculate
 the bearing back home from your current location and display it with a green
 light.
 
