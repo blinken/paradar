@@ -239,9 +239,9 @@ software updates via this project page. Shipping in the UK is free.
 
 **paradar does not replace your responsibility to look for, see and avoid other
 aircraft. This device will not save your life. It is intended only to provide
-additional situational awareness of traffic around you when flying VFR. It is
-not designed for and must not be used for IFR flight, and you must not rely on
-it when flying in any conditions.**
+additional situational awareness of some traffic around you when flying VFR. It
+is not designed for and must not be used for IFR flight, and you must not rely
+on it when flying in any conditions.**
 
 **The pilot is responsible for the safe conduct of any flight, and for obeying
 all applicable laws.**
