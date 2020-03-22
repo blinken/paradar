@@ -67,6 +67,11 @@ class Display:
   # distance (kilometers)
   _DISTANCE_WARNING = 15.0
 
+  # Don't display aircraft closer than this distance (they're probably our own
+  # ADS-B transmitter), and clamp the home location indicator to 180 degrees.
+  # This is to avoid display jitter - GPS isn't much more accurate than 5m.
+  _IGNORE_CLOSER_THAN = 15
+
   _TEST_COLOURS = (
     (255,0,0),     # R
     (0,255,0),     # G
@@ -222,7 +227,7 @@ class Display:
     if Config.track_home() and self._home_location:
       self._calculate_bearing(self._home_location, gps)
 
-      if self._home_location["distance"] < 10:
+      if self._home_location["distance"] < self._IGNORE_CLOSER_THAN:
         # display nearby home as due south to avoid display weirdness
         bearing = (180 + azimuth) % 360
         self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME_NEAR
@@ -264,6 +269,9 @@ class Display:
 
     for ac_bearing, ac_distance, ac_altitude in vectors:
       if ac_distance > self._DISTANCE_SQUELCH:
+        continue
+
+      if ac_distance < self._IGNORE_CLOSER_THAN:
         continue
 
       if Config.altitude_squelch() and ac_altitude > self._ALTITUDE_SQUELCH:
