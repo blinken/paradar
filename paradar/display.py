@@ -221,11 +221,13 @@ class Display:
     # just been enabled)
     if Config.track_home() and self._home_location:
       self._calculate_bearing(self._home_location, gps)
-      bearing = (self._home_location["bearing"] + azimuth) % 360
 
-      if self._home_location["distance"] < 20:
+      if self._home_location["distance"] < 10:
+        # display nearby home as due south to avoid display weirdness
+        bearing = (180 + azimuth) % 360
         self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME_NEAR
       else:
+        bearing = (self._home_location["bearing"] + azimuth) % 360
         self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME
     elif Config.track_home() and not self._home_location:
       try:
