@@ -216,6 +216,8 @@ Feedback is particularly welcome. Please raise an issue on [GitHub](https://gith
 you are indicating that you have read and agree to the disclaimer and
 license.**
 
+You can find the user manual [here](https://github.com/blinken/paradar/blob/master/doc/user-manual.md).
+
 paradar is an open hardware project, and you can build it yourself. I also sell
 pre-assembled units.
 
