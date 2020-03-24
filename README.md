@@ -3,7 +3,7 @@
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/20200324-blue-case-800.png"><br/>
 <br/><br/>
-First production run is ready - shipping until they run out! Get one while they're hot! :D <del>£339</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
+First production run is ready - v1.4 is shipping until they run out! Get one while they're hot! :D <del>£339</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
 </div>
 
 ### paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
@@ -198,11 +198,13 @@ finished product to reduce power consumption on battery.
 The case is 3D printed and follows the shape of the board. It incorporates a
 hole to permit easy removal of the SD card, slot for the power switch, and a
 hole for the antenna connector off the SDR. The lid has countersunk screw holes
-for M2.5 hex screws.
+for M3 hex screws.
 
-Still being finalised but dimensions are approximately 77mm x 77mm x 25mm.
+Dimensions without antenna are 90mm x 84mm x 30mm. The antenna connector is
+SMA, and the included antenna is 110mm in length with a flexible elbow.
 
-Both bottom and lid are printed in ABS (the lid is translucent).
+Both bottom and lid are 3D-printed in PETG (the lid is translucent). This is
+resistant to most solvents and fuels, though the case is not waterproof
 
 # Support, bug reports, and feedback
 
@@ -217,28 +219,34 @@ license.**
 paradar is an open hardware project, and you can build it yourself. I also sell
 pre-assembled units.
 
-As of February 2020, you have two options to purchase paradar:
+You have two options for case colour: bright yellow or classy blue.
 
-1. **Preorder for April/May 2020** ~~£299~~ £229 (25% discount!)
+**The very first production run of units is currently shipping with a 30%
+earlybird discount. The discount will last only until these units sell out!**
 
-    [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8XXSATNMDTR9N) (free UK shipping)
+Blue case:
 
-    [![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=AMLXSVQQYQXPY) (£5 international shipping)
+[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=53CTQ8R4HXTSU) (~~£339~~ £229, free UK shipping)
 
-1. **Help me beta test the first ten units**
+[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WQHX3FT54GMVG) (~~£339~~ £229 + £5 international shipping)
 
-    You'll get a prototype unit for the discounted price of **£170**, on the
-    condition you give me some detailed & honest feedback.
+Yellow case:
 
-	  Hardware on prototype units is the same as finished units - just with
-    slightly buggier software. I'll publish software updates on this project page
-    with instructions to install them.
+[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=PGKHTJ3QJBBHL) (~~£339~~ £229, free UK shipping)
 
-    [Send me an email](mailto:blinken@gmail.com?subject=paradar%20beta%20access") for more
-    information. There's only 10 units available at this price.
+[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=G5KVQCLE667JE) (~~£339~~ £229 + £5 international shipping)
 
-Each paradar will come assembled in a 3D-printed case, with usage instructions and
-software updates via this project page. Shipping in the UK is free.
+Each paradar comes assembled in a 3D-printed case with an 11cm (2dBi) antenna
+and usage instructions.  Software updates will be made available via this
+project page, and will require some technical knowledge to install
+(alternatively, an update service will be available).  First-class shipping to
+the UK is free.
+
+Please <a href="mailto:blinken@gmail.com">contact me</a> for bulk order
+discounts and distribution information.
+
+Coming soon - individual components, high-gain antennas, and more. For now,
+contact me if you're interested in these.
 
 # Disclaimer and license
 
