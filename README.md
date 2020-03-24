@@ -1,21 +1,20 @@
 # paradar: a portable, handheld ADS-B indicator and receiver
 
 <div align="center">
-<img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-v1.2-assembled-withcase-800.png" width="600"><br/>
-<i>(shown without the translucent top case)</i><br/><br/>
-Preorder for April/May 2020 <del>£299</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
-<a href="mailto:blinken@gmail.com?subject=paradar%20beta%20access">Currently seeking 10 beta testers</a> in return for early access and a heavily discounted (£170) unit! <a href="#buy-a-paradar">More information</a><br/>
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/20200324-blue-case-800.png"><br/>
+<br/><br/>
+First production run is ready - shipping until they run out! Get one while they're hot! :D <del>£339</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
 </div>
 
 ### paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
 
- * Compact, self contained receiver and display - can be used without a linked phone or tablet
- * Clearly indicates the direction of other aircraft in a ~10km radius
+ * Compact, self contained handheld receiver and display - can be used without a linked phone or tablet
+ * Clearly indicates the direction of other aircraft in a ~20km radius
  * Much faster to understand at glance vs an app on your phone
  * Easily readable in full sunlight
  * Optionally feeds high quality GPS and traffic information to SkyDemon or other GDL90-compatible EFB apps
  * Receives ADS-B on 1090Mhz (UK/EU) and 978Mhz (US)
- * Built-in 850mAh battery with USB-C fast charge
+ * Built-in 1950mAh battery (2.5 hours battery life) with USB-C fast charge
 
 It can be used standalone (with or without a phone or tablet), on the ground as
 a handheld compass that indicates air traffic, or in the air on your flight
@@ -40,14 +39,18 @@ available here for you to download. If you have the ability to solder SMD
 devices and 3D print a case, then you can build it yourself. [Bug reports, feedback](https://github.com/blinken/paradar/issues)
 or patches to improve the software are always welcome.
 
-Project status: hardware design is complete, and the initial version for the
-firmware is done. **I'm currently seeking beta testers to put up with a few
-bugs and give me some honest feedback.** In return, you get early access and a
-fully assembled unit for a little over half price (£170). [Send me an email for more information.](mailto:blinken@gmail.com?subject=paradar%20beta%20access) 
+Project status: I am *shipping* the first batch of devices. This is super
+exciting - it's been a very long road to get to this point. Supplies are
+limited, so grab one before they sell out!
 
 # Project news & roadmap
 
 ### Hardware
+
+**2020-03-24** Coronavirus disruption aside... I am shipping the first run of
+Paradars! I have a small number ready to go, and enough components to make up a
+few more around the ongoing supply chain disruption. Get them while they're
+hot!
 
 **2020-02-25** DHL confirms that the first run of boards has _arrived in the
 UK!_ With luck, they'll be with me by the end of the week. Assuming there's no
@@ -77,6 +80,8 @@ The case design is close to complete, but requires some tweaking to add holes
 for the SD card and antenna.
 
 ### Software
+
+**2020-03-24** Software is complete and well-tested. Test units have been shipped to a small group of beta testers for their feedback
 
 **2020-02-25** We're just about feature-complete! 978MHz ADS-B is working, LED
 colours are now red/green-colourblind-friendly, take-me-home feature is
