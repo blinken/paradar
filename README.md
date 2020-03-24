@@ -9,7 +9,7 @@ First production run is ready - shipping until they run out! Get one while they'
 ### paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
 
  * Compact, self contained handheld receiver and display - can be used without a linked phone or tablet
- * Clearly indicates the direction of other aircraft in a ~20km radius
+ * 36 ultrabright LEDs clearly indicate the direction of other aircraft in a ~20km radius
  * Much faster to understand at glance vs an app on your phone
  * Easily readable in full sunlight
  * Optionally feeds high quality GPS and traffic information to SkyDemon or other GDL90-compatible EFB apps
