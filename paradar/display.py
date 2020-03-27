@@ -130,11 +130,11 @@ class Display:
     self.pixels.show()
 
   def _pixel_for_bearing(self, bearing):
-    uncorrected_pixel = (self._PIXEL_COUNT - 1) + bearing/self._DEGREES_PER_PIXEL
+    uncorrected_pixel = self._PIXEL_COUNT + bearing/self._DEGREES_PER_PIXEL
 
     # The offset is required because pixel 1 is at the top-left of the board,
     # whereas the compass indicates 0 degrees at the top-center.
-    return int((uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT - 1))
+    return int((uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT))
 
   def _haversine(self, lat1, lon1, lat2, lon2):
     # shamelessly stolen from SO, https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
