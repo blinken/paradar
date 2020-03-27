@@ -59,9 +59,9 @@ class GDL90:
   _NET_BROADCAST_PORT = 4000
 
   # Delay between transmission of respective message types (seconds)
-  _INTERVAL_HEARTBEAT = 1
-  _INTERVAL_OWNSHIP = 1
-  _INTERVAL_TRAFFIC = 1 # All aircraft
+  _INTERVAL_HEARTBEAT = 0.8
+  _INTERVAL_OWNSHIP = 0.8
+  _INTERVAL_TRAFFIC = 0.8 # All aircraft
   _INTERVAL_TRAFFIC_DELAY = 0.01 # Delay between aircraft transmissions
 
   # If we don't know something, these are the values we send (per the spec)
@@ -102,7 +102,26 @@ class GDL90:
       return
 
     self._sched.enter(interval, 1, self._periodic, (interval, func))
-    func()
+    try:
+      func()
+    except:
+      print("gdl90: job {} crashed".format(func.__name__))
+      traceback.print_exc(file=sys.stdout)
+
+  def _dhcp_clients(self):
+    LEASES_FILE = '/var/lib/dhcp/dnsmasq.leases'
+    addresses = []
+    try:
+      for line in open(LEASES_FILE).readlines():
+        try:
+          addresses.append(line.strip().split(" ")[2])
+        except:
+          pass
+    except:
+      # dnsmasq.leases doesn't exist
+      return []
+
+    return addresses
 
   def _crc_init(self):
     for i in range(256):
@@ -215,8 +234,9 @@ class GDL90:
         nic=10, # meters. TODO, update these from GPS accuracy
         nac_p=10,
       ))
-    except (NoFixError, UserWarning):
+    except (NoFixError, UserWarning) as e:
       # If no GPS, all zeros here except the category
+      print("gdl90: gps failure, sending zeros: {}".format(str(e)))
       msg.extend(self._traffic_report_generic(emitter_category=self._EC_MINE))
 
     self._transmit(self._assemble_message(msg))
@@ -453,7 +473,10 @@ class GDL90:
     return msg
 
   def _transmit(self, data):
-    self._sock.sendto(data, ('10.48.87.255', self._NET_BROADCAST_PORT))
+    addresses = self._dhcp_clients() or ['10.48.87.255']
+    for addr in addresses:
+      #print("gdl90: sending to {}".format(addr))
+      self._sock.sendto(data, (addr, self._NET_BROADCAST_PORT))
 
   def transmit_gdl90(self):
     '''Continuously transmit GDL90 messages as UDP broadcasts at the
