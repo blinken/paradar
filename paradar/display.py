@@ -82,6 +82,8 @@ class Display:
   _HIGH_BRIGHTNESS = 1.0
   _LOW_BRIGHTNESS = 0.6
   _SELFTEST_BRIGHTNESS = 0.03
+  _STARTUP_BRIGHTNESS = 0.2
+
 
   def __init__(self):
     print("display: starting up")
@@ -109,7 +111,8 @@ class Display:
         if not gps.is_fresh():
           self.off()
         self.pixels[i] = self._COLOUR_STARTUP
-        self._refresh()
+        # Limit brightness to avoid breaking the power supply on startup
+        self._refresh(brightness=self._STARTUP_BRIGHTNESS)
         time.sleep(0.02)
 
       if gps.is_fresh():
@@ -117,7 +120,7 @@ class Display:
 
     for i in range(self._PIXEL_COUNT):
       self.pixels[i] = self._COLOUR_STARTUP
-      self._refresh()
+      self._refresh(brightness=self._STARTUP_BRIGHTNESS)
       time.sleep(0.02)
 
     time.sleep(0.1)
@@ -125,8 +128,11 @@ class Display:
     self.off()
     self._refresh()
 
-  def _refresh(self):
-    self.pixels.brightness=(self._HIGH_BRIGHTNESS if Config.high_brightness() else self._LOW_BRIGHTNESS)
+  def _refresh(self, brightness=None):
+    if not brightness:
+      brightness = (self._HIGH_BRIGHTNESS if Config.high_brightness() else self._LOW_BRIGHTNESS)
+
+    self.pixels.brightness=brightness
     self.pixels.show()
 
   def _pixel_for_bearing(self, bearing):
