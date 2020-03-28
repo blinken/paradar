@@ -48,6 +48,7 @@ while True:
 
   while not Config.wifi_enabled():
     time.sleep(1)
+    ConfigType.setup_pullups()
 
   # Set up hostap mode
   print("paradar_network: setting up hostap mode")
@@ -57,6 +58,8 @@ while True:
   start("dnsmasq")
   start("hostapd")
 
+  ConfigType.setup_pullups()
   while Config.wifi_enabled():
     time.sleep(1)
+    ConfigType.setup_pullups()
 
