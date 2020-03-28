@@ -22,6 +22,7 @@ import signal
 import sys
 import threading
 import time
+import traceback
 import os
 import subprocess
 
@@ -39,28 +40,26 @@ from display import Display
 from config import Config
 from gdl90 import GDL90
 
-os.nice(-5)
+threads = {"main": threading.main_thread()}
 
-gps = GPS()
-display = Display()
+# Print a stack trace when we receive SIGUSR1
+def usr1_handler(sig, frame):
+    """Print a stacktrace when we receive SIGUSR1, to enable debugging"""
 
-# Blocks until the GPS is ready
-display.start(gps)
+    print("** SIGUSR1 received - printing tracebacks all threads\n")
+    for t_id, t_frame in sys._current_frames().items():
+      name = "unknown thread ({})".format(t_id)
+      for t_name, t_obj in threads.items():
+        if t_obj.ident == t_id:
+          name = t_name
+          break
 
-os.nice(5)
-
-ac = Aircraft(gps)
-t_ac = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
-t_ac.start()
-
-gdl90 = GDL90(gps, ac)
-t_gdl90 = threading.Thread(target=gdl90.transmit_gdl90, args=(), daemon=True)
-t_gdl90.start()
-
-compass = Compass()
+      print ("=> {}".format(name))
+      print(''.join(traceback.format_stack(t_frame)))
+signal.signal(signal.SIGUSR1, usr1_handler)
 
 # Clean up GPIOs on exit
-def signal_handler(sig, frame):
+def interrupt_handler(sig, frame):
   global ac
 
   # Make sure dump1090 exits cleanly
@@ -68,7 +67,7 @@ def signal_handler(sig, frame):
 
   GPIO.cleanup()
   sys.exit(0)
-signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGINT, interrupt_handler)
 
 def get_system_temp():
   return int(open("/sys/class/thermal/thermal_zone0/temp", "r").read().strip())/1000.0
@@ -116,6 +115,26 @@ def get_system_flags():
       flags.append("(soft temp limit reached)")
 
   return ", ".join(flags)
+
+os.nice(-5)
+
+gps = GPS()
+display = Display()
+
+# Blocks until the GPS is ready
+display.start(gps)
+
+os.nice(5)
+
+ac = Aircraft(gps)
+threads["aircraft"] = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
+threads["aircraft"].start()
+
+gdl90 = GDL90(gps, ac)
+threads["gdl90"] = threading.Thread(target=gdl90.transmit_gdl90, args=(), daemon=True)
+threads["gdl90"].start()
+
+compass = Compass()
 
 while True:
   t_start = time.time()
