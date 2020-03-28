@@ -73,7 +73,9 @@ class Compass:
     self._clk_idle()
 
     # Holds results to allow calculation of moving average
-    self._measurements = deque(maxlen=self._MOVING_AVG_LENGTH)
+    self._measurements_x = deque(maxlen=self._MOVING_AVG_LENGTH)
+    self._measurements_y = deque(maxlen=self._MOVING_AVG_LENGTH)
+    self._measurements_z = deque(maxlen=self._MOVING_AVG_LENGTH)
 
     #self.spi = SpiDev()
     #self.spi.open(0, 0)
@@ -304,8 +306,14 @@ class Compass:
     print("Scaling: {:3.4f} {:3.4f} {:3.4f}".format(x_scale, y_scale, z_scale))
 
   def get_azimuth(self):
-    if self._measurements:
-      return sum(self._measurements)/len(self._measurements)
+    if self._measurements_x and self._measurements_y:
+      x = sum(self._measurements_x)/len(self._measurements_x)
+      y = sum(self._measurements_y)/len(self._measurements_y)
+
+      azimuth = (180/math.pi * math.atan2(y, x)) % 360
+      #print("{} {} {}".format(y, x, azimuth))
+
+      return azimuth
     else:
       return 0.0
 
@@ -318,9 +326,10 @@ class Compass:
     y = (y - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
     z = (z - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
 
-    azimuth = (180/math.pi * math.atan2(y, x)) % 360
+    self._measurements_x.append(x)
+    self._measurements_y.append(y)
+    self._measurements_z.append(z)
 
-    self._measurements.append(azimuth)
 
   def to_string(self):
     return str(round(self.get_azimuth(), 1))
