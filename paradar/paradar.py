@@ -116,6 +116,11 @@ def get_system_flags():
 
   return ", ".join(flags)
 
+def startup_tasks():
+  """System commands to run on service start"""
+  print("main: running startup tasks")
+  subprocess.run("/usr/bin/tvservice -o", shell=True, capture_output=True) # disable HDMI
+
 os.nice(-5)
 
 gps = GPS()
@@ -135,6 +140,8 @@ threads["gdl90"] = threading.Thread(target=gdl90.transmit_gdl90, args=(), daemon
 threads["gdl90"].start()
 
 compass = Compass()
+
+startup_tasks()
 
 while True:
   t_start = time.time()
