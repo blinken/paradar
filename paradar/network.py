@@ -22,7 +22,7 @@ GPIO.setmode(GPIO.BCM)
 
 import subprocess
 import time
-from config import Config
+from config import Config, ConfigType
 
 print("paradar_network: starting up")
 
@@ -35,6 +35,8 @@ def start(service):
   subprocess.run("/usr/sbin/service {} start".format(service), shell=True)
 
 while True:
+  ConfigType.setup_pullups()
+
   # Set up client mode
   if not Config.wifi_enabled():
     print("paradar_network: setting up client mode")

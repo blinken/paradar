@@ -33,9 +33,12 @@ MAPPING = {
 }
 
 class ConfigType(type):
-  def __init__(cls, name, bases, dct):
+  def setup_pullups():
     for pin in MAPPING.values():
       GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+  def __init__(cls, name, bases, dct):
+    ConfigType.setup_pullups()
 
   def __getattr__(cls, name):
     if name in MAPPING.keys():
