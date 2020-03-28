@@ -20,6 +20,7 @@ import struct
 import math
 import time
 import sys
+from collections import deque
 #from spidev import SpiDev
 
 try:
@@ -52,6 +53,9 @@ class Compass:
   _CAL_OFFSETS = (-0.1648, 0.6867, 0.1346)
   _CAL_SCALING = (0.9951, 0.9467, 1.0652)
 
+  # Result is moving average of this many samples
+  _MOVING_AVG_LENGTH = 2
+
   def __init__(self):
     print("compass: starting up")
 
@@ -67,6 +71,9 @@ class Compass:
     GPIO.setup(self._GPIO_DRDY, GPIO.IN)
 
     self._clk_idle()
+
+    # Holds results to allow calculation of moving average
+    self._measurements = deque(maxlen=self._MOVING_AVG_LENGTH)
 
     #self.spi = SpiDev()
     #self.spi.open(0, 0)
@@ -297,7 +304,10 @@ class Compass:
     print("Scaling: {:3.4f} {:3.4f} {:3.4f}".format(x_scale, y_scale, z_scale))
 
   def get_azimuth(self):
-    return self._azimuth
+    if self._measurements:
+      return sum(self._measurements)/len(self._measurements)
+    else:
+      return 0.0
 
   def update(self):
     while GPIO.input(self._GPIO_DRDY) == 0:
@@ -308,10 +318,10 @@ class Compass:
     y = (y - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
     z = (z - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
 
-    self._azimuth = (180/math.pi * math.atan2(y, x)) % 360
+    azimuth = (180/math.pi * math.atan2(y, x)) % 360
 
-    return self._azimuth
+    self._measurements.append(azimuth)
 
   def to_string(self):
-    return str(round(self._azimuth, 1))
+    return str(round(self.get_azimuth(), 1))
 
