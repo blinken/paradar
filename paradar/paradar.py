@@ -23,6 +23,7 @@ import sys
 import threading
 import time
 import os
+import subprocess
 
 from gpsd import NoFixError
 
@@ -69,6 +70,53 @@ def signal_handler(sig, frame):
   sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
+def get_system_temp():
+  return int(open("/sys/class/thermal/thermal_zone0/temp", "r").read().strip())/1000.0
+
+def get_system_flags():
+  try:
+    output = subprocess.run("/opt/vc/bin/vcgencmd get_throttled", shell=True, capture_output=True).stdout.decode("utf-8").strip()
+  except Exception as e:
+    print("main: failed to get output from vcgencmd: {}".format(str(e)))
+    return ""
+
+  prefix = "throttled=0x"
+  if not output.startswith(prefix):
+    print("main: unknown output from vcgencmd '{}'".format(output))
+    return []
+
+  output = output[len(prefix):]
+  if len(output) % 2 == 1:
+    # This is really annoying
+    output = "0" + output
+
+  b = bytes.fromhex(output)
+
+  flags = []
+
+  if b:
+    if b[0] & 0x01:
+      flags.append("under voltage detected")
+    if b[0] & 0x02:
+      flags.append("arm frequency capped")
+    if b[0] & 0x04:
+      flags.append("throttled")
+    if b[0] & 0x08:
+      flags.append("soft temp limit reached")
+
+  if len(b) >= 3:
+    # Historical observations
+    if b[2] & 0x01:
+      flags.append("(under voltage detected)")
+    if b[2] & 0x02:
+      flags.append("(arm frequency capped)")
+    if b[2] & 0x04:
+      flags.append("(throttled)")
+    if b[2] & 0x08:
+      flags.append("(soft temp limit reached)")
+
+  return ", ".join(flags)
+
 while True:
   t_start = time.time()
   cycle_length = 500
@@ -89,10 +137,13 @@ while True:
   print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft (alt squelch {}), {}".format(refresh_rate, len(Aircraft.positions), "on" if Config.altitude_squelch() else "off", gps_msg))
 
   try:
-    temp = int(open("/sys/class/thermal/thermal_zone0/temp", "r").read().strip())/1000.0
-    print("main: system temperature is {}°C".format(temp))
+    print("main: system temperature is {}°C".format(get_system_temp()))
   except Exception as e:
     print("main: unable to read system temperature: {}".format(e))
+
+  flags = get_system_flags()
+  if flags:
+    print("main: system flags: {}".format(flags))
 
   if Config.enable_978():
     # In regions where 978MHz exists, traffic may be advertised on either
