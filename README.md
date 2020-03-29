@@ -5,7 +5,8 @@
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7983-800.png"><br/>
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7979-800.png"><br/>
 <br/>
-First production run is ready! v1.4 is shipping until they run out! Get one while they're hot! :D <del>£339</del> <b>£229</b> <a href="#buy-a-paradar">Click here to buy a paradar</a><br/>
+First production run is ready! v1.4 is shipping until they run out! Get one while they're hot! :D<br/>
+<del>£339</del> <b>£229 <a href="#buy-a-paradar">Click here to buy a paradar</a></b><br/>
 <br/><br/>
 </div>
 
@@ -37,17 +38,22 @@ aircraft. For receive and transmit functionality in the UK, pairing paradar with
 gives you a highly portable and inexpensive setup with a convenient display,
 suitable for paraglider, ultralight and fixed wing pilots.
 
-<a href="#buy-a-paradar">Fully assembled units available below.</a>
-
-**paradar is open hardware and open source software under the GNU General
-Public License**, which means all the design files and source code are
+paradar is open hardware and open source software under the GNU General
+Public License, which means all the design files and source code are
 available here for you to download. If you have the ability to solder SMD
 devices and 3D print a case, then you can build it yourself. [Bug reports, feedback](https://github.com/blinken/paradar/issues)
 or patches to improve the software are always welcome.
 
-Project status: I am *shipping* the first batch of devices. This is super
+**Project status:** I am *shipping* the first batch of devices. This is super
 exciting - it's been a very long road to get to this point. Supplies are
 limited, so grab one before they sell out!
+
+<a href="#buy-a-paradar"><b>Fully assembled units available to buy below - click here!</b></a>
+
+<div align="center">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/gif/animated-800.gif"><br/>
+<i>Check out the cool animated GIF I made</i>
+</div>
 
 # Project news & roadmap
 
@@ -122,6 +128,17 @@ The case design is close to complete, but requires some tweaking to add holes
 for the SD card and antenna.
 
 ### Software
+
+**2020-03-24** Some good bugfixes this week from *loads* of testing.
+
+ * Fix an off-by-one error that meant the 36th LED wasn't getting used
+ * Improve compass stability a ton - by adding a moving average over the sensor readings
+ * Improve wifi reliability (fix GPIO pullup issues)
+ * Improve SkyDemon compatibility - send messages slightly more often
+
+Battery life tests out at 2-2.5 hours without wifi, which is probably as good
+as we're going to get without a bigger battery. That SDR is pretty power
+hungry.
 
 **2020-03-24** Software is complete and well-tested. Test units have been shipped to a small group of beta testers for their feedback
 
