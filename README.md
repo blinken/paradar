@@ -1,20 +1,26 @@
-# paradar: a portable, handheld ADS-B indicator and receiver
+# paradar: locates and indicates aircraft around you
 
 <div align="center">
-<img src="https://github.com/blinken/paradar/raw/master/doc/images/20200324-blue-case-800.png"><br/>
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7973-800.png"><br/>
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7983-800.png"><br/>
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7979-800.png"><br/>
+<br/>
+First production run is ready! v1.4 is shipping until they run out! Get one while they're hot! :D <del>£339</del> <b>£229</b> <a href="#buy-a-paradar">Click here to buy a paradar</a><br/>
 <br/><br/>
-First production run is ready - v1.4 is shipping until they run out! Get one while they're hot! :D <del>£339</del> <b>£229</b> <a href="#buy-a-paradar">Click here</a><br/>
 </div>
 
-### paradar is a tiny, handheld ADS-B indicator for paramotor, paraglider and general aviation pilots.
+### paradar is a tiny, handheld ADS-B receiver for paramotor, paraglider, drone and general aviation pilots.
 
- * Compact, self contained handheld receiver and display - can be used without a linked phone or tablet
  * 36 ultrabright LEDs clearly indicate the direction of other aircraft in a ~20km radius
+ * Fully self contained handheld receiver and display - can be used without a linked phone or tablet
  * Much faster to understand at glance vs an app on your phone
- * Easily readable in full sunlight
  * Optionally feeds high quality GPS and traffic information to SkyDemon or other GDL90-compatible EFB apps
+ * Easily readable in full sunlight, on the ground or in the air on your flight deck
  * Receives ADS-B on 1090Mhz (UK/EU) and 978Mhz (US)
+ * Colour-blind-friendly colours
  * Built-in 1950mAh battery (2.5 hours battery life) with USB-C fast charge
+ * Only 88mm x 88mm and 175g with antenna
+ * **Open source hardware and software**
 
 It can be used standalone (with or without a phone or tablet), on the ground as
 a handheld compass that indicates air traffic, or in the air on your flight
@@ -46,6 +52,42 @@ limited, so grab one before they sell out!
 # Project news & roadmap
 
 ### Hardware
+
+**2020-03-29** A lot of work this week to finalise assembly, fix bugs after
+feedback from the beta testers, and start the process of finding someone I can
+outsource the PCB manufacture to. To put together the first few boards I'm
+working with [PCBWay](https://www.pcbway.com/pcb-service.html) (click for some
+neat videos) in Shenzhen, China, who are a large PCB manufacturer and
+assembler.  It's been a pretty straightforward experience working with them so
+far - most of the pain has been around sourcing parts, but we've settled on a
+final BOM that they say they can deliver. All going well I should have about 30
+assembled boards delivered to me in 3-4 weeks (for now I'm making them up by
+hand).
+
+Obviously the massive global disruption from COVID-19 is causing a few
+headaches, mostly around shipping and delivery of parts - getting certain
+microUSB connectors has been a nightmare. However, the cursed package arrived
+this week (the final component I was waiting on) and now I can assemble the
+boards together in one unit.
+
+The bottom photo below is of the new optimised assembly. For the beta units, I
+soldered wires by hand from the USB port to the Raspberry Pi (top photo) - and now
+I have a neat little custom adapter board to do this!
+
+<p align="center">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/20200329-old-assembly.jpg" width="800">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/20200329-new-assembly.jpg" width="800">
+</p>
+
+Some other news - paradar branded antennas! 1090Mhz antennas are really hard to
+get at a reasonable price outside of a manufacturer - they're fairly specialist -
+and manufacturers won't sell you less than a few hundred. So I've found a
+factory and ordered enough antennas to last me for the rest of my life. But as a bonus, they'll engrave a logo!
+Behold the new paradar logo and antenna design:
+
+<p align="center">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/20200329-antenna-mockup.jpg">
+</p>
 
 **2020-03-24** Coronavirus disruption aside... I am shipping the first run of
 Paradars! I have a small number ready to go, and enough components to make up a
