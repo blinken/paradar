@@ -5,8 +5,7 @@
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7983-800.png"><br/>
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7979-800.png"><br/>
 <br/>
-First production run is ready! v1.4 is shipping until they run out! Get one while they're hot! :D<br/>
-<del>£339</del> <b>£229 <a href="#buy-a-paradar">Click here to buy a paradar</a></b><br/>
+<del>£339</del> <b>£229 <a href="https://paradar.co.uk">Click here to buy a paradar</a></b><br/>
 <br/><br/>
 </div>
 
@@ -44,11 +43,10 @@ available here for you to download. If you have the ability to solder SMD
 devices and 3D print a case, then you can build it yourself. [Bug reports, feedback](https://github.com/blinken/paradar/issues)
 or patches to improve the software are always welcome.
 
-**Project status:** I am *shipping* the first batch of devices. This is super
-exciting - it's been a very long road to get to this point. Supplies are
-limited, so grab one before they sell out!
-
-<a href="#buy-a-paradar"><b>Fully assembled units available to buy below - click here!</b></a>
+**Project status:** My manufacturing and distribution partner over at
+paradar.co.uk is now shipping the first production run of devices! This is
+super exciting - it's been a very long road to get to this point. Supplies are
+limited, so **[click here to grab one before they sell out!](https://paradar.co.uk)**
 
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/gif/animated-800.gif"><br/>
@@ -63,22 +61,20 @@ limited, so grab one before they sell out!
 feedback from the beta testers, and start the process of finding someone I can
 outsource the PCB manufacture to. To put together the first few boards I'm
 working with [PCBWay](https://www.pcbway.com/pcb-service.html) (click for some
-neat videos) in Shenzhen, China, who are a large PCB manufacturer and
-assembler.  It's been a pretty straightforward experience working with them so
-far - most of the pain has been around sourcing parts, but we've settled on a
-final BOM that they say they can deliver. All going well I should have about 30
-assembled boards delivered to me in 3-4 weeks (for now I'm making them up by
-hand).
+neat videos) in Shenzhen, China, who are a large PCB manufacturer and assembler - alongside a distributor in the UK to sell and source the devices. It's been a
+pretty straightforward experience working with them so far - most of the pain
+has been around sourcing parts, but we've settled on a final BOM that they say
+they can deliver.
 
 Obviously the massive global disruption from COVID-19 is causing a few
 headaches, mostly around shipping and delivery of parts - getting certain
 microUSB connectors has been a nightmare. However, the cursed package arrived
-this week (the final component I was waiting on) and now I can assemble the
-boards together in one unit.
+this week (the final component I was waiting on) and now it's possible to
+assemble the boards together in one unit.
 
-The bottom photo below is of the new optimised assembly. For the beta units, I
+The bottom photo below is of the new optimised assembly. For the beta units, we
 soldered wires by hand from the USB port to the Raspberry Pi (top photo) - and now
-I have a neat little custom adapter board to do this!
+there's a neat little custom adapter board to do this!
 
 <p align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/20200329-old-assembly.jpg" width="800">
@@ -87,23 +83,24 @@ I have a neat little custom adapter board to do this!
 
 Some other news - paradar branded antennas! 1090Mhz antennas are really hard to
 get at a reasonable price outside of a manufacturer - they're fairly specialist -
-and manufacturers won't sell you less than a few hundred. So I've found a
-factory and ordered enough antennas to last me for the rest of my life. But as a bonus, they'll engrave a logo!
+and manufacturers won't sell you less than a few hundred. So we've found a
+factory and ordered a _load_. But as a bonus, they'll engrave a logo!
 Behold the new paradar logo and antenna design:
 
 <p align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/20200329-antenna-mockup.jpg">
 </p>
 
-**2020-03-24** Coronavirus disruption aside... I am shipping the first run of
-Paradars! I have a small number ready to go, and enough components to make up a
-few more around the ongoing supply chain disruption. Get them while they're
-hot!
+**2020-03-24** Coronavirus disruption aside... my [distribution partner](https://paradar.co.uk) in the
+UK is shipping the first run of Paradars! I have a small number ready to go,
+and enough components to make up a few more around the ongoing supply chain
+disruption. Get them while they're hot!
 
 **2020-02-25** DHL confirms that the first run of boards has _arrived in the
-UK!_ With luck, they'll be with me by the end of the week. Assuming there's no
-unexpected hardware issues, there should then be enough boards and components
-to make up the set of 10 units for the beta test group over the weekend.
+UK!_ With luck, they'll be with my distrubution partner by the end of the week.
+Assuming there's no unexpected hardware issues, there should then be enough
+boards and components to make up the set of 10 units for the beta test group
+over the weekend.
 
 Case design has also been ticking along, and my ghetto towel-covered 3D printer
 has been working overtime to print up prototypes. So many broken prototypes. 3D
@@ -189,13 +186,13 @@ embedded computer (1GHz ARM, 512MB RAM) with built-in WiFi. The software runs
 on an SD card booting Linux (based on Raspbian), which provides drivers for the
 SDR and supporting software.
 
-| Photo  | Part                | Where to buy  |
-| ------ |:--------------------| -----:|
-| pic    | Raspberry Pi Zero W | [Adafruit](https://www.adafruit.com/product/3400), [Pi Supply](https://uk.pi-supply.com/products/raspberry-pi-zero-w) |
-| pic    | paradar main PCB   | [Order on PCBway](https://www.pcbway.com/project/shareproject/paradar__a_portable__handheld_ADS_B_indicator_and_receiver.html), or [shoot me an email](mailto:blinken@gmail.com) |
-| pic    | paradar USB adapter PCB (fits the SDR neatly next to the Pi Zero)    | [Order on PCBway](https://www.pcbway.com/project/shareproject/Raspverry_Pi_Zero_USB_right_angle_adapter.html), or [shoot me an email](mailto:blinken@gmail.com) |
-| pic    | Nooelec NESDR SMArt v4 SDR | [Amazon](https://www.amazon.co.uk/Nooelec-NESDR-SMArt-SDR-R820T2-Based/dp/B01HA642SW), [Nooelec](https://www.nooelec.com/store/sdr/sdr-receivers/nesdr/nesdr-smart-sdr.html) |
-| pic    | 2x20 2.54mm header  | [RS](https://uk.rs-online.com/web/p/pcb-headers/8281563/), [Amazon](https://www.amazon.co.uk/William-Lee-2-54mm-Break-away-Header-Raspberry/dp/B07TK1CLCZ/) and many other suppliers |
+| Part                | Where to buy  |
+|:--------------------| -----:|
+| Raspberry Pi Zero W | [Adafruit](https://www.adafruit.com/product/3400), [Pi Supply](https://uk.pi-supply.com/products/raspberry-pi-zero-w) |
+| paradar main PCB   | [Order on PCBway](https://www.pcbway.com/project/shareproject/paradar__a_portable__handheld_ADS_B_indicator_and_receiver.html), or [shoot me an email](mailto:blinken@gmail.com) |
+| paradar USB adapter PCB (fits the SDR neatly next to the Pi Zero)    | [Order on PCBway](https://www.pcbway.com/project/shareproject/Raspverry_Pi_Zero_USB_right_angle_adapter.html), or [shoot me an email](mailto:blinken@gmail.com) |
+| Nooelec NESDR SMArt v4 SDR | [Amazon](https://www.amazon.co.uk/Nooelec-NESDR-SMArt-SDR-R820T2-Based/dp/B01HA642SW), [Nooelec](https://www.nooelec.com/store/sdr/sdr-receivers/nesdr/nesdr-smart-sdr.html) |
+| 2x20 2.54mm header  | [RS](https://uk.rs-online.com/web/p/pcb-headers/8281563/), [Amazon](https://www.amazon.co.uk/William-Lee-2-54mm-Break-away-Header-Raspberry/dp/B07TK1CLCZ/) and many other suppliers |
 
 The major SMD components are the PNI RM3100 high-resolution compass module, Quectel L86 GPS, and 36x WS2813A LEDs.
 
@@ -203,7 +200,9 @@ The major SMD components are the PNI RM3100 high-resolution compass module, Quec
 
 <p align="center"><img src="https://github.com/blinken/paradar/raw/master/pcb/main/v1.3/top.png" width="300"> <img src="https://github.com/blinken/paradar/raw/master/pcb/main/v1.3/bottom.png" width="300"></p>
 
-The concept here is pretty simple - securely connect a compass, GPS and LED ring to the Raspberry Pi. The board incorporates:
+The concept here is pretty simple - securely connect a compass, GPS and LED
+ring (and soon, a pressure sensor and accelerometer) to the Raspberry Pi. The
+board incorporates:
 
  * PNI RM3100 high-resolution compass module. Works well in environments with lots of electrical noise.
  * Quectel L86 GPS module with integrated antenna. GPS backup power is supplied from the main battery (speeds up GPS startup time)
@@ -234,6 +233,56 @@ times*.
 The first iteration of the design consisted of a plastic lid velcroed to a Raspberry Pi.
 </div>
 
+### Boost converter hell
+
+v1.3 was supposed to be the final design. Unfortunately, designing switch mode
+power supplies is tricker than it seems... I'd read that these are hard, but
+believed I could do better. Obviously.
+
+In v1.3, the ground return from the -ve terminal of the output capacitor had a
+poor connection to the power ground on the boost converter. As a result,
+sometimes a boost converter would work: and sometimes they'd fry their MOSFET
+within a few seconds. The failure mode would be to short battery voltage to
+ground, which made things _even more sad_.
+
+It was really challenging to figure this out. I considered buying a FLIR camera
+to look at current flows, I was that desperate. But careful deduction and
+elimination saved the day (desoldering components one by one until the short
+went away), and I was then able to show that a wire soldered between the two
+problematic components reduced the failure rate (though not to zero). In the
+process I replaced and then instantly fried 9 boost converters on the same
+board.
+
+As a result, v1.4 features a redesigned boost converter layout. There's still
+some compromises (ground return is across the other side of the board), but I
+was unwilling to change too much at the risk of introducing another bug. It
+works. I also swapped the 22uF ceramic caps for 47uF everywhere to keep the
+ripple <80mV at idle. They're basically the same price in 1206.
+
+<div align="center">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.3-boost-converter.png" width="300">
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4-boost-converter.png" width="300"><br/>
+v1.3 boost converter design (left) compared with v1.4. The ground path back to the boost converter is via the other side of the board.
+</div>
+
+tl;dr - boost converters are REALLY HARD THEY WILL DRIVE YOU INSANE
+
+### Other learnings
+
+ * Sourcing components in the middle of a global pandemic makes me sad.
+ * Soldering a WS2813 LED sideways shorts +5V to ground, and turns the LED
+   power trace into a resistive heater. A board at 200 degrees Celcius melts a
+   PETG case.
+ * Designing against components available from RS in the UK means that assembly
+   in China will be a challenge :'(
+ * Soldering USB-C connectors is a nightmare. I tried two manufacturers and
+   still can't get soldering reliable, using a stencil and an oven. I gave up
+   and delegated to the professionals. :{
+ * Scope creep
+
+<p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/toaster-oven.jpg" width="600"><br/>
+Wonder what this is for? Hint, not chicken</p>
+
 ## USB adapter PCB
 
 <p align="center"><img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/top.png" width="300"> <img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/bottom.png" width="300"></p>
@@ -252,22 +301,44 @@ There's pads here for a resistor and a power indicator LED (connected to
 USB VBUS, not Pi power input), but these probably won't be populated in the
 finished product to reduce power consumption on battery.
 
+<p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/tiny-wires.jpg" width="600"><br/>
+Manually soldering tiny wires. So many tiny wires. Don't do this.</p>
+
 ## Case
 
 The case is 3D printed and follows the shape of the board. It incorporates a
 hole to permit easy removal of the SD card, slot for the power switch, and a
 hole for the antenna connector off the SDR. The lid has countersunk screw holes
-for M3 hex screws.
+for M3 hex screws, and the base 4mm shafts to hold brass inserts for the M3 threads.
 
-Dimensions without antenna are 90mm x 84mm x 30mm. The antenna connector is
+Dimensions without antenna are 88 x 88 x 30mm. The antenna connector is
 SMA, and the included antenna is 110mm in length with a flexible elbow.
 
 Both bottom and lid are 3D-printed in PETG (the lid is translucent). This is
-resistant to most solvents and fuels, though the case is not waterproof
+resistant to most solvents and fuels, though the case is not waterproof (see also, scope creep above).
+
+The case was arrived at after a lot of iterations (and teaching myself to use
+Blender). My trusty Anycubic Mega-S churned out prototypes, and was a
+gamechanger in terms of rapid iteration. For finished cases, we're using
+[Midlands 3D](https://midlands3d.com) - I can't recommend them enough, their
+prints are fantastic.
+
+The current iteration of the case features posts to support the switch and hold
+the PCB up, plus posts in the lid to hold the PCB down (so it's sandwiched in a
+fixed position). The SDR (which gets hot) is separated from the battery by a
+small tab. The lid locks to the base to permit easy assembly, and there's a
+hole to give access to the SD card to permit firmware upgrades in the field.
+
+<p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/bag-o-cases.jpg" width="600"><br/>
+It took a lot of iteration to get here.</p>
+
+<p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/case-wireframe.png" width="600"></p>
 
 # Support, bug reports, and feedback
 
 Feedback is particularly welcome. Please raise an issue on [GitHub](https://github.com/blinken/paradar/issues).
+
+You can find the user manual [here](https://github.com/blinken/paradar/blob/master/doc/user-manual.md).
 
 # Buy a paradar
 
@@ -275,39 +346,10 @@ Feedback is particularly welcome. Please raise an issue on [GitHub](https://gith
 you are indicating that you have read and agree to the disclaimer and
 license.**
 
-You can find the user manual [here](https://github.com/blinken/paradar/blob/master/doc/user-manual.md).
-
-paradar is an open hardware project, and you can build it yourself. I also sell
-pre-assembled units.
-
-You have two options for case colour: bright yellow or classy blue.
-
-**The very first production run of units is currently shipping with a 30%
-earlybird discount. The discount will last only until these units sell out!**
-
-Blue case:
-
-[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=53CTQ8R4HXTSU) (~~£339~~ £229, free UK shipping)
-
-[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WQHX3FT54GMVG) (~~£339~~ £229 + £5 international shipping)
-
-Yellow case:
-
-[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=PGKHTJ3QJBBHL) (~~£339~~ £229, free UK shipping)
-
-[![paypal](https://www.paypalobjects.com/en_GB/i/btn/btn_buynow_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=G5KVQCLE667JE) (~~£339~~ £229 + £5 international shipping)
-
-Each paradar comes assembled in a 3D-printed case with an 11cm (2dBi) antenna
-and usage instructions.  Software updates will be made available via this
-project page, and will require some technical knowledge to install
-(alternatively, an update service will be available).  First-class shipping to
-the UK is free.
-
-Please <a href="mailto:blinken@gmail.com">contact me</a> for bulk order
-discounts and distribution information.
-
-Coming soon - individual components, high-gain antennas, and more. For now,
-contact me if you're interested in these.
+I don't sell or distribute these devices - I only maintain the open source
+project. [paradar.co.uk](https://paradar.co.uk) manufactures paradar units,
+comes recommended by me, and you can grab one on their website! Discounts are
+available for volume purchases.
 
 # Disclaimer and license
 
