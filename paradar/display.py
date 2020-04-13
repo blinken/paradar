@@ -70,7 +70,7 @@ class Display:
   # Don't display aircraft closer than this distance (they're probably our own
   # ADS-B transmitter), and clamp the home location indicator to 180 degrees.
   # This is to avoid display jitter - GPS isn't much more accurate than 5m.
-  _IGNORE_CLOSER_THAN = 15
+  _IGNORE_CLOSER_THAN = 15.0/1000 # 15m
 
   _TEST_COLOURS = (
     (255,0,0),     # R
