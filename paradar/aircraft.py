@@ -167,13 +167,18 @@ class Aircraft:
         if ac_data.get("version", None) == 1 or ac_data.get("version", None) == 2:
           ac_data["nac_v"] = adsb.nac_v(msg_hex)
 
-        (speed, track, climb, speed_source, track_source, climb_source) = adsb.velocity(msg_hex, rtn_sources=True)
-        ac_data["speed_h"] = speed
-        ac_data["track"] = track
-        ac_data["speed_v"] = climb
-        ac_data["speed_h_source"] = speed_source
-        ac_data["track_source"] = track_source
-        ac_data["speed_v_source"] = climb_source
+        try:
+          (speed, track, climb, speed_source, track_source, climb_source) = adsb.velocity(msg_hex, rtn_sources=True)
+          ac_data["speed_h"] = speed
+          ac_data["track"] = track
+          ac_data["speed_v"] = climb
+          ac_data["speed_h_source"] = speed_source
+          ac_data["track_source"] = track_source
+          ac_data["speed_v_source"] = climb_source
+        except TypeError:
+          # adsb.velocity can return None
+          raise ValueError
+
       elif type_code == 31:
         # Operational status
         version = adsb.version(msg_hex)
