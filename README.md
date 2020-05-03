@@ -5,7 +5,7 @@
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7983-800.png"><br/>
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7979-800.png"><br/>
 <br/>
-<del>£339</del> <b>£229 <a href="https://paradar.co.uk">Click here to buy a paradar</a></b><br/>
+<del>£339</del> <b>£299 <a href="https://paradar.co.uk">Click here to buy a paradar!</a></b><br/>
 <br/><br/>
 </div>
 
@@ -26,27 +26,13 @@ It can be used standalone (with or without a phone or tablet), on the ground as
 a handheld compass that indicates air traffic, or in the air on your flight
 deck to improve your situational awareness.
 
-paradar receives ADS-B, the international standard for aircraft surveillance.
-Support for the Open Glider Network (via a free software update) and possibly
-integrated FLARM (to see and be seen by other ultralight pilots) is planned in
-the future.
-
-This is a receive-only device: it doesn't transmit your location to other
-aircraft. For receive and transmit functionality in the UK, pairing paradar with the
-[uAvionix SkyEcho2](https://uavionix.com/products/skyecho/) ADS-B transmitter
-gives you a highly portable and inexpensive setup with a convenient display,
-suitable for paraglider, ultralight and fixed wing pilots.
-
-paradar is open hardware and open source software under the GNU General
-Public License, which means all the design files and source code are
-available here for you to download. If you have the ability to solder SMD
-devices and 3D print a case, then you can build it yourself. [Bug reports, feedback](https://github.com/blinken/paradar/issues)
-or patches to improve the software are always welcome.
-
-**Project status:** My manufacturing and distribution partner over at
-paradar.co.uk is now shipping the first production run of devices! This is
-super exciting - it's been a very long road to get to this point. Supplies are
-limited, so **[click here to grab one before they sell out!](https://paradar.co.uk)**
+Paradar is the result of a short two-week project that grew into a monster. I
+fly in a busy area, and I wanted to see aircraft in the sky around me - and the
+displays in apps designed for fixed-wing pilots are tricky to read while flying
+an ultralight. Paradar started out as a Raspberry Pi attached to a USB
+software-defined radio dongle, and some LEDs from Amazon. Six months later,
+it's now a professionally manufactured PCB and case that fits in the palm of
+your hand. The journey to get here was long and arduous. Read more below.
 
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/gif/animated-800.gif"><br/>
@@ -57,14 +43,20 @@ limited, so **[click here to grab one before they sell out!](https://paradar.co.
 
 ### Hardware
 
+**2020-05-03** Not too much to report recently: I'm mostly waiting for
+manufactured PCBs from PCBWay to arrive. They're making progress, which is
+good - but COVID-19 is causing huge delays. Assembled boards should ship soon -
+then I get to do a ton of testing!
+
 **2020-03-29** A lot of work this week to finalise assembly, fix bugs after
 feedback from the beta testers, and start the process of finding someone I can
 outsource the PCB manufacture to. To put together the first few boards I'm
 working with [PCBWay](https://www.pcbway.com/pcb-service.html) (click for some
-neat videos) in Shenzhen, China, who are a large PCB manufacturer and assembler - alongside a distributor in the UK to sell and source the devices. It's been a
-pretty straightforward experience working with them so far - most of the pain
-has been around sourcing parts, but we've settled on a final BOM that they say
-they can deliver.
+neat videos) in Shenzhen, China, who are a large PCB manufacturer and assembler - alongside
+a distributor in the UK to sell and source the devices. It's been a pretty
+straightforward experience working with them so far - most of the pain has been
+around sourcing parts, but we've settled on a final BOM that they say they can
+deliver.
 
 Obviously the massive global disruption from COVID-19 is causing a few
 headaches, mostly around shipping and delivery of parts - getting certain
@@ -194,7 +186,7 @@ SDR and supporting software.
 | Nooelec NESDR SMArt v4 SDR | [Amazon](https://www.amazon.co.uk/Nooelec-NESDR-SMArt-SDR-R820T2-Based/dp/B01HA642SW), [Nooelec](https://www.nooelec.com/store/sdr/sdr-receivers/nesdr/nesdr-smart-sdr.html) |
 | 2x20 2.54mm header  | [RS](https://uk.rs-online.com/web/p/pcb-headers/8281563/), [Amazon](https://www.amazon.co.uk/William-Lee-2-54mm-Break-away-Header-Raspberry/dp/B07TK1CLCZ/) and many other suppliers |
 
-The major SMD components are the PNI RM3100 high-resolution compass module, Quectel L86 GPS, and 36x WS2813A LEDs.
+The major SMD components are the PNI RM3100 high-resolution compass module, Quectel L86 GPS, and 36x WS2813 LEDs.
 
 ## Main PCB / Pi shield
 
@@ -206,7 +198,7 @@ board incorporates:
 
  * PNI RM3100 high-resolution compass module. Works well in environments with lots of electrical noise.
  * Quectel L86 GPS module with integrated antenna. GPS backup power is supplied from the main battery (speeds up GPS startup time)
- * A ring of WS2813A programmable LEDs. These are very, very bright (2300mcd white, 480mcd red) and all LEDs can be easily controlled with one GPIO pin.
+ * A ring of WS2813 programmable LEDs. These are very, very bright (2300mcd white, 480mcd red) and all LEDs can be easily controlled with one GPIO pin.
  * 6-way DIP switch connected to Pi GPIO pins, to allow the user to configure the device in the field.
  * USB-C power supply with TPS61090 boost converter and MCP73871 LiPo battery charger. Allows powering the unit via USB-C @ 5V/2A (with the battery providing for load spikes if necessary), battery charging, and powering direct from battery. The TPS61090 handles the boost of battery voltage (~3V) to the 5V required by the Raspberry Pi. Includes a resettable fuse and a TVS diode to absorb voltage spikes on the USB line.
  * LEDs to indicate USB power connected, charging, charge done, low battery.
@@ -215,19 +207,11 @@ board incorporates:
  * A variety of jumpers exposing GPIOs, power lines, serial & SPI to allow future expansion.
  * Mounting holes to suit an undermounted Pi 3 A+ or Pi Zero.
 
-This board makes a neat Raspberry Pi shield for a project needing a compass,
-GPS and LED display. Contact me if you'd like one separately from the rest of
-the project.
-
-It turns out getting this board right was harder than expected. After mocking
-up the design using components from Amazon velcroed to a plastic lid, the
-initial board design simply held together those components. Then scope creep
-set in... and before I knew it there's LEDs incorporated on the board and a
-switchmode power supply (schematic loosely based off the [Adafruit PowerBoost 1000C](https://learn.adafruit.com/adafruit-powerboost-1000c-load-share-usb-charge-boost/downloads))
-with QFN20 ICs. Soldering those was a journey through pain.
-
-I got the SPI MISO/MOSI pins for the compass backwards *no less than three
-times*.
+The first mockup featured a few components from Amazon velcroed to a plastic
+lid. I figured I'd get a PCB made to make things nicer. Then scope creep and
+silly mistakes crept in... and five board revisions later there's 36 LEDs and a
+switchmode power supply with QFN20 ICs. I got the SPI MISO/MOSI pins for the
+compass backwards *no less than three times*.
 
 <div align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/paradar-prototype-201911-600.png" width="600"><br/>
 The first iteration of the design consisted of a plastic lid velcroed to a Raspberry Pi.
@@ -235,49 +219,57 @@ The first iteration of the design consisted of a plastic lid velcroed to a Raspb
 
 ### Boost converter hell
 
-v1.3 was supposed to be the final design. Unfortunately, designing switch mode
-power supplies is tricker than it seems... I'd read that these are hard, but
-believed I could do better. Obviously.
+The original design used an off-board modular power supply; I decided I wanted
+to incorporate it onto the main PCB, to reduce weight and size. My friends all
+told me that switchmode design was hard (as if I was going to listen to that).
+I threw a design together based loosely on the Adafruit PowerBoost and sent it
+off to be manufactured. Without bothering to test it first.
 
-In v1.3, the ground return from the -ve terminal of the output capacitor had a
+Hubris caught up with me: it turns out, board layout matters. In board version
+1.3, the ground return from the negative terminal of the output capacitor had a
 poor connection to the power ground on the boost converter. As a result,
-sometimes a boost converter would work: and sometimes they'd fry their MOSFET
-within a few seconds. The failure mode would be to short battery voltage to
-ground, which made things _even more sad_.
+sometimes the boost converter would work perfectly: and sometimes it would fry
+the IC's internal MOSFET after an hour or so. The dead boost converter would short
+battery voltage to ground, which made things even more sad (read: toasty).
+_Dear TI: this is an incredibly unhelpful failure mode._
 
-It was really challenging to figure this out. I considered buying a FLIR camera
-to look at current flows, I was that desperate. But careful deduction and
-elimination saved the day (desoldering components one by one until the short
-went away), and I was then able to show that a wire soldered between the two
-problematic components reduced the failure rate (though not to zero). In the
-process I replaced and then instantly fried 9 boost converters on the same
-board.
+I spent weeks debugging this problem, because it presented as a short on the 5V
+bus that only appeared after some time in operation, about 50% of the time. I
+was so desperate I considered buying a FLIR camera to look at current flows to
+locate the problem.  But careful deduction and my hot air rework station saved
+the day (desoldering components one by one until the short went away), and I
+was then able to show that a wire soldered between the two problematic
+components reduced the failure rate (though not to zero). In one evening I
+replaced and then instantly fried 9 boost converters on the same board. They
+cost $3 each. It hurt.
 
-As a result, v1.4 features a redesigned boost converter layout. There's still
+As a result, board v1.4 features a redesigned boost converter layout. There's
 some compromises (ground return is across the other side of the board), but I
 was unwilling to change too much at the risk of introducing another bug. It
-works. I also swapped the 22uF ceramic caps for 47uF everywhere to keep the
-ripple <80mV at idle. They're basically the same price in 1206.
+works so well and I am so happy.
 
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.3-boost-converter.png" width="300">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4-boost-converter.png" width="300"><br/>
-v1.3 boost converter design (left) compared with v1.4. The ground path back to the boost converter is via the other side of the board.
+v1.3 boost converter design (left) compared with v1.4. The ground path back to
+the boost converter is now via the other side of the board: this isn't ideal
+from a noise perspective, but there weren't easier solutions without a larger
+redesign.
 </div>
 
-tl;dr - boost converters are REALLY HARD THEY WILL DRIVE YOU INSANE
+tl;dr - boost converters are REALLY HARD THEY WILL DRIVE YOU INSANE >:{
 
 ### Other learnings
 
  * Sourcing components in the middle of a global pandemic makes me sad.
  * Soldering a WS2813 LED sideways shorts +5V to ground, and turns the LED
-   power trace into a resistive heater. A board at 200 degrees Celcius melts a
-   PETG case.
- * Designing against components available from RS in the UK means that assembly
-   in China will be a challenge :'(
- * Soldering USB-C connectors is a nightmare. I tried two manufacturers and
-   still can't get soldering reliable, using a stencil and an oven. I gave up
-   and delegated to the professionals. :{
+   power trace into a resistive heater. A board at 200 degrees Celcius for an
+   hour effectively liquifies a PETg plastic case.
+ * Designing against components commonly available from RS in the UK means that
+   assembly in China will be a challenge :'(
+ * Soldering USB-C connectors using anything at home is a nightmare. I tried
+   two manufacturers and still can't get soldering reliable, using a stainless
+   steel stencil and an oven. I gave up and outsourced manufacturing.
  * Scope creep
 
 <p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/toaster-oven.jpg" width="600"><br/>
@@ -287,19 +279,17 @@ Wonder what this is for? Hint, not chicken</p>
 
 <p align="center"><img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/top.png" width="300"> <img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/bottom.png" width="300"></p>
 
-To get a super compact case, the USB connection needs to make a sharp
-right-hand bend so the SDR can sit neatly alongside the Pi. USB cables have a
-huge amount of plastic moulded strain relief and don't fit, despite my best
-efforts scouring Amazon and attacking cables with pliers. This board connects
+To get a more compact case, the USB connection needs to make a sharp
+right-hand bend so the SDR can sit neatly alongside the Pi. Does anyone make a
+tight right-hand USB adapter? Of course not; people want pink android-shaped
+USB adapters. And the market [provides](https://www.amazon.co.uk/gp/product/B07F94DS6X). USB cables have a
+huge amount of plastic moulded strain relief and just don't fit, despite my best
+efforts scouring Amazon and attacking cables with pliers. So this board connects
 to both Pi Zero microUSB ports and exposes a compact USB A socket for the SDR.
 
 The Pi Zero's power input port (the one closer to the edge of the board) is not
 connected - it's just used for mechanical support. The Pi is powered via the
 GPIO pins connected to the main PCB.
-
-There's pads here for a resistor and a power indicator LED (connected to
-USB VBUS, not Pi power input), but these probably won't be populated in the
-finished product to reduce power consumption on battery.
 
 <p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/tiny-wires.jpg" width="600"><br/>
 Manually soldering tiny wires. So many tiny wires. Don't do this.</p>
@@ -311,22 +301,25 @@ hole to permit easy removal of the SD card, slot for the power switch, and a
 hole for the antenna connector off the SDR. The lid has countersunk screw holes
 for M3 hex screws, and the base 4mm shafts to hold brass inserts for the M3 threads.
 
+I learned how to use Blender to make this. I use the word "learned" loosely.
+
 Dimensions without antenna are 88 x 88 x 30mm. The antenna connector is
 SMA, and the included antenna is 110mm in length with a flexible elbow.
 
-Both bottom and lid are 3D-printed in PETG (the lid is translucent). This is
-resistant to most solvents and fuels, though the case is not waterproof (see also, scope creep above).
+Both bottom and lid are 3D-printed in PETg (the lid is translucent). This is
+resistant to most solvents and fuels, though the case is not waterproof. Maybe
+in a future version (scope creep!).
 
-The case was arrived at after a lot of iterations (and teaching myself to use
-Blender). My trusty Anycubic Mega-S churned out prototypes, and was a
-gamechanger in terms of rapid iteration. For finished cases, we're using
-[Midlands 3D](https://midlands3d.com) - I can't recommend them enough, their
-prints are fantastic.
+The case was arrived at after a lot of iterations. Obviously I justified buying
+a 3D printer for this project (my trusty Anycubic Mega-S) and it churned out
+prototypes, and was a gamechanger in terms of rapid iteration. For cases I'm
+actually willing to send to someone else, cases, we're using [Midlands 3D](https://midlands3d.com) - I can't recommend them enough, their prints are
+fantastic and their prices are reasonable.
 
-The current iteration of the case features posts to support the switch and hold
-the PCB up, plus posts in the lid to hold the PCB down (so it's sandwiched in a
-fixed position). The SDR (which gets hot) is separated from the battery by a
-small tab. The lid locks to the base to permit easy assembly, and there's a
+The current iteration of the case features posts to support the switch and
+support the PCB, plus posts in the lid to hold the PCB down (so it's sandwiched
+in a fixed position). The SDR (which gets hot) is kept separat from the battery by
+a small tab. The lid locks to the base to permit easy assembly, and there's a
 hole to give access to the SD card to permit firmware upgrades in the field.
 
 <p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/bag-o-cases.jpg" width="600"><br/>
@@ -336,7 +329,10 @@ It took a lot of iteration to get here.</p>
 
 # Support, bug reports, and feedback
 
-Feedback is particularly welcome. Please raise an issue on [GitHub](https://github.com/blinken/paradar/issues).
+I'm still in really early stages here, and if you have thoughts (partiuclarly
+if you fly fixed-wing or ultralight aircraft, or drones) I'd love to hear from
+you. [Shoot me an email](mailto:blinken@gmail.com), or [raise an issue on
+GitHub](https://github.com/blinken/paradar/issues).
 
 You can find the user manual [here](https://github.com/blinken/paradar/blob/master/doc/user-manual.md).
 
