@@ -27,12 +27,12 @@ a handheld compass that indicates air traffic, or in the air on your flight
 deck to improve your situational awareness.
 
 Paradar is the result of a short two-week project that grew into a monster. I
-fly in a busy area, and I wanted to see aircraft in the sky around me - and the
-displays in apps designed for fixed-wing pilots are tricky to read while flying
+fly in a busy area, and I wanted to see aircraft in the sky around me - and
+apps designed for fixed-wing pilots are tricky to read while flying
 an ultralight. Paradar started out as a Raspberry Pi attached to a USB
 software-defined radio dongle, and some LEDs from Amazon. Six months later,
 it's now a professionally manufactured PCB and case that fits in the palm of
-your hand. The journey to get here was long and arduous. Read more below.
+your hand. The journey to get here was [long and arduous.](#design)
 
 <div align="center">
 <img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/gif/animated-800.gif"><br/>
@@ -207,8 +207,8 @@ board incorporates:
  * A variety of jumpers exposing GPIOs, power lines, serial & SPI to allow future expansion.
  * Mounting holes to suit an undermounted Pi 3 A+ or Pi Zero.
 
-The first mockup featured a few components from Amazon velcroed to a plastic
-lid. I figured I'd get a PCB made to make things nicer. Then scope creep and
+**The first mockup featured a few components from Amazon velcroed to a plastic
+lid.** I figured I'd get a PCB made to make things nicer. Then scope creep and
 silly mistakes crept in... and five board revisions later there's 36 LEDs and a
 switchmode power supply with QFN20 ICs. I got the SPI MISO/MOSI pins for the
 compass backwards *no less than three times*.
@@ -255,13 +255,14 @@ v1.3 boost converter design (left) compared with v1.4. The ground path back to
 the boost converter is now via the other side of the board: this isn't ideal
 from a noise perspective, but there weren't easier solutions without a larger
 redesign.
+<br/>
 </div>
 
 tl;dr - boost converters are REALLY HARD THEY WILL DRIVE YOU INSANE >:{
 
 ### Other learnings
 
- * Sourcing components in the middle of a global pandemic makes me sad.
+ * Sourcing components in the middle of a global pandemic is hard.
  * Soldering a WS2813 LED sideways shorts +5V to ground, and turns the LED
    power trace into a resistive heater. A board at 200 degrees Celcius for an
    hour effectively liquifies a PETg plastic case.
@@ -282,10 +283,9 @@ Wonder what this is for? Hint, not chicken</p>
 To get a more compact case, the USB connection needs to make a sharp
 right-hand bend so the SDR can sit neatly alongside the Pi. Does anyone make a
 tight right-hand USB adapter? Of course not; people want pink android-shaped
-USB adapters. And the market [provides](https://www.amazon.co.uk/gp/product/B07F94DS6X). USB cables have a
-huge amount of plastic moulded strain relief and just don't fit, despite my best
-efforts scouring Amazon and attacking cables with pliers. So this board connects
-to both Pi Zero microUSB ports and exposes a compact USB A socket for the SDR.
+USB adapters. And the market [provides](https://www.amazon.co.uk/gp/product/B07F94DS6X). 
+So this board connects to both Pi Zero microUSB ports and exposes a compact USB
+A socket for the SDR.
 
 The Pi Zero's power input port (the one closer to the edge of the board) is not
 connected - it's just used for mechanical support. The Pi is powered via the
@@ -310,7 +310,7 @@ Both bottom and lid are 3D-printed in PETg (the lid is translucent). This is
 resistant to most solvents and fuels, though the case is not waterproof. Maybe
 in a future version (scope creep!).
 
-The case was arrived at after a lot of iterations. Obviously I justified buying
+The case was arrived at after a lot of iterations. Obviously I justified (I use the word "justified" loosely) buying
 a 3D printer for this project (my trusty Anycubic Mega-S) and it churned out
 prototypes, and was a gamechanger in terms of rapid iteration. For cases I'm
 actually willing to send to someone else, cases, we're using [Midlands 3D](https://midlands3d.com) - I can't recommend them enough, their prints are
@@ -318,7 +318,7 @@ fantastic and their prices are reasonable.
 
 The current iteration of the case features posts to support the switch and
 support the PCB, plus posts in the lid to hold the PCB down (so it's sandwiched
-in a fixed position). The SDR (which gets hot) is kept separat from the battery by
+in a fixed position). The SDR (which gets hot) is kept separated from the battery by
 a small tab. The lid locks to the base to permit easy assembly, and there's a
 hole to give access to the SD card to permit firmware upgrades in the field.
 
@@ -337,6 +337,8 @@ GitHub](https://github.com/blinken/paradar/issues).
 You can find the user manual [here](https://github.com/blinken/paradar/blob/master/doc/user-manual.md).
 
 # Buy a paradar
+
+[Click here to buy one!](https://paradar.co.uk)
 
 **Please read the disclaimer and license section below. By purchasing paradar,
 you are indicating that you have read and agree to the disclaimer and
@@ -359,19 +361,19 @@ on it when flying in any conditions.**
 all applicable laws.**
 
 
-Copyright (C) 2020 Patrick Coleman
-
-paradar is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 3 of the License, or
-(at your option) any later version.
-
-paradar is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+    Copyright (C) 2020 Patrick Coleman
+    
+    paradar is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    
+    paradar is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
