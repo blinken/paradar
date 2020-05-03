@@ -179,22 +179,29 @@ on an SD card booting Linux (based on Raspbian), which provides drivers for the
 SDR and supporting software.
 
 | Part                | Where to buy  |
-|:--------------------| -----:|
+|:--------------------| -------------:|
 | Raspberry Pi Zero W | [Adafruit](https://www.adafruit.com/product/3400), [Pi Supply](https://uk.pi-supply.com/products/raspberry-pi-zero-w) |
 | paradar main PCB   | [Order on PCBway](https://www.pcbway.com/project/shareproject/paradar__a_portable__handheld_ADS_B_indicator_and_receiver.html), or [shoot me an email](mailto:blinken@gmail.com) |
-| paradar USB adapter PCB (fits the SDR neatly next to the Pi Zero)    | [Order on PCBway](https://www.pcbway.com/project/shareproject/Raspverry_Pi_Zero_USB_right_angle_adapter.html), or [shoot me an email](mailto:blinken@gmail.com) |
+| paradar USB adapter PCB (fits the SDR neatly next to the Pi Zero)  | [Order on PCBway](https://www.pcbway.com/project/shareproject/Raspverry_Pi_Zero_USB_right_angle_adapter.html), or [shoot me an email](mailto:blinken@gmail.com) |
 | Nooelec NESDR SMArt v4 SDR | [Amazon](https://www.amazon.co.uk/Nooelec-NESDR-SMArt-SDR-R820T2-Based/dp/B01HA642SW), [Nooelec](https://www.nooelec.com/store/sdr/sdr-receivers/nesdr/nesdr-smart-sdr.html) |
 | 2x20 2.54mm header  | [RS](https://uk.rs-online.com/web/p/pcb-headers/8281563/), [Amazon](https://www.amazon.co.uk/William-Lee-2-54mm-Break-away-Header-Raspberry/dp/B07TK1CLCZ/) and many other suppliers |
+| Battery | [RS](https://uk.rs-online.com/mobile/p/family-id/1251266/), [TME](https://www.tme.eu/en/details/accu-lp654060_cl/rechargeable-batteries/cellevia-batteries/) |
+| Power switch | [RS](https://uk.rs-online.com/web/p/slide-switches/7347328/) |
+| 3D-printed case | [Design files](https://github.com/blinken/paradar/tree/master/case) |
 
 The major SMD components are the PNI RM3100 high-resolution compass module, Quectel L86 GPS, and 36x WS2813 LEDs.
 
 ## Main PCB / Pi shield
 
-<p align="center"><img src="https://github.com/blinken/paradar/raw/master/pcb/main/v1.3/top.png" width="300"> <img src="https://github.com/blinken/paradar/raw/master/pcb/main/v1.3/bottom.png" width="300"></p>
+<p align="center"><img src="https://github.com/blinken/paradar/raw/master/pcb/main/v1.5/paradar-v1.5-top.png" width="300"> <img src="https://github.com/blinken/paradar/raw/master/pcb/main/v1.5/paradar-v1.5-bottom.png" width="300"></p>
+
+ * [v1.5 gerbers](https://github.com/blinken/paradar/raw/master/pcb/main/v1.5/paradar-v1.5.zip)
+ * [v1.5 schematic](https://github.com/blinken/paradar/raw/master/pcb/main/v1.5/paradar-v1.5-schematic.pdf)
+ * [v1.5 BOM](https://github.com/blinken/paradar/raw/master/pcb/main/v1.5/20200325-paradar-v1.5-pcbway-bom.xlsx)
 
 The concept here is pretty simple - securely connect a compass, GPS and LED
-ring (and soon, a pressure sensor and accelerometer) to the Raspberry Pi. The
-board incorporates:
+ring (and in version 1.5, a pressure sensor and accelerometer) to the Raspberry
+Pi. The board incorporates:
 
  * PNI RM3100 high-resolution compass module. Works well in environments with lots of electrical noise.
  * Quectel L86 GPS module with integrated antenna. GPS backup power is supplied from the main battery (speeds up GPS startup time)
@@ -282,6 +289,8 @@ Wonder what this is for? Hint, not chicken</p>
 
 <p align="center"><img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/top.png" width="300"> <img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/bottom.png" width="300"></p>
 
+ * [v1.2b gerbers and board renders](https://github.com/blinken/paradar/tree/master/pcb/pizero-usb-rightangle/v1.2b-panelised)
+
 To get a more compact case, the USB connection needs to make a sharp
 right-hand bend so the SDR can sit neatly alongside the Pi. Does anyone make a
 tight right-hand USB adapter? Of course not; people want pink android-shaped
@@ -299,9 +308,10 @@ Manually soldering tiny wires. So many tiny wires. Don't do this.</p>
 ## Case
 
 The case is 3D printed and follows the shape of the board. It incorporates a
-hole to permit easy removal of the SD card, slot for the power switch, and a
-hole for the antenna connector off the SDR. The lid has countersunk screw holes
-for M3 hex screws, and the base 4mm shafts to hold brass inserts for the M3 threads.
+hole to permit easy removal of the SD card (filled with a [rubber grommet](https://www.amazon.co.uk/Metric-Rubber-Closed-Blanking-Grommets/dp/B07P73Z7KK) ),
+slot for the power switch, and a hole for the antenna connector off the SDR.
+The lid has holes for [M3 hex screws](https://uk.rs-online.com/web/p/socket-screws/4679818/),
+and the base 4mm shafts to hold [brass inserts](https://uk.farnell.com/tr-fastenings/m3-uhbrxpsf/brass-insert-unheaded-m3/dp/2474926) for the M3 threads.
 
 I learned how to use Blender to make this. I use the word "learned" loosely.
 
@@ -312,11 +322,12 @@ Both bottom and lid are 3D-printed in PETg (the lid is translucent). This is
 resistant to most solvents and fuels, though the case is not waterproof. Maybe
 in a future version (scope creep!).
 
-The case was arrived at after a lot of iterations. Obviously I justified (I use the word "justified" loosely) buying
-a 3D printer for this project (my trusty Anycubic Mega-S) and it churned out
-prototypes, and was a gamechanger in terms of rapid iteration. For cases I'm
-actually willing to send to someone else, cases, we're using [Midlands 3D](https://midlands3d.com) - I can't recommend them enough, their prints are
-fantastic and their prices are reasonable.
+The case was arrived at after a lot of iterations. Obviously I justified (I use
+the word "justified" loosely) buying a 3D printer for this project (my trusty
+Anycubic Mega-S) and it churned out prototypes, and was a gamechanger in terms
+of rapid iteration. For cases I'm actually willing to send to someone else,
+cases, we're using [Midlands 3D](https://midlands3d.com) - I can't recommend
+them enough, their prints are fantastic and their prices are reasonable.
 
 The current iteration of the case features posts to support the switch and
 support the PCB, plus posts in the lid to hold the PCB down (so it's sandwiched
