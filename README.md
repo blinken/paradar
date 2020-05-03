@@ -311,8 +311,10 @@ Manually soldering tiny wires. So many tiny wires. Don't do this.</p>
 
 ## Case
 
+<p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/case-wireframe.png" width="600"></p>
+
 The case is 3D printed and follows the shape of the board. It incorporates a
-hole to permit easy removal of the SD card (filled with a [rubber grommet](https://www.amazon.co.uk/Metric-Rubber-Closed-Blanking-Grommets/dp/B07P73Z7KK) ),
+hole to permit easy removal of the SD card (filled with a [rubber grommet](https://www.amazon.co.uk/Metric-Rubber-Closed-Blanking-Grommets/dp/B07P73Z7KK)),
 slot for the power switch, and a hole for the antenna connector off the SDR.
 The lid has holes for [M3 hex screws](https://uk.rs-online.com/web/p/socket-screws/4679818/),
 and the base 4mm shafts to hold [brass inserts](https://uk.farnell.com/tr-fastenings/m3-uhbrxpsf/brass-insert-unheaded-m3/dp/2474926) for the M3 threads.
@@ -329,11 +331,9 @@ in a future version (scope creep!).
 The case was arrived at after a lot of iterations. Obviously I justified (I use
 the word "justified" loosely) buying a 3D printer for this project (my trusty
 Anycubic Mega-S) and it churned out prototypes, and was a gamechanger in terms
-of rapid iteration. For cases I'm actually willing to send to someone else,
-cases, we're using [Midlands 3D](https://midlands3d.com) - I can't recommend
-them enough, their prints are fantastic and their prices are reasonable.
+of rapid iteration.
 
-The current iteration of the case features posts to support the switch and
+The current version of the case features posts to support the switch and
 support the PCB, plus posts in the lid to hold the PCB down (so it's sandwiched
 in a fixed position). The SDR (which gets hot) is kept separated from the battery by
 a small tab. The lid locks to the base to permit easy assembly, and there's a
@@ -341,8 +341,6 @@ hole to give access to the SD card to permit firmware upgrades in the field.
 
 <p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/bag-o-cases.jpg" width="600"><br/>
 It took a lot of iteration to get here.</p>
-
-<p align="center"><img src="https://github.com/blinken/paradar/raw/master/doc/images/case-wireframe.png" width="600"></p>
 
 # Support, bug reports, and feedback
 
