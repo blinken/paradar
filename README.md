@@ -266,7 +266,7 @@ tl;dr - boost converters are REALLY HARD THEY WILL DRIVE YOU INSANE >:{
  * Testing a device that detects aircraft - when there are no aircraft flying due to aforementioned pandemic - is also hard.
  * Soldering a WS2813 LED sideways shorts +5V to ground, and turns the LED
    power trace into a resistive heater. A board at 200 degrees Celcius for an
-   hour effectively liquifies a PETg plastic case.
+   hour effectively liquifies a PETg plastic case (on the upside, the power supply worked great)
  * Designing against components commonly available from RS in the UK means that
    assembly in China will be a challenge :'(
  * Soldering USB-C connectors using anything at home is a nightmare. I tried
