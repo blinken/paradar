@@ -256,6 +256,7 @@ the boost converter is now via the other side of the board: this isn't ideal
 from a noise perspective, but there weren't easier solutions without a larger
 redesign.
 <br/>
+<br/>
 </div>
 
 tl;dr - boost converters are REALLY HARD THEY WILL DRIVE YOU INSANE >:{
