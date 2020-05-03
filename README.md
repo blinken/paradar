@@ -287,7 +287,11 @@ Wonder what this is for? Hint, not chicken</p>
 
 ## USB adapter PCB
 
-<p align="center"><img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/top.png" width="300"> <img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/bottom.png" width="300"></p>
+<p align="center">
+<img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/top.png" width="300">
+<img src="https://github.com/blinken/paradar/raw/master/pcb/pizero-usb-rightangle/v1.0/bottom.png" width="300"><br/>
+<img src="https://github.com/blinken/paradar/raw/master/doc/images/20200329-new-assembly.jpg" width="600">
+</p>
 
  * [v1.2b gerbers and board renders](https://github.com/blinken/paradar/tree/master/pcb/pizero-usb-rightangle/v1.2b-panelised)
 
