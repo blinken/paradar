@@ -263,6 +263,7 @@ tl;dr - boost converters are REALLY HARD THEY WILL DRIVE YOU INSANE >:{
 ### Other learnings
 
  * Sourcing components in the middle of a global pandemic is hard.
+ * Testing a device that detects aircraft - when there are no aircraft flying due to aforementioned pandemic - is also hard.
  * Soldering a WS2813 LED sideways shorts +5V to ground, and turns the LED
    power trace into a resistive heater. A board at 200 degrees Celcius for an
    hour effectively liquifies a PETg plastic case.
