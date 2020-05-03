@@ -344,9 +344,9 @@ It took a lot of iteration to get here.</p>
 
 # Support, bug reports, and feedback
 
-I'm still in really early stages here, and if you have thoughts (partiuclarly
-if you fly fixed-wing or ultralight aircraft, or drones) I'd love to hear from
-you. [Shoot me an email](mailto:blinken@gmail.com), or [raise an issue on
+I'm still in really early stages here, and if you have thoughts (particularly
+if you fly fixed-wing aircraft, ultralights, or drones) I'd love to hear your thoughts.
+[Shoot me an email](mailto:blinken@gmail.com), or [raise an issue on
 GitHub](https://github.com/blinken/paradar/issues).
 
 You can find the user manual [here](https://github.com/blinken/paradar/blob/master/doc/user-manual.md).
