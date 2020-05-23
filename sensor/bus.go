@@ -55,4 +55,3 @@ func (s *Bus) Tx(write []byte, cs gpio.PinIO) []byte {
 
 	return read
 }
-

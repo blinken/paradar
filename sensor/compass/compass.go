@@ -1,4 +1,4 @@
-package sensor
+package compass
 
 import (
 	"fmt"
@@ -7,13 +7,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blinken/paradar/sensor"
+
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/host/bcm283x"
 )
 
 type compass struct {
 	mutex   sync.RWMutex
-	sb      Bus
+	sb      sensor.Bus
 	x, y, z uint32
 }
 
@@ -28,7 +30,7 @@ const (
 var gpioChipSelect = bcm283x.GPIO24
 var gpioDataReady = bcm283x.GPIO23
 
-func NewCompass(sb *Bus) *compass {
+func NewCompass(sb *sensor.Bus) *compass {
 	gpioChipSelect.Out(gpio.High)
 	return &compass{sb: *sb}
 }
@@ -79,10 +81,10 @@ func (c *compass) Track() {
 		y = uint32(uint(r[6]) | uint(r[5])<<8 | uint(r[4])<<16)
 		z = uint32(uint(r[9]) | uint(r[8])<<8 | uint(r[7])<<16)
 
-		fmt.Printf("compass   %x\n", r)
-		fmt.Printf("compass x %x %d\n", r[1:4], x)
-		fmt.Printf("compass y %x %d\n", r[4:7], y)
-		fmt.Printf("compass z %x %d\n", r[7:10], z)
+		//fmt.Printf("compass   %x\n", r)
+		//fmt.Printf("compass x %x %d\n", r[1:4], x)
+		//fmt.Printf("compass y %x %d\n", r[4:7], y)
+		//fmt.Printf("compass z %x %d\n", r[7:10], z)
 
 		c.mutex.Lock()
 		c.x = x
