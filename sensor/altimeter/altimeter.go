@@ -32,8 +32,7 @@ const (
 
 	// Temperature as measured by the pressure sensors is about this much hotter
 	// than surrounding air
-	temperature_offset_c  float64 = -25.0
-	pressure_sealevel_hpa float64 = 1027
+	temperature_offset_c float64 = -25.0
 )
 
 var gpioChipSelect = bcm283x.GPIO2
@@ -99,8 +98,11 @@ func (a *altimeter) Track() {
 		pressure_hpa := float64(pressure_raw) / 4096
 		temperature_c := float64(temperature_raw)/100 + temperature_offset_c
 
-		altitude_m := (math.Pow((pressure_sealevel_hpa/pressure_hpa), (1/5.257)) - 1) * (temperature_c + 273.15) / 0.0065
-		altitude_ft := altitude_m * 3.28084
+		// Note this is IACO standard pressure altitude - assuming MSL pressure of 1013.25
+		// hPa and temperature of 15 degrees. We are expected to transmit this
+		// number in GDL90 but it does not equal height above ground!
+		// ref https://www.weather.gov/media/epz/wxcalc/pressureAltitude.pdf, https://en.wikipedia.org/wiki/Pressure_altitude
+		altitude_ft := 145366.45 * (1 - math.Pow((pressure_hpa/1013.25), 0.190284))
 		fmt.Printf("altimeter %.2f hPa %.1f° %.1f ft\n", pressure_hpa, temperature_c, altitude_ft)
 
 		a.mutex.Lock()
