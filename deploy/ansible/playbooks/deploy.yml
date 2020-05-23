@@ -39,6 +39,8 @@
     git:
       repo: "https://github.com/blinken/paradar.git"
       dest: /opt/paradar
+      version: v1.4
+      depth: 1
     tags: git
 
   - name: update all debian packages
@@ -60,6 +62,7 @@
       - firmware-misc-nonfree
       - firmware-realtek
       - gpsd
+      - golang
       - hostapd
       - libbladerf1
       - librtlsdr-dev
