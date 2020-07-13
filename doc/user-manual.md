@@ -1,13 +1,18 @@
 # paradar user manual
 
-*Last update: April 2020*
-
-See https://github.com/blinken/paradar/tree/master/doc/user-manual.md for the
+Last update: July 2020. See https://github.com/blinken/paradar/tree/master/doc/user-manual.md for the
 latest version.
+
+| Serial number |             |
+| ------------- | ------------|
+
+Paradar, Lytchett House, 13 Freeland Park, Wareham Road, Poole, BH16 6FA<br/>
+info@paradar.co.uk
 
 ## Overview
 
-Thanks for purchasing paradar!
+Thanks for purchasing paradar! paradar is open-source hardware and software,
+and your purchase funds further development.
 
 paradar is a tiny, handheld, self-contained ADS-B indicator for paramotor,
 paraglider, drone and general aviation pilots. It helps increase your
@@ -27,16 +32,14 @@ indicated on a ring of bright LEDs. Because paradar relies on other aircraft
 transmitting their position, it will pick up many aircraft but not all: some
 older airframes are still not equipped with modern ADS-B transponders. This
 proportion is decreasing, however, as ADS-B is mandated by regulators around
-the world. By 7th June 2020, all aircraft with a maximum take-off mass greater
-than 5,700kg or a maximum cruising airspeed greater than 250kts must transmit
-ADS-B in order to operate IFR/GAT in Europe.
+the world.
 
 paradar is open source hardware and software. If you have an idea for a
 feature or improvement, or encounter a bug, please report it at https://github.com/blinken/paradar/issues
 (see the bug reports section below for more information).
 
 For general queries, including bulk order discounts, you're welcome to contact
-me at blinken@gmail.com.
+me at info@paradar.co.uk.
 
 Happy flying!
 
@@ -44,19 +47,105 @@ Happy flying!
 
 <div style="page-break-after: always;"></div>
 
+## Safety information
+To prevent possible electrical shock, fire, personal injury, or damage to the
+product, read this safety information carefully before attempting to install or
+use the product. In addition, follow all generally accepted safety practices
+and procedures for working with or near electricity.
+
+### Symbols and terminology
+
+The following safety descriptions and symbols are found thoughout this guide:
+
+* A **WARNING** identifies conditions or practices that could result in injury
+  or death.
+* A **CAUTION** identifies conditions or practices that could result in damage
+  to the product or equipment to which it is connected.
+
+| Symbol | Description |
+| :----: | ----------- |
+| ![Electric shock](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-shock.png) | Possibility of electric shock. Risk of injury or death. |
+| ![Caution](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-caution.png) | Caution. Risk of damage to the product or attached equipment. |
+| ![WEEE](https://raw.githubusercontent.com/blinken/paradar/master/doc/WEEE.png) | Do not dispose of this product as unsorted muncipal waste. |
+
+### General safety information
+
+> ![Electric shock](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-shock.png)
+> 
+> **WARNING** To prevent injury or death, use
+> the product only as instructed and use only the accessories that have been
+> supplied or recommended. Protection provided by the product may be impaired if
+> used in a manner not specified by the manufacturer.
+> 
+> **WARNING** To prevent injury or death, do not use in wet or damp conditions,
+> or near explosive gas or vapour.
+> 
+> **WARNING** paradar contains a rechargeable lithium-polymer battery. Do not use
+> the device outside of the recommended operating conditions. Do not burn or
+> crush, or otherwise damage or modify the outer case. Do not attempt to directly
+> charge the battery; only use the USB-C port integrated into paradar.
+
+### Operating environment
+
+|   | Storage | Operating (including charging) |
+| - | ------- | --------- |
+| Temperature | 0°C to +55°C | 5°C to +50°C |
+| Humidity | 5% to 95% RH (non-condensing) | 5% to 80% RH (non-condensing) |
+| Magnetic field | - | -400 to 400 µT |
+
+Keep paradar away from strong magnets and magnetic fields while in use. Keep
+paradar well away from fuels (including fuel vapour), oils and solvents.
+
+> ![Caution](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-caution.png)
+> 
+> **CAUTION** To prevent damage, always use and store paradar in appropriate
+> environments.
+
+<div style="page-break-after: always;"></div>
+
+### Care and cleaning
+
+paradar contains user-servicable configuration switches on the top circuit
+board, which can be accessed by removing the top cover using the four top
+screws. Do not attempt to disassemble the device further; repair, servicing and
+calibration require specialised test equipment.
+
+To clean, ensure the top cover is firmly attached, and wipe only the outside of
+the case with a damp, clean, soft cloth using a solution of mild soap or
+detergent and water. Do not attempt to clean the circuit board or other
+internal components.
+
+Keep paradar well away from fuels (including fuel vapour), oils and solvents.
+
+> ![Electric shock](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-shock.png)
+> 
+> **WARNING** To prevent injury or death, do not touch any electronic or internal
+> component except the user configuration switches as instructed in this manual.
+> 
+> **WARNING** To prevent injury or death, do not use the product if it appears to
+> be damaged in any way, and stop using immediately if you are concerned by any
+> abnormal operations.
+> 
+> **WARNING** When cleaning paradar, use a soft cloth and a solution of mild soap
+> or detergent in water. To prevent electric shock, do not allow water to enter
+> the casing as this will compromise the electronics or insulation inside.
+
+<div style="page-break-after: always;"></div>
+
 ## Getting started
 
 paradar is pretty easy to use!
 
-1. Ensure the antenna is attached.
+1. Ensure the antenna is attached. The longer antenna is more sensitive, but also more bulky.
 1. Turn paradar on using the power switch on the side. A small green LED in the
    center of the unit will light up.
 1. Wait 30-40 seconds for the software to initialise.
 1. The main display will start and show a spinning white dot. This indicates
-   paradar is searching for a GPS signal. Make sure it can see the sky, and
-   keep it in one place for 30-60 seconds.
-1. When paradar locks on to the GPS signal, the display will briefly change to a
-   solid white ring.
+   paradar is searching for a GPS signal. Make sure the top case is pointing
+   upwards and it has an unobstructed view of the sky, and keep it in one place
+   until it locates the GPS signal (30-120 seconds).
+1. When paradar locks on to the GPS signal, the display will briefly change to
+   a solid white ring.
 
 You're up and running! paradar can show several things on the display via
 coloured lights, all of which will move together as the device is rotated:
@@ -83,11 +172,17 @@ and clearance from nearby obstacles (buildings, trees, terrain). Outdoors,
 clear of obstructions, with a good line of sight in all directions, the
 included 2dBi (10cm) antenna will receive large aircraft 20-30km away. A 5dBi
 antenna (20cm) or a larger magnetic-mounted whip placed in a high location (eg,
-a vehicle roof) will receive more distant aircraft. Make sure any external
-antenna is tuned to 1090Mhz for best results.
+a vehicle roof) will receive more distant aircraft. 
 
 paradar uses a female SMA antenna connector (the antenna should have a male SMA
 connector).
+
+> ![Caution](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-caution.png)
+> 
+> **CAUTION** If attaching an antenna not supplied by the manufacturer, ensure it
+> is tuned to 1090MHz (and optionally 978MHz in the USA). It must have 50 ohm impedance and a
+> male SMA connector. Turn off paradar and disconnect the antenna if you receive
+> reports of interference with other equipment.
 
 To avoid display clutter, paradar will not display aircraft further than 30km
 away, even if it can hear them. If connected to SkyDemon or another
@@ -132,42 +227,63 @@ will work well alongside paradar.
 Drone pilots should consider equipping with
 a [uAvionix ping1090](https://uavionix.com/products/ping1090/), if possible.
 
+<div style="page-break-after: always;"></div>
+
 ## Battery life, care and feeding
 
-Battery life is approximately 2.5 hours (with display set to medium
-brightness). The low battery indicator (a small, red light in the center of the
-device) will come on when you have approximately 30 minutes remaining.
+Paradar has a 2,000mAh internal battery. Battery life is approximately 2.5
+hours (with display set to medium brightness and wifi turned off). The low
+battery indicator (a small, red light in the center of the device) will come on
+when you have approximately 30 minutes remaining.
 
 Charge the battery by carefully connecting a USB-C cable to the port on the
-side. An orange LED in the center of the device indicates the battery is
-charging, and a green LED indicates charging is complete. paradar can be
-switched on or off while the battery is charging, though it will charge
-slightly faster when switched off.
+side.
 
-paradar runs fine powered from USB-C or battery. It can be run continuously off
-a USB-C power supply for use on the ground or as part of a flight deck.
+* An orange LED in the center of the device indicates the battery is
+  charging
+* A green LED indicates charging is complete.
+* A red LED indicates low battery.
+* If two lights (orange, green) are illuminated when the power is switched off,
+  or you see three lights (green/orange/green) with the power switched on, the battery is
+  too hot to charge. Disconnect the charger, turn paradar off and allow it
+  to cool down.
 
-The case is made of PETG plastic, which is resistant to most solvents and
+paradar can be switched on or off while the battery is charging, though it will
+charge slightly faster when switched off.
+
+You can also run paradar continuously connected to an external USB battery pack
+or 5V power source.  It can be run continuously off a USB-C power supply for
+use on the ground or as part of a flight deck. **A good setup is a 10,000mAh
+USB battery pack stored in a pocket of your flight deck, and permanently
+attached to paradar via a short cable.  This can extend the run time by 5-10x,
+depending on battery pack size.** Contact us if you need recommendations.
+
+The case is made of PET plastic, which is resistant to most solvents and
 somewhat resistant to fuels. paradar is not waterproof. Wipe the case clean
 using a damp rag.
 
-For reliable operation:
+> ![Caution](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-caution.png)
+> 
+> **CAUTION** For reliable operation and to prevent damage, follow the
+> requirements below.
+> 
+> * paradar consumes 5W (1A) in operation, and up to 12W (2.5A) when charging. For
+>   best results **use a good quality USB power supply rated to at least 3A, and a
+>   good quality USB-C cable.** Weaker power supplies (eg, a laptop USB port) will
+>   work, though the battery may still discharge if paradar is running and
+>   charging at the same time (you'll still get a longer run time than battery alone).
+> * Keep the device as level as possible to ensure the compass reading is accurate.
+> * The compass used by paradar has a very high dynamic range, and will work well
+>   in difficult magnetic environments. However, it is still susceptible to
+>   interference. Keep paradar a few centimeters away from metal of any sort, and
+>   well away from strong magnetic fields such as electric motors.
+> * Don't leave paradar in hot environments or very strong sunlight (where it can
+>   heat up). It will slow down processing and disable battery charging if the
+>   external temperature exceeds approximately 50 degrees Celcius. Prolonged
+>   exposure to higher temperatures (eg, the dashboard of a car on a hot day) may
+>   damage the battery.
 
-* paradar consumes 5W (1A) in operation, and up to 12W (2.5A) when charging. For
-  best results **use a good quality USB power supply rated to at least 3A, and a
-  good quality USB-C cable.** Weaker power supplies (eg, a laptop USB port) will
-  work, though the battery may still discharge if paradar is running and
-  charging at the same time (you'll still get a longer run time than battery alone).
-* Keep the device as level as possible to ensure the compass reading is accurate.
-* The compass used by paradar has a very high dynamic range, and will work well
-  in difficult magnetic environments. However, it is still susceptible to
-  interference. Keep paradar a few centimeters away from metal of any sort, and
-  well away from strong magnetic fields such as electric motors.
-* Don't leave paradar in hot environments or very strong sunlight (where it can
-  heat up). It will slow down processing and disable battery charging if the
-  external temperature exceeds approximately 50 degrees Celcius. Prolonged
-  exposure to higher temperatures (eg, the dashboard of a car on a hot day) may
-  damage the battery.
+<div style="page-break-after: always;"></div>
 
 ## Features and configuration
 
@@ -184,11 +300,22 @@ main board. Each switch has a number printed below.
 To turn a switch on, move it to the upper position (towards the ON marking). To
 turn it off, move it down.
 
-**Warnings:**
+> ![Electric shock](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-shock.png)
+> 
+> **WARNING** To prevent injury or death, do not touch (with fingers or tools)
+> any electronic component except those described below. Ensure the power switch
+> is turned off and the device is unplugged. Note that this reduces risk but does
+> not de-energise the device, as it contains a battery.
+> 
+> **WARNING** Some parts of the device get very hot in normal operation. Be cautious.
 
-* The main LEDs may be damaged if you touch them with your finger or a sharp tool.
-* Some parts of the board get very hot in normal operation! Be wary.
-* Do not touch any electrical component when paradar is running.
+> ![Caution](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-caution.png)
+> 
+> **CAUTION** Ensure you work in a clean environment, to avoid damage to
+> paradar's SD card or internal electronics.
+> 
+> **CAUTION** The main LEDs may be damaged if you touch them with your finger or
+> a sharp tool.
 
 ### Switch function overview
 
@@ -314,7 +441,23 @@ receive strong signals on 978Mhz, but reception will be weaker. However, even
 in the US 1090MHz is the predominant frequency in use for air-to-air position
 transmission.
 
+<div style="page-break-after: always;"></div>
+
 ## Software updates
+
+> ![Electric shock](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-shock.png)
+> 
+> **WARNING** To prevent injury or death, do not touch (with fingers or tools)
+> any electronic component except those described below. Ensure the power switch
+> is turned off and the device is unplugged. Note that this reduces risk but does
+> not de-energise the device, as it contains a battery.
+> 
+> **WARNING** Some parts of the device get very hot in normal operation. Be cautious.
+
+> ![Caution](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-caution.png)
+> 
+> **CAUTION** Ensure you work in a clean environment, to avoid damage to
+> paradar's SD card or internal electronics.
 
 To perform a software update, you'll need to remove the microSD card that holds
 paradar's software. This is a bit of a delicate process - set yourself up on a
@@ -363,14 +506,29 @@ directly at blinken@gmail.com.
 
 ## Disclaimer and license
 
-**paradar does not replace your responsibility to look for, see and avoid other
-aircraft. This device will not save your life. It is intended only to provide
-additional situational awareness of some traffic around you when flying VFR. It
-is not designed for and must not be used for IFR flight, and you must not rely
-on it when flying in any conditions.**
+<img height="75px" style="margin: 5px;" src="https://raw.githubusercontent.com/blinken/paradar/master/doc/CE.png"> <img height="75px" style="margin: 5px;" src="https://raw.githubusercontent.com/blinken/paradar/master/doc/WEEE.png">
 
-**The pilot is responsible for the safe conduct of any flight, and for obeying
-all applicable laws.**
+![Electric shock](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-shock.png)
+
+**paradar does not replace your responsibility to look for, see and avoid
+other aircraft.** This device will not save your life, and you must ensure
+you have appropriate flight-rated equipment to operate your aircraft.
+paradar is intended only to provide additional situational awareness of
+some traffic around you when flying VFR. It is not designed for and must
+not be used for IFR flight, and you must not rely on it when flying in any
+conditions.
+
+paradar takes the place of a phone or tablet and app when flying, and aims
+to provide useful information to a pilot. **The information provided by
+paradar is not guaranteed to be correct and may fail without warning.
+paradar is not suitable and must not be used to operate or control an
+aircraft, and must not be relied upon for safety or the safe operation of
+an aircraft.  It is not suitable and must not be used for the navigation of
+an aircraft.**
+
+**The pilot is responsible for the safe conduct of any flight, for ensuring
+they have appropriate flight rated equipment alongside paradar and for
+obeying all applicable laws.**
 
 Copyright (C) 2020 Patrick Coleman
 
