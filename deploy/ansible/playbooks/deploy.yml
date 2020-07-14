@@ -1,3 +1,7 @@
+# $ cat ~/.ansible.cfg 
+# [defaults]
+# remote_tmp     = /tmp/.ansible-${USER}/tmp
+
 ---
 - hosts: all
   become: yes
@@ -7,11 +11,12 @@
       that:
        - ansible_lsb.id == "Raspbian"
 
-  - name: ensure we're mounted read-write
-    mount:
-      opts: rw
-      state: remounted
-      path: "{{ item }}"
+  # The ansible mount module is useless here - it doesn't seem to be able to
+  # remount a read-only filesystem read-write (it tries to modify fstab, and
+  # the remounted flag doesn't let you add options).
+  - name: ensure boot and root are mounted read-write
+    shell:
+      cmd: "mount -o remount,rw {{item}}"
     with_items:
       - /
       - /boot
@@ -121,7 +126,7 @@
     pip:
       requirements: /opt/paradar/requirements.txt
       virtualenv: /opt/paradar
-      virtualenv_python: /usr/bin/python4
+      virtualenv_python: /usr/bin/python3
     tags: python
 
   - name: install /etc/
@@ -306,6 +311,14 @@
       - paradar-logs
       - paradar-keys
       - paradar-network
+    tags: system
+
+  - name: stop cron so we can unmount spool
+    systemd:
+      name: "{{ item }}"
+      state: stopped
+    with_items:
+      - cron
     tags: system
 
   - name: ensure temporary directories are unmounted
