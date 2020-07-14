@@ -1,11 +1,11 @@
 # paradar: locates and indicates aircraft around you
 
 <div align="center">
-<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7973-800.png"><br/>
-<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7983-800.png"><br/>
-<img src="https://github.com/blinken/paradar/raw/master/doc/images/v1.4/DSC_7979-800.png"><br/>
+<img src="https://paradar.co.uk/images/product10-2000.jpg" width="700"><br/>
+<img src="https://paradar.co.uk/images/product3-700.png" width="700"><br/>
+<img src="https://paradar.co.uk/images/action1-2048.jpg" width="700"><br/>
 <br/>
-<del>£339</del> <b>£299 <a href="https://paradar.co.uk">Click here to buy a paradar!</a></b><br/>
+<del>£339</del> <b>£299 <a href="https://paradar.co.uk">Click here to buy a paradar!</a> All sales help fund development.</b><br/>
 <br/><br/>
 </div>
 
