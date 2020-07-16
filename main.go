@@ -5,13 +5,12 @@ import (
 	"time"
 
 	"github.com/blinken/paradar/sensor"
+	"github.com/blinken/paradar/sensor/accelerometer"
 	"github.com/blinken/paradar/sensor/altimeter"
 	"github.com/blinken/paradar/sensor/compass"
-	"github.com/blinken/paradar/sensor/accelerometer"
 )
 
 func main() {
-
 
 	sb := sensor.NewBus()
 	c := compass.NewCompass(sb)
@@ -38,7 +37,14 @@ func main() {
 
 	go c.Track()
 	go a.Track()
-	go accel.Track()
+
+	var imuReadings = make(chan accelerometer.IMUFilteredReading)
+	go accel.TrackCalibrated(imuReadings)
+
+	for {
+		var reading accelerometer.IMUFilteredReading = <-imuReadings
+		fmt.Printf("imu %.4f %.4f %.4f temp %.2f°\n", reading.Roll, reading.Pitch, reading.YawUncorrected, reading.Temp)
+	}
 
 	time.Sleep(60 * time.Second)
 }

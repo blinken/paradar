@@ -1,2 +1,4 @@
+github.com/brunocannavina/goahrs v0.0.0-20190522180435-8e7dd11b862f h1:MP4UvNHG0RiQccilLHbOtjQQMXNQzIc13l4nUzZQOv0=
+github.com/brunocannavina/goahrs v0.0.0-20190522180435-8e7dd11b862f/go.mod h1:PK6OsI6XMN9eAuAEodlYg7oKOV4oo+GzztftPjvNBhw=
 periph.io/x/periph v3.6.2+incompatible h1:B9vqhYVuhKtr6bXua8N9GeBEvD7yanczCvE0wU2LEqw=
 periph.io/x/periph v3.6.2+incompatible/go.mod h1:EWr+FCIU2dBWz5/wSWeiIUJTriYv9v2j2ENBmgYyy7Y=
