@@ -103,7 +103,7 @@ func (a *altimeter) Track() {
 		// number in GDL90 but it does not equal height above ground!
 		// ref https://www.weather.gov/media/epz/wxcalc/pressureAltitude.pdf, https://en.wikipedia.org/wiki/Pressure_altitude
 		altitude_ft := 145366.45 * (1 - math.Pow((pressure_hpa/1013.25), 0.190284))
-		fmt.Printf("altimeter %.2f hPa %.1f° %.1f ft\n", pressure_hpa, temperature_c, altitude_ft)
+		//fmt.Printf("altimeter %.2f hPa %.1f° %.1f ft\n", pressure_hpa, temperature_c, altitude_ft)
 
 		a.mutex.Lock()
 		a.altitude_ft = int32(altitude_ft)

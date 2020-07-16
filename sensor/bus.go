@@ -31,7 +31,7 @@ func NewBus() *Bus {
 		log.Fatal(err)
 	}
 
-	c, err := p.Connect(1000*physic.KiloHertz, spi.Mode0|spi.NoCS, 8)
+	c, err := p.Connect(500*physic.KiloHertz, spi.Mode0|spi.NoCS, 8)
 	if err != nil {
 		log.Fatal(err)
 	}
