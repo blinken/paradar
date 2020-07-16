@@ -12,7 +12,7 @@ import (
 	"periph.io/x/periph/host/bcm283x"
 )
 
-type accelerometer struct {
+type Accelerometer struct {
 	sb sensor.Bus
 }
 
@@ -58,17 +58,17 @@ const (
 var gpioChipSelect = bcm283x.GPIO17
 var gpioDataReady = bcm283x.GPIO27
 
-func NewAccelerometer(sb *sensor.Bus) *accelerometer {
+func NewAccelerometer(sb *sensor.Bus) *Accelerometer {
 	gpioChipSelect.Out(gpio.High)
 
-	return &accelerometer{sb: *sb}
+	return &Accelerometer{sb: *sb}
 }
 
-func (a *accelerometer) Tx(write []byte) []byte {
+func (a *Accelerometer) Tx(write []byte) []byte {
 	return a.sb.Tx(write, gpioChipSelect)
 }
 
-func (a *accelerometer) decodeInt16(d []byte) int16 {
+func (a *Accelerometer) decodeInt16(d []byte) int16 {
 	var res int16
 	if (d[1] & 0x80) == 0x01 {
 		res = int16(uint(d[0])|uint(d[1])<<8) * -1
@@ -81,7 +81,7 @@ func (a *accelerometer) decodeInt16(d []byte) int16 {
 
 // Calibrate using the first n readings from the sensor, then apply filtering
 // TODO - calibration needs to be persisted to disk
-func (a *accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
+func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 	var rawResults = make(chan IMURawReading)
 	go a.track(rawResults)
 
@@ -151,7 +151,7 @@ func (a *accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 }
 
 // Get raw data off the device and into a channel
-func (a *accelerometer) track(c chan IMURawReading) {
+func (a *Accelerometer) track(c chan IMURawReading) {
 	fmt.Printf("accelerometer tracking\n")
 
 	if err := gpioDataReady.In(gpio.PullDown, gpio.RisingEdge); err != nil {
@@ -262,7 +262,7 @@ func (a *accelerometer) track(c chan IMURawReading) {
 	}
 }
 
-func (a *accelerometer) SelfTest() bool {
+func (a *Accelerometer) SelfTest() bool {
 	// WHO_AM_I register should read 0x6c
 	read := a.Tx([]byte{0x8f, 0x00})
 

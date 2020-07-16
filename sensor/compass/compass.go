@@ -13,10 +13,14 @@ import (
 	"periph.io/x/periph/host/bcm283x"
 )
 
-type compass struct {
+type Compass struct {
 	mutex   sync.RWMutex
 	sb      sensor.Bus
-	x, y, z uint32
+}
+
+type MagnetometerReading struct {
+  X, Y, Z uint32
+  AzimuthXY float64 // uncorrected naive azimuth from XY readings only
 }
 
 const (
@@ -25,21 +29,23 @@ const (
 	regCycleCount                uint8 = 0x04
 	regTMRC                      uint8 = 0x0b
 	regResult                    uint8 = 0xa4
+
+  fieldStrengthLimit uint32 =  1000 // TODO, calibrate this
 )
 
 var gpioChipSelect = bcm283x.GPIO24
 var gpioDataReady = bcm283x.GPIO23
 
-func NewCompass(sb *sensor.Bus) *compass {
+func NewCompass(sb *sensor.Bus) *Compass {
 	gpioChipSelect.Out(gpio.High)
-	return &compass{sb: *sb}
+	return &Compass{sb: *sb}
 }
 
-func (c *compass) Tx(write []byte) []byte {
-	return c.sb.Tx(write, gpioChipSelect)
+func (c *Compass) Tx(write []byte) []byte {
+	  return c.sb.Tx(write, gpioChipSelect)
 }
 
-func (c *compass) Track() {
+func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 	fmt.Printf("compass tracking\n")
 
 	if err := gpioDataReady.In(gpio.PullDown, gpio.BothEdges); err != nil {
@@ -75,26 +81,22 @@ func (c *compass) Track() {
 			0x00, 0x00, 0x00,
 		})
 
-		var x, y, z uint32
-
-		x = uint32(uint(r[3]) | uint(r[2])<<8 | uint(r[1])<<16)
-		y = uint32(uint(r[6]) | uint(r[5])<<8 | uint(r[4])<<16)
-		z = uint32(uint(r[9]) | uint(r[8])<<8 | uint(r[7])<<16)
-
 		//fmt.Printf("compass   %x\n", r)
 		//fmt.Printf("compass x %x %d\n", r[1:4], x)
 		//fmt.Printf("compass y %x %d\n", r[4:7], y)
 		//fmt.Printf("compass z %x %d\n", r[7:10], z)
 
-		c.mutex.Lock()
-		c.x = x
-		c.y = y
-		c.z = z
-		c.mutex.Unlock()
+    res := new(MagnetometerReading)
+		res.X = uint32(uint(r[3]) | uint(r[2])<<8 | uint(r[1])<<16)
+		res.Y = uint32(uint(r[6]) | uint(r[5])<<8 | uint(r[4])<<16)
+		res.Z = uint32(uint(r[9]) | uint(r[8])<<8 | uint(r[7])<<16)
+    res.AzimuthXY = azimuthXY(res)
+
+    chanMagReadings <- *res
 	}
 }
 
-func (c *compass) SelfTest() bool {
+func (c *Compass) SelfTest() bool {
 	// ID register should read 0x22 (may change with firmware revisions?)
 	read := c.Tx([]byte{0xb6, 0x00})
 
@@ -103,9 +105,12 @@ func (c *compass) SelfTest() bool {
 	return (int(read[1]) == 0x22)
 }
 
-func (c *compass) Azimuth() float64 {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
+func azimuthXY(r *MagnetometerReading) float64 {
+	return math.Mod((180 / math.Pi * math.Atan2(float64(r.Y), float64(r.X))), 360)
+}
 
-	return math.Mod((180 / math.Pi * math.Atan2(float64(c.y), float64(c.x))), 360)
+func (c *Compass) FieldStrengthOverlimit(r MagnetometerReading) bool {
+  return ((r.X > fieldStrengthLimit) ||
+          (r.Y > fieldStrengthLimit) ||
+          (r.Z > fieldStrengthLimit))
 }

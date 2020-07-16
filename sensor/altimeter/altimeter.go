@@ -121,7 +121,7 @@ func (a *altimeter) SelfTest() bool {
 }
 
 // Altitude in ft
-func (a *altimeter) Altitude() int32 {
+func (a *altimeter) GetAltitude() int32 {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
@@ -129,7 +129,7 @@ func (a *altimeter) Altitude() int32 {
 }
 
 // Temperature in celcius (note - precise but not accurate due to board temp)
-func (a *altimeter) Temperature() float64 {
+func (a *altimeter) GetTemperature() float64 {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
@@ -137,7 +137,7 @@ func (a *altimeter) Temperature() float64 {
 }
 
 // Pressure in hPa
-func (a *altimeter) Pressure() float64 {
+func (a *altimeter) GetPressure() float64 {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 

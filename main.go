@@ -5,23 +5,15 @@ import (
 	"time"
 
 	"github.com/blinken/paradar/sensor"
-	"github.com/blinken/paradar/sensor/accelerometer"
 	"github.com/blinken/paradar/sensor/altimeter"
-	"github.com/blinken/paradar/sensor/compass"
+	"github.com/blinken/paradar/sensor/ahrs"
 )
 
 func main() {
 
 	sb := sensor.NewBus()
-	c := compass.NewCompass(sb)
 	a := altimeter.NewAltimeter(sb)
-	accel := accelerometer.NewAccelerometer(sb)
-
-	if c.SelfTest() {
-		fmt.Printf("compass is connected\n")
-	} else {
-		fmt.Printf("compass not connected\n")
-	}
+  orientation := ahrs.NewAHRS(sb)
 
 	if a.SelfTest() {
 		fmt.Printf("altimeter is connected\n")
@@ -29,22 +21,16 @@ func main() {
 		fmt.Printf("altimeter not connected\n")
 	}
 
-	if accel.SelfTest() {
-		fmt.Printf("accelerometer is connected\n")
-	} else {
-		fmt.Printf("accelerometer not connected\n")
-	}
-
-	go c.Track()
 	go a.Track()
-
-	var imuReadings = make(chan accelerometer.IMUFilteredReading)
-	go accel.TrackCalibrated(imuReadings)
+  go orientation.Track()
 
 	for {
-		var reading accelerometer.IMUFilteredReading = <-imuReadings
-		fmt.Printf("imu %.4f %.4f %.4f temp %.2f°\n", reading.Roll, reading.Pitch, reading.YawUncorrected, reading.Temp)
+		fmt.Printf("imu %.4f %.4f %.4f° %d ft\n",
+      orientation.GetRoll(),
+      orientation.GetPitch(),
+      orientation.GetYaw(),
+      a.GetAltitude(),
+    )
+	  time.Sleep(200 * time.Millisecond)
 	}
-
-	time.Sleep(60 * time.Second)
 }
