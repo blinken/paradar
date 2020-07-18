@@ -323,8 +323,8 @@ class Compass:
 
     x, y, z = self.get_raw_measurements()
     x = (x - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
-    y = (y - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
-    z = (z - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
+    y = (y - self._CAL_OFFSETS[1]) * self._CAL_SCALING[1]
+    z = (z - self._CAL_OFFSETS[2]) * self._CAL_SCALING[2]
 
     self._measurements_x.append(x)
     self._measurements_y.append(y)
