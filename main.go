@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/blinken/paradar/sensor"
-	"github.com/blinken/paradar/sensor/altimeter"
 	"github.com/blinken/paradar/sensor/ahrs"
+	"github.com/blinken/paradar/sensor/altimeter"
 )
 
 func main() {
 
 	sb := sensor.NewBus()
 	a := altimeter.NewAltimeter(sb)
-  orientation := ahrs.NewAHRS(sb)
+	orientation := ahrs.NewAHRS(sb)
 
 	if a.SelfTest() {
 		fmt.Printf("altimeter is connected\n")
@@ -22,15 +22,18 @@ func main() {
 	}
 
 	go a.Track()
-  go orientation.Track()
+	go orientation.Track()
 
 	for {
-		fmt.Printf("imu %.4f %.4f %.4f° %d ft\n",
-      orientation.GetRoll(),
-      orientation.GetPitch(),
-      orientation.GetYaw(),
-      a.GetAltitude(),
-    )
-	  time.Sleep(200 * time.Millisecond)
+		fmt.Printf("imu %9.4f %9.4f  %7.4f° (gyro %5t, o=%7.2f°, c=%4d) %dft\n",
+			orientation.GetRoll(),
+			orientation.GetPitch(),
+			orientation.GetYaw(),
+			orientation.UsingIMU(),
+			orientation.GetIMUYawOffset(),
+			orientation.GetIMUCount(),
+			a.GetAltitude(),
+		)
+		time.Sleep(200 * time.Millisecond)
 	}
 }

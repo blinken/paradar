@@ -14,13 +14,13 @@ import (
 )
 
 type Compass struct {
-	mutex   sync.RWMutex
-	sb      sensor.Bus
+	mutex sync.RWMutex
+	sb    sensor.Bus
 }
 
 type MagnetometerReading struct {
-  X, Y, Z uint32
-  AzimuthXY float64 // uncorrected naive azimuth from XY readings only
+	X, Y, Z   int32
+	AzimuthXY float64 // uncorrected naive azimuth from XY readings only
 }
 
 const (
@@ -30,7 +30,7 @@ const (
 	regTMRC                      uint8 = 0x0b
 	regResult                    uint8 = 0xa4
 
-  fieldStrengthLimit uint32 =  1000 // TODO, calibrate this
+	fieldStrengthLimit float64 = 2000.0
 )
 
 var gpioChipSelect = bcm283x.GPIO24
@@ -42,7 +42,18 @@ func NewCompass(sb *sensor.Bus) *Compass {
 }
 
 func (c *Compass) Tx(write []byte) []byte {
-	  return c.sb.Tx(write, gpioChipSelect)
+	return c.sb.Tx(write, gpioChipSelect)
+}
+
+// Unpack a big-endian signed int24 given three bytes
+func unpackInt24(input []byte) int32 {
+	var ures uint32
+	ures = uint32(uint(input[2]) | uint(input[1])<<8 | uint(input[0])<<16)
+	if (ures & 0x800000) > 0 {
+		return ((0xffffff ^ int32(ures)) * -1)
+	} else {
+		return int32(ures)
+	}
 }
 
 func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
@@ -81,18 +92,15 @@ func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 			0x00, 0x00, 0x00,
 		})
 
-		//fmt.Printf("compass   %x\n", r)
-		//fmt.Printf("compass x %x %d\n", r[1:4], x)
-		//fmt.Printf("compass y %x %d\n", r[4:7], y)
-		//fmt.Printf("compass z %x %d\n", r[7:10], z)
+		var reading MagnetometerReading
+		reading.X = unpackInt24(r[1:4])
+		reading.Y = unpackInt24(r[4:7])
+		reading.Z = unpackInt24(r[7:])
+		reading.AzimuthXY = azimuthXY(reading.X, reading.Y)
 
-    res := new(MagnetometerReading)
-		res.X = uint32(uint(r[3]) | uint(r[2])<<8 | uint(r[1])<<16)
-		res.Y = uint32(uint(r[6]) | uint(r[5])<<8 | uint(r[4])<<16)
-		res.Z = uint32(uint(r[9]) | uint(r[8])<<8 | uint(r[7])<<16)
-    res.AzimuthXY = azimuthXY(res)
+		//fmt.Printf("compass %v\n", reading)
 
-    chanMagReadings <- *res
+		chanMagReadings <- reading
 	}
 }
 
@@ -105,12 +113,11 @@ func (c *Compass) SelfTest() bool {
 	return (int(read[1]) == 0x22)
 }
 
-func azimuthXY(r *MagnetometerReading) float64 {
-	return math.Mod((180 / math.Pi * math.Atan2(float64(r.Y), float64(r.X))), 360)
+func azimuthXY(x, y int32) float64 {
+	return math.Mod((180.0/math.Pi*math.Atan2(float64(y), float64(x)))+180, 360.0)
 }
 
 func (c *Compass) FieldStrengthOverlimit(r MagnetometerReading) bool {
-  return ((r.X > fieldStrengthLimit) ||
-          (r.Y > fieldStrengthLimit) ||
-          (r.Z > fieldStrengthLimit))
+	return ((math.Abs(float64(r.X)) > fieldStrengthLimit) ||
+		(math.Abs(float64(r.Y)) > fieldStrengthLimit))
 }

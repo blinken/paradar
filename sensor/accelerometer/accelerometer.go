@@ -3,6 +3,7 @@ package accelerometer
 import (
 	"fmt"
 	"log"
+	"math"
 	"time"
 
 	"github.com/blinken/paradar/sensor"
@@ -21,6 +22,7 @@ type IMUFilteredReading struct {
 	Pitch          float64
 	YawUncorrected float64
 	Temp           float64
+	Count          int
 }
 
 type IMURawReading struct {
@@ -70,7 +72,7 @@ func (a *Accelerometer) Tx(write []byte) []byte {
 
 func (a *Accelerometer) decodeInt16(d []byte) int16 {
 	var res int16
-	if (d[1] & 0x80) == 0x01 {
+	if (d[1] & 0x80) == 0x01 { // problematic?
 		res = int16(uint(d[0])|uint(d[1])<<8) * -1
 	} else {
 		res = int16(uint(d[0]) | uint(d[1])<<8)
@@ -95,16 +97,27 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 	averagedResult.temp = 0.0
 
 	// TODO need to be moved into module-level constants
-	var calibrationSize float64 = 100
-	var updateRate float64 = 208.0
+	var calibrationSize float64 = 200
+	var updateRate float64 = 99.54
 	// Assume a calibration temp of 22 degrees, and acceleration/movement all
 	// zeros except 1g perpendicular to Z axis
 	var offsetTemp float64 = 22.0
 	var offsetAccelZ float64 = 1.0
 
+	// Wait for the gyro to start up
+	for {
+		res := <-rawResults
+
+		if math.Abs(res.gyro_x) > 0 {
+			break
+		}
+	}
+
 	for i := 0; float64(i) < calibrationSize; i++ {
 
 		res := <-rawResults
+
+		//fmt.Printf("accelerometer %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", res.accel_x, res.accel_y, res.accel_z, res.gyro_x, res.gyro_y, res.gyro_z, res.temp)
 
 		averagedResult.gyro_x += res.gyro_x / calibrationSize
 		averagedResult.gyro_y += res.gyro_y / calibrationSize
@@ -124,6 +137,7 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 	var madgwickState = new(goahrs.Quaternion)
 	madgwickState.Begin(updateRate)
 
+	count := 0
 	for {
 		res := <-rawResults
 
@@ -144,9 +158,11 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 		imuRes.Temp = res.temp
 		imuRes.Roll = madgwickState.GetRoll()
 		imuRes.Pitch = madgwickState.GetPitch()
-		imuRes.YawUncorrected = madgwickState.GetYaw()
+		imuRes.YawUncorrected = math.Mod(madgwickState.GetYaw()+180, 360)
+		imuRes.Count = count
 
 		c <- *imuRes
+		count += 1
 	}
 }
 
@@ -174,23 +190,23 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 	a.Tx([]byte{regInt1Ctrl, 0x03})
 	// INT2: Disable all features
 	a.Tx([]byte{regInt2Ctrl, 0x00})
-	// Accel: 6.66kHz raw [1010], 8g full scale [11], Low-pass filter enabled [1], [0]
-	a.Tx([]byte{regCtrl1, 0xae})
-	// Gyro: 6.66kHz raw [1010], 500dps full scale [010], [0]
-	a.Tx([]byte{regCtrl2, 0xa4})
+	// Accel: 104Hz raw [0100], 8g full scale [11], Low-pass filter enabled [1], [0]
+	a.Tx([]byte{regCtrl1, 0x4e})
+	// Gyro: 104Hz raw [0100], 500dps full scale [010], [0]
+	a.Tx([]byte{regCtrl2, 0x44})
 	// Reboot [0], Block updates enabled [1], Interrupt active-high [0], push-pull mode [0], 4-wire SPI [0], Auto-increment reads [1], [0], Reset device [0]
 	a.Tx([]byte{regCtrl3, 0x44})
 	// [0], Disable sleep mode [0], Use two interrupt pins [0], [0], Mask DRDY until filters settle [1], Disable I2C [1], Enable Gyro LPF [1], [0]
 	a.Tx([]byte{regCtrl4, 0x0e})
 	// Defaults
 	a.Tx([]byte{regCtrl5, 0x00})
-	// Level-sensitive DRDY trigger [011], High performance accelerometer [0], Low-res offsets [0], Gyro 305.5Hz output [000]
-	a.Tx([]byte{regCtrl6, 0x30})
+	// Edge-sensitive DRDY trigger [100], High performance accelerometer [0], Low-res offsets [0], Gyro 67Hz output [000]
+	a.Tx([]byte{regCtrl6, 0x60})
 	// High performance gyro [1], Gyro HPF disabled [0], 16mHz cutoff [00], [0], No OIS [0], No accel offset [0], No OIS [0]
 	// TODO - check whether the gyro HPF does a better job than our calibration above
 	a.Tx([]byte{regCtrl7, 0x80})
-	// Accel 333Hz output [010], Defaults [00], Accel slope filter disabled [0], [0], Don't use LPF data for 6D [0]
-	a.Tx([]byte{regCtrl8, 0x40})
+	// Accel 52Hz output [000], Defaults [00], Accel slope filter disabled [0], [0], Don't use LPF data for 6D [0]
+	a.Tx([]byte{regCtrl8, 0x00})
 	// No DEN stamping [1110], Disable DEN on Accel [0], DEN Active Low [0], Disable I3C [1], [0]
 	a.Tx([]byte{regCtrl9, 0xe2})
 
@@ -222,9 +238,9 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 			})
 
 			// 65.536 given by +/- 500dps range, 16-bit signed int
-			res.gyro_x = float64(a.decodeInt16(r[1:3])) / 65.536
-			res.gyro_y = float64(a.decodeInt16(r[3:5])) / 65.536
-			res.gyro_z = float64(a.decodeInt16(r[5:7])) / 65.536
+			res.gyro_x = float64(a.decodeInt16(r[1:3])) / 65.536 / 50
+			res.gyro_y = float64(a.decodeInt16(r[3:5])) / 65.536 / 50
+			res.gyro_z = float64(a.decodeInt16(r[5:7])) / 65.536 / 50
 		} else {
 			res.gyro_x = 0
 			res.gyro_y = 0
@@ -257,7 +273,7 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 			res.temp = 0
 		}
 
-		//fmt.Printf("accelerometer %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", a.accel_x, a.accel_y, a.accel_z, a.gyro_x, a.gyro_y, a.gyro_z, a.temp)
+		//fmt.Printf("accelerometer %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", res.accel_x, res.accel_y, res.accel_z, res.gyro_x, res.gyro_y, res.gyro_z, res.temp)
 		c <- *res
 	}
 }

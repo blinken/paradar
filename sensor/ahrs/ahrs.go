@@ -3,6 +3,7 @@ package ahrs
 import (
 	"fmt"
 	"sync"
+  "math"
 
 	"github.com/blinken/paradar/sensor"
 	"github.com/blinken/paradar/sensor/accelerometer"
@@ -14,8 +15,11 @@ type ahrs struct {
   compass *compass.Compass
   imu *accelerometer.Accelerometer
 
+  imuYawOffset float64
+  imuCount int
+
   roll, pitch, yaw float64
-  imuAvailable bool
+  imuAvailable, usingImu bool
 }
 
 func NewAHRS(sb *sensor.Bus) *ahrs {
@@ -26,15 +30,12 @@ func NewAHRS(sb *sensor.Bus) *ahrs {
     pitch: 0.0,
     yaw: 0.0,
     imuAvailable: false,
+    usingImu: false,
   }
 }
 
 func subtractAngles(a, b float64) float64 {
-  if (b < a) {
-    return (a - (b + 360.0))
-  } else {
-    return (a - b)
-  }
+  return math.Mod(a - b, 360)
 }
 
 func (a *ahrs) Track() {
@@ -50,6 +51,7 @@ func (a *ahrs) Track() {
     fmt.Printf("ahrs: using imu to correct compass\n")
 
     lastMagReading := <-chanMagReadings
+    fmt.Printf("ahrs: got mag %.2f\n", lastMagReading.AzimuthXY)
     imuYawOffset := 0.0
 
     for {
@@ -59,8 +61,12 @@ func (a *ahrs) Track() {
       imuReading := <-chanIMUReadings
       select {
       case lastMagReading = <-chanMagReadings:
+        //fmt.Printf("ahrs: got mag %.2f\n", lastMagReading.AzimuthXY)
       default:
       }
+
+      //fmt.Printf("ahrs: got imu roll %.2f pitch %.2f yaw %.2f\n", imuReading.Roll, imuReading.Pitch, imuReading.YawUncorrected)
+      //fmt.Printf("ahrs: got mag %.2f\n", lastMagReading.AzimuthXY)
 
       // TODO, add a test for excessive difference between IMU and Mag readings
       if (a.compass.FieldStrengthOverlimit(lastMagReading)) {
@@ -68,7 +74,9 @@ func (a *ahrs) Track() {
 	      a.mutex.Lock()
         a.roll = imuReading.Roll
         a.pitch = imuReading.Pitch
-        a.yaw = imuReading.YawUncorrected + imuYawOffset // this might be wrong?
+        a.yaw = math.Mod(imuReading.YawUncorrected + imuYawOffset, 360) // this might be wrong?
+        a.usingImu = true
+        a.imuCount = imuReading.Count
 	      a.mutex.Unlock()
 
       } else {
@@ -77,10 +85,10 @@ func (a *ahrs) Track() {
 	      a.mutex.Lock()
         a.roll = imuReading.Roll
         a.pitch = imuReading.Pitch
-        a.yaw = lastMagReading.AzimuthXY
+        a.yaw = lastMagReading.AzimuthXY // this needs to be corrected for tilt
+        a.usingImu = false
+        a.imuYawOffset = subtractAngles(lastMagReading.AzimuthXY, imuReading.YawUncorrected)
 	      a.mutex.Unlock()
-
-        imuYawOffset = subtractAngles(lastMagReading.AzimuthXY, imuReading.YawUncorrected)
       }
     }
   } else {
@@ -128,4 +136,26 @@ func (a *ahrs) IMUAvailable() bool {
 
   return a.imuAvailable
 }
+
+func (a *ahrs) UsingIMU() bool {
+	a.mutex.RLock()
+	defer a.mutex.RUnlock()
+
+  return a.usingImu
+}
+
+func (a *ahrs) GetIMUYawOffset() float64 {
+  a.mutex.RLock()
+  defer a.mutex.RUnlock()
+
+  return a.imuYawOffset
+}
+
+func (a *ahrs) GetIMUCount() int {
+  a.mutex.RLock()
+  defer a.mutex.RUnlock()
+
+  return a.imuCount
+}
+
 
