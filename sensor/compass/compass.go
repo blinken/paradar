@@ -19,7 +19,7 @@ type Compass struct {
 }
 
 type MagnetometerReading struct {
-	X, Y, Z   int32
+	X, Y, Z   float64
 	AzimuthXY float64 // uncorrected naive azimuth from XY readings only
 }
 
@@ -93,10 +93,10 @@ func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 		})
 
 		var reading MagnetometerReading
-		reading.X = unpackInt24(r[1:4])
-		reading.Y = unpackInt24(r[4:7])
-		reading.Z = unpackInt24(r[7:])
-		reading.AzimuthXY = azimuthXY(reading.X, reading.Y)
+		reading.X = float64(unpackInt24(r[1:4]))
+		reading.Y = float64(unpackInt24(r[4:7]))
+		reading.Z = float64(unpackInt24(r[7:]))
+		reading.AzimuthXY = AzimuthXY(reading.X, reading.Y)
 
 		//fmt.Printf("compass %v\n", reading)
 
@@ -113,11 +113,11 @@ func (c *Compass) SelfTest() bool {
 	return (int(read[1]) == 0x22)
 }
 
-func azimuthXY(x, y int32) float64 {
-	return math.Mod((180.0/math.Pi*math.Atan2(float64(y), float64(x)))+180, 360.0)
+func AzimuthXY(x, y float64) float64 {
+	return math.Mod((180.0/math.Pi*math.Atan2(y, x))+180, 360.0)
 }
 
 func (c *Compass) FieldStrengthOverlimit(r MagnetometerReading) bool {
-	return ((math.Abs(float64(r.X)) > fieldStrengthLimit) ||
-		(math.Abs(float64(r.Y)) > fieldStrengthLimit))
+	return ((math.Abs(r.X) > fieldStrengthLimit) ||
+		(math.Abs(r.Y) > fieldStrengthLimit))
 }
