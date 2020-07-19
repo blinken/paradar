@@ -28,3 +28,6 @@ AcceptEnv LANG LC_*
 
 # override default of no subsystems
 Subsystem	sftp	/usr/lib/openssh/sftp-server
+
+# Set QoS, which seems to drastically improve interactive SSH performance (?)
+IPQoS cs0 cs0
