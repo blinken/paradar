@@ -67,6 +67,7 @@
       - firmware-misc-nonfree
       - firmware-realtek
       - gpsd
+      - gpsd-clients
       - golang
       - hostapd
       - libbladerf1

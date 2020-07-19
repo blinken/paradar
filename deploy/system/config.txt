@@ -1,10 +1,8 @@
 # Disable the rainbow splash screen
 disable_splash=1
 
-# Overclock the SD Card from 50 to 100MHz
-# This can only be done with at least a UHS Class 1 card
-# Disable bluetooth to reduce power blinken/20200121
-dtoverlay=sdtweak,overclock_50=100,pi3-disable-bt,spi=on
+# Disable bluetooth to reduce power. Enable hardware SPI blinken/20200121
+dtoverlay=pi3-disable-bt,spi=on
 
 # Set the bootloader delay to 0 seconds. The default is 1s if not specified.
 boot_delay=0
