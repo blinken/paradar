@@ -25,15 +25,18 @@ func main() {
 	go orientation.Track()
 
 	for {
-		fmt.Printf("imu %9.4f %9.4f  %7.4f° (gyro %5t, o=%7.2f°, c=%4d) %dft\n",
+		offset, gain := orientation.GetIMUYawOffset()
+		fmt.Printf("imu %9.4f %9.4f  %7.4f° (gyro %5t, o=%v %v, c=%4d) %dft\n",
 			orientation.GetRoll(),
 			orientation.GetPitch(),
 			orientation.GetYaw(),
 			orientation.UsingIMU(),
-			orientation.GetIMUYawOffset(),
+			offset, gain,
 			orientation.GetIMUCount(),
 			a.GetAltitude(),
 		)
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
+
+		//orientation.DumpYawReadings()
 	}
 }

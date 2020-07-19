@@ -30,7 +30,14 @@ const (
 	regTMRC                      uint8 = 0x0b
 	regResult                    uint8 = 0xa4
 
-	fieldStrengthLimit float64 = 2000.0
+	fieldStrengthLimit float64 = 3000.0
+
+	cal_offset_x = -0.1648
+	cal_offset_y = 0.6867
+	cal_offset_z = 0.1346
+	cal_gain_x   = 0.9951
+	cal_gain_y   = 0.9467
+	cal_gain_z   = 1.0652
 )
 
 var gpioChipSelect = bcm283x.GPIO24
@@ -92,10 +99,12 @@ func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 			0x00, 0x00, 0x00,
 		})
 
+		// The compass words in north-east-down coordinates, and the accelerometer
+		// works with north up. "flip" the compass to the other side of the board.
 		var reading MagnetometerReading
-		reading.X = float64(unpackInt24(r[1:4]))
-		reading.Y = float64(unpackInt24(r[4:7]))
-		reading.Z = float64(unpackInt24(r[7:]))
+		reading.Y = (float64(unpackInt24(r[1:4])) - cal_offset_x) * cal_gain_x
+		reading.X = -(float64(unpackInt24(r[4:7])) - cal_offset_y) * cal_gain_y
+		reading.Z = -(float64(unpackInt24(r[7:])) - cal_offset_z) * cal_gain_z
 		reading.AzimuthXY = AzimuthXY(reading.X, reading.Y)
 
 		//fmt.Printf("compass %v\n", reading)
