@@ -1,20 +1,23 @@
 # Disable the rainbow splash screen
 disable_splash=1
 
-# Disable bluetooth to reduce power. Enable hardware SPI blinken/20200121
-dtoverlay=pi3-disable-bt,spi=on
+# Ensure the first uart is enabled, and bluetooth is disabled. Activate the SPI
+# kernel drivers and overclock the SD card to 100MHz.
+# The application sets up the SPI pins to the required function, so no need to
+# do this in a dtoverlay.
+#dtdebug=on
+dtoverlay=uart0
+dtoverlay=disable-bt
+dtparam=spi=on,sd_overclock=100,act_led_trigger=heartbeat
+
+# Drive the pixel pin low to prevent noise/random lights
+gpio=18=op,dl
 
 # Set the bootloader delay to 0 seconds. The default is 1s if not specified.
 boot_delay=0
 
-# Disable CPU throttling
+# Make sure the core frequency is fixed to avoid issues with the UART (this may
+# be unnecessary with force_turbo)
 force_turbo=1
-
-[pi4]
-# Enable DRM VC4 V3D driver on top of the dispmanx display stack
-#dtoverlay=vc4-fkms-v3d
-#max_framebuffers=2
-
-[all]
-#dtoverlay=vc4-fkms-v3d
-start_x=0
+core_freq=1000
+core_freq_min=1000

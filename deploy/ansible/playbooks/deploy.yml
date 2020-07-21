@@ -82,6 +82,7 @@
       - python3
       - python3-apt
       - python3-pip
+      - raspi-gpio
       - vim
       - xz-utils
     tags: apt
