@@ -1,6 +1,5 @@
 pyModeS
 geographiclib
-spidev
 adafruit-circuitpython-neopixel
 RPi.GPIO
 gpsd-py3

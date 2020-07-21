@@ -140,6 +140,8 @@ threads["gdl90"] = threading.Thread(target=gdl90.transmit_gdl90, args=(), daemon
 threads["gdl90"].start()
 
 compass = Compass()
+threads["compass"] = threading.Thread(target=compass.track_ahrs, args=(), daemon=True)
+threads["compass"].start()
 
 startup_tasks()
 
@@ -148,7 +150,6 @@ while True:
   cycle_length = 500
 
   for i in range(cycle_length):
-    compass.update()
     display.update(compass, gps, Aircraft.positions)
 
   t_end = time.time()

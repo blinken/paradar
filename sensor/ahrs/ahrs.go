@@ -29,8 +29,8 @@ type ahrs struct {
 }
 
 const (
-	nYawReadings   int = 4096 // tune this
-	minYawReadings int = 4    // and this
+	nYawReadings   int = 50 // tune this
+	minYawReadings int = 4  // and this
 )
 
 func NewAHRS(sb *sensor.Bus) *ahrs {
@@ -95,12 +95,11 @@ func (a *ahrs) calculateYawOffset() (float64, float64) {
 	offset_yaw, gain_yaw := stat.LinearRegression(x_axis, a.bufYawReadings, nil, false)
 	//fmt.Printf("ahrs: yaw offset=%3.2f %3.2f gain=%3.2f %3.2f\n", offset_mag, offset_yaw, gain_mag, gain_yaw)
 
-	return offset_yaw - offset_mag, gain_yaw / gain_mag // this produces crazy values, but maybe that's ok?
+	return (offset_yaw - offset_mag), (gain_mag / gain_yaw) // this produces crazy values, but maybe that's ok?
 }
 
 func (a *ahrs) Track() {
-	spew.Dump("ahrs tracking")
-	a.imuAvailable = a.imu.SelfTest()
+	fmt.Printf("ahrs tracking\n")
 
 	chanIMUReadings := make(chan accelerometer.IMUFilteredReading)
 	chanMagReadings := make(chan compass.MagnetometerReading)
@@ -108,11 +107,14 @@ func (a *ahrs) Track() {
 	a.bufYawReadings = make([]float64, 0, nYawReadings)
 	a.bufMagReadings = make([]float64, 0, nYawReadings)
 
-	go a.imu.TrackCalibrated(chanIMUReadings)
 	go a.compass.Track(chanMagReadings)
+
+	a.imuAvailable = a.imu.SelfTest()
+	fmt.Printf("ahrs: imu self test: %t\n", a.imuAvailable)
 
 	if a.imuAvailable {
 		fmt.Printf("ahrs: using imu to correct compass\n")
+		go a.imu.TrackCalibrated(chanIMUReadings)
 
 		lastMagReading := <-chanMagReadings
 		a.imuYawOffset = 0.0
@@ -137,7 +139,7 @@ func (a *ahrs) Track() {
 				a.mutex.Lock()
 				a.roll = imuReading.Roll
 				a.pitch = imuReading.Pitch
-				a.yaw = math.Mod(imuReading.YawUncorrected-a.imuYawOffset, 360)
+				a.yaw = math.Mod(imuReading.YawUncorrected-a.imuYawOffset+360, 360)
 				a.usingImu = true
 				a.imuCount = imuReading.Count
 				a.mutex.Unlock()
@@ -146,10 +148,10 @@ func (a *ahrs) Track() {
 				a.mutex.Lock()
 				a.roll = imuReading.Roll
 				a.pitch = imuReading.Pitch
-				a.yaw = math.Mod(imuReading.YawUncorrected-a.imuYawOffset, 360)
+				a.yaw = math.Mod(imuReading.YawUncorrected-a.imuYawOffset+360, 360)
 				//a.yaw = a.levelMagAndGetAzimuth(lastMagReading)
 				a.usingImu = false
-				a.mutex.Unlock()
+				a.imuCount = imuReading.Count
 
 				a.bufYawReadings = append(a.bufYawReadings, imuReading.YawUncorrected)
 				a.bufMagReadings = append(a.bufMagReadings, a.levelMagAndGetAzimuth(lastMagReading))
@@ -163,6 +165,7 @@ func (a *ahrs) Track() {
 				}
 
 				a.imuYawOffset, a.imuYawGain = a.calculateYawOffset()
+				a.mutex.Unlock()
 			}
 
 			//fmt.Printf("ahrs: mag yaw=%8.3f uncorrected inertial=%8.3f inertial=%8.3f\n", a.yaw, imuReading.YawUncorrected, math.Mod(imuReading.YawUncorrected - a.imuYawOffset, 360))
@@ -175,7 +178,7 @@ func (a *ahrs) Track() {
 		for {
 			magReading := <-chanMagReadings
 			a.mutex.Lock()
-			a.yaw = magReading.AzimuthXY
+			a.yaw = magReading.AzimuthXY // todo, apply a moving average to this
 			a.mutex.Unlock()
 		}
 	}

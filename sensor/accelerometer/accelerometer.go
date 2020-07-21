@@ -8,6 +8,7 @@ import (
 
 	"github.com/blinken/paradar/sensor"
 	"github.com/brunocannavina/goahrs"
+	//"github.com/davecgh/go-spew/spew"
 
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/host/bcm283x"
@@ -98,7 +99,7 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 
 	// TODO need to be moved into module-level constants
 	var calibrationSize float64 = 200
-	var updateRate float64 = 99.54
+	var updateRate float64 = 97
 	// Assume a calibration temp of 22 degrees, and acceleration/movement all
 	// zeros except 1g perpendicular to Z axis
 	var offsetTemp float64 = 22.0
@@ -126,6 +127,8 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 		averagedResult.accel_y += res.accel_y / calibrationSize
 		averagedResult.accel_z += res.accel_z / calibrationSize
 		averagedResult.temp += res.temp / calibrationSize
+
+		//fmt.Println(res)
 	}
 
 	averagedResult.temp -= offsetTemp
@@ -170,7 +173,7 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 func (a *Accelerometer) track(c chan IMURawReading) {
 	fmt.Printf("accelerometer tracking\n")
 
-	if err := gpioDataReady.In(gpio.PullDown, gpio.RisingEdge); err != nil {
+	if err := gpioDataReady.In(gpio.PullDown, gpio.BothEdges); err != nil {
 		log.Fatal(err)
 	}
 
@@ -181,6 +184,8 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 	// Reset memory to defaults
 	a.Tx([]byte{regCtrl3, 0x80})
 	time.Sleep(300 * time.Millisecond)
+
+	fmt.Printf("accel: imu self test: %t\n", a.SelfTest())
 
 	// FIFO: No batching for accel or gyro
 	a.Tx([]byte{regFifoCtrl3, 0x00})
@@ -200,7 +205,7 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 	a.Tx([]byte{regCtrl4, 0x0e})
 	// Defaults
 	a.Tx([]byte{regCtrl5, 0x00})
-	// Edge-sensitive DRDY trigger [100], High performance accelerometer [0], Low-res offsets [0], Gyro 67Hz output [000]
+	// Level-sensitive latched DRDY trigger [011], High performance accelerometer [0], Low-res offsets [0], Gyro 67Hz output [000]
 	a.Tx([]byte{regCtrl6, 0x60})
 	// High performance gyro [1], Gyro HPF disabled [0], 16mHz cutoff [00], [0], No OIS [0], No accel offset [0], No OIS [0]
 	// TODO - check whether the gyro HPF does a better job than our calibration above
@@ -226,7 +231,11 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		//
 		// Set a 1s timeout so we read even if there's no edge triggered, to avoid
 		// getting into a bad state.
-		gpioDataReady.WaitForEdge(time.Second)
+		// Record the start time, so we can ensure this loop always takes 7ms
+		time_start := time.Now().UnixNano()
+		if gpioDataReady.Read() == gpio.Low {
+			gpioDataReady.WaitForEdge(time.Second)
+		}
 
 		statusReg := a.Tx([]byte{0x9e, 0x00})
 
@@ -275,6 +284,13 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 
 		//fmt.Printf("accelerometer %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", res.accel_x, res.accel_y, res.accel_z, res.gyro_x, res.gyro_y, res.gyro_z, res.temp)
 		c <- *res
+
+		// Ensure result rate is stable - pad the loop so it always takes 7ms (this
+		// is roughly the time for the accelerometer to return a result the way
+		// we've configured it)
+		runtime_ns := time.Now().UnixNano() - time_start
+		//fmt.Println(runtime_ns)
+		time.Sleep(time.Duration(10000000-runtime_ns) * time.Nanosecond)
 	}
 }
 

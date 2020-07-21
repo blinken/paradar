@@ -84,7 +84,7 @@ func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 	})
 
 	// Activate continuous measurement mode
-	c.Tx([]byte{regTMRC, 0x92})
+	c.Tx([]byte{regTMRC, 0x95})
 	c.Tx([]byte{regContinuousMeasurementMode, 0x79})
 
 	for {
