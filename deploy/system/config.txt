@@ -10,8 +10,12 @@ dtoverlay=uart0
 dtoverlay=disable-bt
 dtparam=spi=on,sd_overclock=100,act_led_trigger=heartbeat
 
+# BCM24 - compass CS
+# BCM2 - pressure CS
+# BCM17 - accel CS
+
 # Drive the pixel pin low to prevent noise/random lights
-gpio=18=op,dl
+gpio=18=a5
 
 # Set the bootloader delay to 0 seconds. The default is 1s if not specified.
 boot_delay=0
