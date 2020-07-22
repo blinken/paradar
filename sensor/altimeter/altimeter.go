@@ -54,8 +54,8 @@ func (a *altimeter) Track() {
 		log.Fatal(err)
 	}
 
-	// [0], 25Hz update rate [011], Strong low pass filter enable [11], BDU enabled (reads block updates) [1], 4-wire SPI [0]
-	a.Tx([]byte{regCtrl1, 0x3e})
+	// [0], 1Hz update rate [001], Strong low pass filter enable [11], BDU enabled (reads block updates) [1], 4-wire SPI [0]
+	a.Tx([]byte{regCtrl1, 0x1e})
 	// Reboot [0], FIFO enable [00], Auto-increment registers on read [1], I2C Disabled [1], Reset [0], [0], One-shot mode [0]
 	a.Tx([]byte{regCtrl2, 0x18})
 	// Interrupt active-low [0] (active-high), interrupt push-pull(0) vs open-drain (1) [0], FIFO things [000], DRDY pin enable [100]

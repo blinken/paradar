@@ -89,13 +89,6 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 	go a.track(rawResults)
 
 	var averagedResult IMURawReading
-	averagedResult.gyro_x = 0.0
-	averagedResult.gyro_y = 0.0
-	averagedResult.gyro_z = 0.0
-	averagedResult.accel_x = 0.0
-	averagedResult.accel_y = 0.0
-	averagedResult.accel_z = 0.0
-	averagedResult.temp = 0.0
 
 	// TODO need to be moved into module-level constants
 	var calibrationSize float64 = 200
@@ -157,14 +150,14 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 			res.accel_z-calibrationOffset.accel_z,
 		)
 
-		var imuRes = new(IMUFilteredReading)
+		var imuRes IMUFilteredReading
 		imuRes.Temp = res.temp
 		imuRes.Roll = madgwickState.GetRoll()
 		imuRes.Pitch = madgwickState.GetPitch()
 		imuRes.YawUncorrected = math.Mod(madgwickState.GetYaw()+180, 360)
 		imuRes.Count = count
 
-		c <- *imuRes
+		c <- imuRes
 		count += 1
 	}
 }
@@ -225,7 +218,7 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 	})
 
 	for {
-		var res = new(IMURawReading)
+		var res IMURawReading
 
 		// Wait for any data to be ready
 		//
@@ -237,19 +230,22 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 			gpioDataReady.WaitForEdge(time.Second)
 		}
 
+		// potentially this should be rolled in to the same read as below
 		statusReg := a.Tx([]byte{0x9e, 0x00})
 
-		var r []byte
-		if statusReg[1]&0x02 != 0 {
-			r = a.Tx([]byte{
-				regResultGyro,
-				0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			})
+		// Read all the things at once
+		r := a.Tx([]byte{
+			regResultTemp,
+			0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		})
 
+		if statusReg[1]&0x02 != 0 {
 			// 65.536 given by +/- 500dps range, 16-bit signed int
-			res.gyro_x = float64(a.decodeInt16(r[1:3])) / 65.536 / 50
-			res.gyro_y = float64(a.decodeInt16(r[3:5])) / 65.536 / 50
-			res.gyro_z = float64(a.decodeInt16(r[5:7])) / 65.536 / 50
+			res.gyro_x = float64(a.decodeInt16(r[3:5])) / 65.536 / 50
+			res.gyro_y = float64(a.decodeInt16(r[5:7])) / 65.536 / 50
+			res.gyro_z = float64(a.decodeInt16(r[7:9])) / 65.536 / 50
 		} else {
 			res.gyro_x = 0
 			res.gyro_y = 0
@@ -257,14 +253,9 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		}
 
 		if statusReg[1]&0x01 != 0 {
-			r = a.Tx([]byte{
-				regResultAccel,
-				0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			})
-
-			res.accel_x = float64(a.decodeInt16(r[1:3])) / 4096.0
-			res.accel_y = float64(a.decodeInt16(r[3:5])) / 4096.0
-			res.accel_z = float64(a.decodeInt16(r[5:7])) / 4096.0
+			res.accel_x = float64(a.decodeInt16(r[9:11])) / 4096.0
+			res.accel_y = float64(a.decodeInt16(r[11:13])) / 4096.0
+			res.accel_z = float64(a.decodeInt16(r[13:15])) / 4096.0
 		} else {
 			res.accel_x = 0
 			res.accel_y = 0
@@ -272,18 +263,13 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		}
 
 		if statusReg[1]&0x04 != 0 {
-			r = a.Tx([]byte{
-				regResultTemp,
-				0x00, 0x00,
-			})
-
 			res.temp = float64(a.decodeInt16(r[1:3])) / 256.0
 		} else {
 			res.temp = 0
 		}
 
 		//fmt.Printf("accelerometer %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", res.accel_x, res.accel_y, res.accel_z, res.gyro_x, res.gyro_y, res.gyro_z, res.temp)
-		c <- *res
+		c <- res
 
 		// Ensure result rate is stable - pad the loop so it always takes 7ms (this
 		// is roughly the time for the accelerometer to return a result the way

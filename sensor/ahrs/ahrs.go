@@ -33,7 +33,14 @@ const (
 	minYawReadings int = 4  // and this
 )
 
+var x_axis []float64
+
 func NewAHRS(sb *sensor.Bus) *ahrs {
+	x_axis = make([]float64, nYawReadings)
+	for i := 0; i < nYawReadings; i++ {
+		x_axis[i] = float64(i + 1)
+	}
+
 	return &ahrs{
 		compass:      compass.NewCompass(sb),
 		imu:          accelerometer.NewAccelerometer(sb),
@@ -83,16 +90,11 @@ func (a *ahrs) calculateYawOffset() (float64, float64) {
 		return 0.0, 1.0
 	}
 
-	x_axis := make([]float64, len(a.bufYawReadings))
-	for i := 0; i < len(a.bufYawReadings); i++ {
-		x_axis[i] = float64(i + 1)
-	}
-
 	//fmt.Printf("bufMagReadings: %v bufYawReadings: %v\n", len(a.bufMagReadings), len(a.bufYawReadings))
 	//spew.Dump(a.bufMagReadings)
 	//spew.Dump(a.bufYawReadings)
-	offset_mag, gain_mag := stat.LinearRegression(x_axis, a.bufMagReadings, nil, false)
-	offset_yaw, gain_yaw := stat.LinearRegression(x_axis, a.bufYawReadings, nil, false)
+	offset_mag, gain_mag := stat.LinearRegression(x_axis[:len(a.bufMagReadings)], a.bufMagReadings, nil, false)
+	offset_yaw, gain_yaw := stat.LinearRegression(x_axis[:len(a.bufYawReadings)], a.bufYawReadings, nil, false)
 	//fmt.Printf("ahrs: yaw offset=%3.2f %3.2f gain=%3.2f %3.2f\n", offset_mag, offset_yaw, gain_mag, gain_yaw)
 
 	return (offset_yaw - offset_mag), (gain_mag / gain_yaw) // this produces crazy values, but maybe that's ok?
