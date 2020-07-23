@@ -71,15 +71,15 @@ func (a *Accelerometer) Tx(write []byte) []byte {
 	return a.sb.Tx(write, gpioChipSelect)
 }
 
-func (a *Accelerometer) decodeInt16(d []byte) int16 {
-	var res int16
-	if (d[1] & 0x80) == 0x01 { // problematic?
-		res = int16(uint(d[0])|uint(d[1])<<8) * -1
+// Unpack a little-endian signed int16 given two bytes
+func unpackInt16(input []byte) int32 {
+	var ures uint32
+	ures = uint32(uint(input[0]) | uint(input[1])<<8)
+	if (ures & 0x8000) > 0 {
+		return ((0xffff ^ int32(ures)) * -1)
 	} else {
-		res = int16(uint(d[0]) | uint(d[1])<<8)
+		return int32(ures)
 	}
-
-	return res
 }
 
 // Calibrate using the first n readings from the sensor, then apply filtering
@@ -243,9 +243,10 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 
 		if statusReg[1]&0x02 != 0 {
 			// 65.536 given by +/- 500dps range, 16-bit signed int
-			res.gyro_x = float64(a.decodeInt16(r[3:5])) / 65.536 / 50
-			res.gyro_y = float64(a.decodeInt16(r[5:7])) / 65.536 / 50
-			res.gyro_z = float64(a.decodeInt16(r[7:9])) / 65.536 / 50
+      // output in radians/sec
+			res.gyro_x = float64(unpackInt16(r[3:5])) * math.Pi / (180 * 65536)
+			res.gyro_y = float64(unpackInt16(r[5:7])) * math.Pi / (180 * 65536)
+			res.gyro_z = float64(unpackInt16(r[7:9])) * math.Pi / (180 * 65536)
 		} else {
 			res.gyro_x = 0
 			res.gyro_y = 0
@@ -253,9 +254,9 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		}
 
 		if statusReg[1]&0x01 != 0 {
-			res.accel_x = float64(a.decodeInt16(r[9:11])) / 4096.0
-			res.accel_y = float64(a.decodeInt16(r[11:13])) / 4096.0
-			res.accel_z = float64(a.decodeInt16(r[13:15])) / 4096.0
+			res.accel_x = float64(unpackInt16(r[9:11])) / 4096.0
+			res.accel_y = float64(unpackInt16(r[11:13])) / 4096.0
+			res.accel_z = float64(unpackInt16(r[13:15])) / 4096.0
 		} else {
 			res.accel_x = 0
 			res.accel_y = 0
@@ -263,7 +264,7 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		}
 
 		if statusReg[1]&0x04 != 0 {
-			res.temp = float64(a.decodeInt16(r[1:3])) / 256.0
+			res.temp = float64(unpackInt16(r[1:3])) / 256.0
 		} else {
 			res.temp = 0
 		}
