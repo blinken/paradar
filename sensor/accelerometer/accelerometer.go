@@ -21,7 +21,7 @@ type Accelerometer struct {
 type IMUFilteredReading struct {
 	Roll           float64
 	Pitch          float64
-	YawUncorrected float64
+	YawUncorrected float64 // in radians
 	Temp           float64
 	Count          int
 }
@@ -154,7 +154,7 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 		imuRes.Temp = res.temp
 		imuRes.Roll = madgwickState.GetRoll()
 		imuRes.Pitch = madgwickState.GetPitch()
-		imuRes.YawUncorrected = math.Mod(madgwickState.GetYaw()+180, 360)
+		imuRes.YawUncorrected = madgwickState.GetYaw() * math.Pi / 180.0 // radians
 		imuRes.Count = count
 
 		c <- imuRes
@@ -190,8 +190,8 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 	a.Tx([]byte{regInt2Ctrl, 0x00})
 	// Accel: 104Hz raw [0100], 8g full scale [11], Low-pass filter enabled [1], [0]
 	a.Tx([]byte{regCtrl1, 0x4e})
-	// Gyro: 104Hz raw [0100], 500dps full scale [010], [0]
-	a.Tx([]byte{regCtrl2, 0x44})
+	// Gyro: 104Hz raw [0100], 2000dps full scale [110], [0]
+	a.Tx([]byte{regCtrl2, 0x4c})
 	// Reboot [0], Block updates enabled [1], Interrupt active-high [0], push-pull mode [0], 4-wire SPI [0], Auto-increment reads [1], [0], Reset device [0]
 	a.Tx([]byte{regCtrl3, 0x44})
 	// [0], Disable sleep mode [0], Use two interrupt pins [0], [0], Mask DRDY until filters settle [1], Disable I2C [1], Enable Gyro LPF [1], [0]
@@ -200,9 +200,8 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 	a.Tx([]byte{regCtrl5, 0x00})
 	// Level-sensitive latched DRDY trigger [011], High performance accelerometer [0], Low-res offsets [0], Gyro 67Hz output [000]
 	a.Tx([]byte{regCtrl6, 0x60})
-	// High performance gyro [1], Gyro HPF disabled [0], 16mHz cutoff [00], [0], No OIS [0], No accel offset [0], No OIS [0]
-	// TODO - check whether the gyro HPF does a better job than our calibration above
-	a.Tx([]byte{regCtrl7, 0x80})
+	// High performance gyro [1], Gyro HPF enabled [1], 260mHz cutoff [10], [0], No OIS [0], No accel offset [0], No OIS [0]
+	a.Tx([]byte{regCtrl7, 0xf0})
 	// Accel 52Hz output [000], Defaults [00], Accel slope filter disabled [0], [0], Don't use LPF data for 6D [0]
 	a.Tx([]byte{regCtrl8, 0x00})
 	// No DEN stamping [1110], Disable DEN on Accel [0], DEN Active Low [0], Disable I3C [1], [0]
@@ -242,11 +241,11 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		})
 
 		if statusReg[1]&0x02 != 0 {
-			// 65.536 given by +/- 500dps range, 16-bit signed int
+			// 65.536 given by +/- 2000dps range, 16-bit signed int
       // output in radians/sec
-			res.gyro_x = float64(unpackInt16(r[3:5])) * math.Pi / (180 * 65536)
-			res.gyro_y = float64(unpackInt16(r[5:7])) * math.Pi / (180 * 65536)
-			res.gyro_z = float64(unpackInt16(r[7:9])) * math.Pi / (180 * 65536)
+			res.gyro_x = float64(unpackInt16(r[3:5])) * math.Pi / (180 * 16.384)
+			res.gyro_y = float64(unpackInt16(r[5:7])) * math.Pi / (180 * 16.384)
+			res.gyro_z = float64(unpackInt16(r[7:9])) * math.Pi / (180 * 16.384)
 		} else {
 			res.gyro_x = 0
 			res.gyro_y = 0

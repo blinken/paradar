@@ -65,7 +65,7 @@ class Compass:
 
         try:
           self._azimuth = float(line.split(" ", 1)[0].strip())
-          print("compass: {}".format(line))
+          #print("compass: {}".format(line))
         except (ValueError, TypeError):
           print("compass: ignoring message '{}'".format(line.strip()))
 

@@ -20,7 +20,7 @@ type Compass struct {
 
 type MagnetometerReading struct {
 	X, Y, Z   float64
-	AzimuthXY float64 // uncorrected naive azimuth from XY readings only
+	AzimuthXY float64 // uncorrected naive azimuth from XY readings only (radians!)
 }
 
 const (
@@ -122,8 +122,11 @@ func (c *Compass) SelfTest() bool {
 	return (int(read[1]) == 0x22)
 }
 
+// Returns the azimuth in radians
 func AzimuthXY(x, y float64) float64 {
-	return math.Mod((180.0/math.Pi*math.Atan2(y, x))+180, 360.0)
+  // subtract 90 degrees here, because Atan returns 0 when north is aligned with the
+  // X axis, and device-relative coordinates is north aligned with Y.
+	return math.Atan2(y, x) - (math.Pi/2.0)
 }
 
 func (c *Compass) FieldStrengthOverlimit(r MagnetometerReading) bool {
