@@ -7,10 +7,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/blinken/paradar/sensor"
-	//"github.com/brunocannavina/goahrs"
 	"github.com/blinken/goahrs"
-	//"github.com/davecgh/go-spew/spew"
+	"github.com/blinken/paradar/sensor"
 
 	"github.com/golang/protobuf/proto"
 	"periph.io/x/periph/conn/gpio"
@@ -22,9 +20,9 @@ type Accelerometer struct {
 }
 
 type IMUFilteredReading struct {
-	Roll           float64
-	Pitch          float64
-	YawUncorrected float64 // in radians
+	Roll           float64 // degrees
+	Pitch          float64 // degrees
+	YawUncorrected float64 // radians
 	Temp           float64
 	Count          int
 }
@@ -62,7 +60,9 @@ const (
 const (
 	imuCalibrationFile string  = "/storage/calibration_imu.pb"
 	imuCalibrationSize float64 = 200
-	imuUpdateRate      float64 = 97
+
+	// Must match actual update rate, so the model is correct
+	imuUpdateRate float64 = 97
 
 	// When calibrating, assume acceleration/movement all zeros except 1g
 	// perpendicular to Z axis
@@ -74,8 +74,10 @@ const (
 	imuCalibrationGyroLimit  float64 = 0.1
 )
 
-var gpioChipSelect = bcm283x.GPIO17
-var gpioDataReady = bcm283x.GPIO27
+var (
+	gpioChipSelect = bcm283x.GPIO17
+	gpioDataReady  = bcm283x.GPIO27
+)
 
 func NewAccelerometer(sb *sensor.Bus) *Accelerometer {
 	gpioChipSelect.Out(gpio.High)
@@ -87,20 +89,8 @@ func (a *Accelerometer) Tx(write []byte) []byte {
 	return a.sb.Tx(write, gpioChipSelect)
 }
 
-// Unpack a little-endian signed int16 given two bytes
-func unpackInt16(input []byte) int32 {
-	var ures uint32
-	ures = uint32(uint(input[0]) | uint(input[1])<<8)
-	if (ures & 0x8000) > 0 {
-		return ((0xffff ^ int32(ures)) * -1)
-	} else {
-		return int32(ures)
-	}
-}
-
 // Deserialise the calibration from disk, if it's available
 func (a *Accelerometer) getCalibration(rawResults chan IMURawReading) Calibration {
-
 	var calibrationOffset Calibration
 
 	// Parse and return calibration from disk, if it's valid
@@ -172,7 +162,7 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 	for {
 		res := <-rawResults
 
-		// Update the Madgewick quaternion model with calibrated sensor state. This
+		// Update the Madgwick quaternion model with calibrated sensor state. This
 		// builds a filtered inertial model: the yaw is local and not yet aligned
 		// to global coordinates (but roll and pitch are good to go!)
 		// http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
@@ -267,7 +257,7 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		// potentially this should be rolled in to the same read as below
 		statusReg := a.Tx([]byte{0x9e, 0x00})
 
-		// Read all the things at once
+		// Read all the things at once to save on SPI syscalls, which are expensive
 		r := a.Tx([]byte{
 			regResultTemp,
 			0x00, 0x00,
@@ -276,11 +266,11 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		})
 
 		if statusReg[1]&0x02 != 0 {
-			// 65.536 given by +/- 2000dps range, 16-bit signed int
+			// 16.384 given by +/- 2000dps range, 16-bit signed int
 			// output in radians/sec
-			res.gyro_x = float64(unpackInt16(r[3:5])) * math.Pi / (180 * 16.384)
-			res.gyro_y = float64(unpackInt16(r[5:7])) * math.Pi / (180 * 16.384)
-			res.gyro_z = float64(unpackInt16(r[7:9])) * math.Pi / (180 * 16.384)
+			res.gyro_x = float64(a.sb.UnpackInt16(r[3:5])) * math.Pi / (180 * 16.384)
+			res.gyro_y = float64(a.sb.UnpackInt16(r[5:7])) * math.Pi / (180 * 16.384)
+			res.gyro_z = float64(a.sb.UnpackInt16(r[7:9])) * math.Pi / (180 * 16.384)
 		} else {
 			res.gyro_x = 0
 			res.gyro_y = 0
@@ -288,9 +278,9 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		}
 
 		if statusReg[1]&0x01 != 0 {
-			res.accel_x = float64(unpackInt16(r[9:11])) / 4096.0
-			res.accel_y = float64(unpackInt16(r[11:13])) / 4096.0
-			res.accel_z = float64(unpackInt16(r[13:15])) / 4096.0
+			res.accel_x = float64(a.sb.UnpackInt16(r[9:11])) / 4096.0
+			res.accel_y = float64(a.sb.UnpackInt16(r[11:13])) / 4096.0
+			res.accel_z = float64(a.sb.UnpackInt16(r[13:15])) / 4096.0
 		} else {
 			res.accel_x = 0
 			res.accel_y = 0
@@ -298,7 +288,7 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		}
 
 		if statusReg[1]&0x04 != 0 {
-			res.temp = float64(unpackInt16(r[1:3])) / 256.0
+			res.temp = float64(a.sb.UnpackInt16(r[1:3])) / 256.0
 		} else {
 			res.temp = 0
 		}
@@ -310,7 +300,6 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		// is roughly the time for the accelerometer to return a result the way
 		// we've configured it)
 		runtime_ns := time.Now().UnixNano() - time_start
-		//fmt.Println(runtime_ns)
 		time.Sleep(time.Duration(10000000-runtime_ns) * time.Nanosecond)
 	}
 }

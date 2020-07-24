@@ -29,10 +29,6 @@ const (
 	regResult1  uint8 = 0xa8 // LSB
 	regResult2  uint8 = 0xa9
 	regResult3  uint8 = 0xaa // MSB
-
-	// Temperature as measured by the pressure sensors is about this much hotter
-	// than surrounding air
-	temperature_offset_c float64 = -25.0
 )
 
 var gpioChipSelect = bcm283x.GPIO2
@@ -81,29 +77,14 @@ func (a *altimeter) Track() {
 			0x00, 0x00,
 		})
 
-		var pressure_raw int32
-		if (r[3] & 0x80) == 0x01 {
-			pressure_raw = int32(uint(r[1])|uint(r[2])<<8|uint(r[3])<<16) * -1
-		} else {
-			pressure_raw = int32(uint(r[1]) | uint(r[2])<<8 | uint(r[3])<<16)
-		}
-
-		var temperature_raw int32
-		if (r[5] & 0x80) == 0x01 {
-			temperature_raw = int32(uint(r[4])|uint(r[5])<<8) * -1
-		} else {
-			temperature_raw = int32(uint(r[4]) | uint(r[5])<<8)
-		}
-
-		pressure_hpa := float64(pressure_raw) / 4096
-		temperature_c := float64(temperature_raw)/100 + temperature_offset_c
+		pressure_hpa := float64(a.sb.UnpackLEInt24(r[1:4])) / 4096
+		temperature_c := float64(a.sb.UnpackInt16(r[4:6])) / 100
 
 		// Note this is IACO standard pressure altitude - assuming MSL pressure of 1013.25
 		// hPa and temperature of 15 degrees. We are expected to transmit this
 		// number in GDL90 but it does not equal height above ground!
 		// ref https://www.weather.gov/media/epz/wxcalc/pressureAltitude.pdf, https://en.wikipedia.org/wiki/Pressure_altitude
 		altitude_ft := 145366.45 * (1 - math.Pow((pressure_hpa/1013.25), 0.190284))
-		//fmt.Printf("altimeter %.2f hPa %.1f° %.1f ft\n", pressure_hpa, temperature_c, altitude_ft)
 
 		a.mutex.Lock()
 		a.altitude_ft = int32(altitude_ft)

@@ -25,25 +25,27 @@ type ahrs struct {
 	roll, pitch, yaw       float64 // adjusted readings in degrees
 	imuAvailable, usingImu bool
 
-	//bufMagReadings []float64 // raw readings in radians
 	bufYawReadings []float64 // raw readings in radians
 }
 
 const (
-	nYawReadings   int = 500 // tune this
-	updateYawEvery int = 35  // must be less than 0.1*nYawReadings (410)
-	yawWarmup      int = 30  // at startup, calculate the yaw every reading until this many readings have been collected
+	nYawReadings   int = 500
+	updateYawEvery int = 35 // must be less than 0.1*nYawReadings (410)
+	yawWarmup      int = 30 // at startup, calculate the yaw every reading until this many readings have been collected
+
+	maxRoll  float64 = 70.0  // roll above which we freeze the display to avoid asymptotes
+	maxPitch float64 = 60.0  // pitch above which we freeze the display to avoid asymptotes
+	minRoll  float64 = 100.0 // roll above which we flip into inverted mode
 )
 
 func NewAHRS(sb *sensor.Bus) *ahrs {
+	accel := accelerometer.NewAccelerometer(sb)
+
 	return &ahrs{
-		compass:      compass.NewCompass(sb),
-		imu:          accelerometer.NewAccelerometer(sb),
-		roll:         0.0,
-		pitch:        0.0,
-		yaw:          0.0,
-		imuAvailable: false,
-		usingImu:     false,
+		compass:        compass.NewCompass(sb),
+		imu:            accel,
+		bufYawReadings: make([]float64, 0, nYawReadings),
+		imuAvailable:   accel.SelfTest(),
 	}
 }
 
@@ -64,7 +66,6 @@ func (a *ahrs) levelMagAndGetAzimuth(u compass.MagnetometerReading) float64 {
 	  Y=sin(r)*sin(p)*x + cos(r)*y + sin(r)*cos(p)*z
 	  Z=cos(r)*sin(p)*x + sin(r)*y + cos(r)*cos(p)*z
 	*/
-	//return compass.AzimuthXY(u.X, u.Y) // test one thing at a time
 	var corrected compass.MagnetometerReading
 
 	// Must be in radians
@@ -81,32 +82,23 @@ func (a *ahrs) levelMagAndGetAzimuth(u compass.MagnetometerReading) float64 {
 
 func (a *ahrs) updateYawOffset() {
 
-	/*
-		if len(a.bufYawReadings) != len(a.bufMagReadings) {
-			fmt.Printf("ahrs.calculateYawOffset: yaw and mag readings are not the same length\n")
-		}*/
-
 	if len(a.bufYawReadings) > nYawReadings {
 		// throw out the bottom 10% of the array
 		a.mutex.Lock()
 		a.bufYawReadings = a.bufYawReadings[nYawReadings/10:]
 		a.mutex.Unlock()
-		//a.bufMagReadings = a.bufMagReadings[nYawReadings/10:]
 	}
 
-	//fmt.Printf("bufMagReadings: %v bufYawReadings: %v\n", len(a.bufMagReadings), len(a.bufYawReadings))
-	//a.DumpYawReadings()
 	if (len(a.bufYawReadings)%updateYawEvery == 0) || (len(a.bufYawReadings) < yawWarmup) {
-		//offset_mag := stat.CircularMean(a.bufMagReadings, nil)
 		offset_yaw := stat.CircularMean(a.bufYawReadings, nil)
-		//fmt.Printf("ahrs: yaw offset=%3.2f %3.2f gain=%3.2f %3.2f\n", offset_mag, offset_yaw, gain_mag, gain_yaw)
 
 		a.mutex.Lock()
-		a.imuYawOffset = offset_yaw //- offset_mag // radians
+		a.imuYawOffset = offset_yaw // radians
 		a.mutex.Unlock()
 	}
 }
 
+// Compass leveling does crazy things when roll or pitch ~90°
 func (a *ahrs) orientationTooCrazyToUse() bool {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
@@ -115,7 +107,7 @@ func (a *ahrs) orientationTooCrazyToUse() bool {
 		return false
 	}
 
-	if (a.roll > 70.0) || (a.roll < -70.0) || (a.pitch > 60.0) || (a.pitch < -60.0) {
+	if (math.Abs(a.roll) > maxRoll) || (math.Abs(a.pitch) > maxPitch) {
 		return true
 	} else {
 		return false
@@ -131,14 +123,14 @@ func (a *ahrs) correctYawForOrientation(yaw float64) float64 {
 	}
 
 	// Apply calculated offset from magnetometer and convert to degrees
-	yaw = math.Mod((yaw-a.imuYawOffset)*180/math.Pi+360, 360)
+	yaw = (yaw - a.imuYawOffset) * 180 / math.Pi
 
-	if ((a.roll > 100.0) || (a.roll < -100.0)) && (a.pitch < 60.0) && (a.pitch > -60.0) {
+	if (math.Abs(a.roll) > minRoll) && (math.Abs(a.pitch) < maxPitch) {
 		// When the device is inverted but the pitch isn't crazy, we need to flip
 		// the direction of the yaw and rotate it 180, because it's levelled to
 		// always be relative to the world - not the display. Do this slightly
 		// beyond 90° so it's less likely people trigger it accidentally
-		yaw = math.Mod(-yaw+360+180, 360)
+		yaw = -yaw + 180
 	} else if a.orientationTooCrazyToUse() {
 		// If the device is in one of the asymptotes (close to 90° roll), discard
 		// the proposed new yaw value (freeze the display) to avoid the display
@@ -146,7 +138,7 @@ func (a *ahrs) correctYawForOrientation(yaw float64) float64 {
 		yaw = a.yaw
 	}
 
-	return yaw
+	return math.Mod(yaw+360, 360)
 }
 
 func (a *ahrs) Track() {
@@ -155,60 +147,44 @@ func (a *ahrs) Track() {
 	chanIMUReadings := make(chan accelerometer.IMUFilteredReading)
 	chanMagReadings := make(chan compass.MagnetometerReading)
 
-	a.bufYawReadings = make([]float64, 0, nYawReadings)
-	//a.bufMagReadings = make([]float64, 0, nYawReadings)
-
 	go a.compass.Track(chanMagReadings)
 
-	a.imuAvailable = a.imu.SelfTest()
-	fmt.Printf("ahrs: imu self test: %t\n", a.imuAvailable)
-
-	if a.imuAvailable {
+	if a.IMUAvailable() {
 		fmt.Printf("ahrs: using imu to correct compass\n")
 		go a.imu.TrackCalibrated(chanIMUReadings)
 
 		lastMagReading := <-chanMagReadings
-		a.imuYawOffset = 0.0
 
 		for {
 			// The IMU model relies on receiving data at the rate the accelerometer
 			// sends it; the compass not so much, so let the IMU control the loop rate
 			// here
 			imuReading := <-chanIMUReadings
+
 			select {
 			case lastMagReading = <-chanMagReadings:
-				//fmt.Printf("ahrs: got mag %.2f\n", lastMagReading.AzimuthXY)
 			default:
 			}
-
-			//fmt.Printf("ahrs: got imu roll %.2f pitch %.2f yaw %.2f\n", imuReading.Roll, imuReading.Pitch, imuReading.YawUncorrected)
-			//fmt.Printf("ahrs: got mag %.2f\n", lastMagReading.AzimuthXY)
 
 			yaw := a.correctYawForOrientation(imuReading.YawUncorrected)
 			orientationTooCrazy := a.orientationTooCrazyToUse()
 
-			// TODO, add a test for excessive difference between IMU and Mag readings
-			if a.compass.FieldStrengthOverlimit(lastMagReading) {
-				// use corrected IMU yaw
-				a.mutex.Lock()
-				a.roll = imuReading.Roll
-				a.pitch = imuReading.Pitch
-				a.yaw = yaw
-				a.usingImu = true
-				a.imuCount = imuReading.Count
-				a.lastIMUYaw = imuReading.YawUncorrected
-				a.mutex.Unlock()
+			a.mutex.Lock()
+			a.roll = imuReading.Roll
+			a.pitch = imuReading.Pitch
+			a.yaw = yaw
+			a.imuCount = imuReading.Count
+			a.lastIMUYaw = imuReading.YawUncorrected
+			a.mutex.Unlock()
 
+			if a.compass.FieldStrengthOverlimit(lastMagReading) {
+				a.mutex.Lock()
+				a.usingImu = true
+				a.mutex.Unlock()
 			} else {
 				a.mutex.Lock()
-				a.roll = imuReading.Roll
-				a.pitch = imuReading.Pitch
-				a.yaw = yaw
-				//a.yaw = a.levelMagAndGetAzimuth(lastMagReading)
 				a.usingImu = false
-				a.imuCount = imuReading.Count
 				a.lastMagYaw = a.levelMagAndGetAzimuth(lastMagReading)
-				a.lastIMUYaw = imuReading.YawUncorrected
 
 				if !orientationTooCrazy {
 					a.bufYawReadings = append(a.bufYawReadings, imuReading.YawUncorrected-a.levelMagAndGetAzimuth(lastMagReading))
@@ -217,16 +193,13 @@ func (a *ahrs) Track() {
 
 				a.updateYawOffset()
 			}
-
-			//fmt.Printf("ahrs: mag yaw=%8.3f uncorrected inertial=%8.3f inertial=%8.3f\n", a.yaw, imuReading.YawUncorrected, math.Mod((imuReading.YawUncorrected-a.imuYawOffset)*180/math.Pi+360, 360)
-			//fmt.Printf("ahrs: mag corr=%4.3f uncor=%4.3f pitch=%3.3f roll=%3.3f\n", a.yaw, compass.AzimuthXY(lastMagReading.X,lastMagReading.Y), a.GetPitch(), a.GetRoll())
 		}
 	} else {
 		fmt.Printf("ahrs: imu unavailable\n")
 
-		// Only track the magnetometer
 		for {
 			magReading := <-chanMagReadings
+
 			a.mutex.Lock()
 			a.yaw = magReading.AzimuthXY * 180 / math.Pi // todo, apply a moving average to this
 			a.mutex.Unlock()
@@ -303,6 +276,5 @@ func (a *ahrs) GetIMUCount() int {
 }
 
 func (a *ahrs) DumpYawReadings() {
-	//spew.Dump(a.bufMagReadings)
 	spew.Dump(a.bufYawReadings)
 }

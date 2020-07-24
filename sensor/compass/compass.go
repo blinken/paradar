@@ -52,17 +52,6 @@ func (c *Compass) Tx(write []byte) []byte {
 	return c.sb.Tx(write, gpioChipSelect)
 }
 
-// Unpack a big-endian signed int24 given three bytes
-func unpackInt24(input []byte) int32 {
-	var ures uint32
-	ures = uint32(uint(input[2]) | uint(input[1])<<8 | uint(input[0])<<16)
-	if (ures & 0x800000) > 0 {
-		return ((0xffffff ^ int32(ures)) * -1)
-	} else {
-		return int32(ures)
-	}
-}
-
 func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 	fmt.Printf("compass tracking\n")
 
@@ -73,8 +62,7 @@ func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 	c.Tx([]byte{regPoll, 0x00})
 	c.Tx([]byte{regContinuousMeasurementMode, 0x00})
 
-	// Cycle count controls the accuracy/averaging. Set the cycle count the same
-	// for x/y/z
+	// Cycle count controls the accuracy/averaging for each axis
 	var cycle_count uint8 = 0xc8
 	c.Tx([]byte{
 		regCycleCount,
@@ -102,12 +90,10 @@ func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 		// The compass words in north-east-down coordinates, and the accelerometer
 		// works with north up. "flip" the compass to the other side of the board.
 		var reading MagnetometerReading
-		reading.Y = (float64(unpackInt24(r[1:4])) - cal_offset_x) * cal_gain_x
-		reading.X = -(float64(unpackInt24(r[4:7])) - cal_offset_y) * cal_gain_y
-		reading.Z = -(float64(unpackInt24(r[7:])) - cal_offset_z) * cal_gain_z
+		reading.Y = (float64(c.sb.UnpackInt24(r[1:4])) - cal_offset_x) * cal_gain_x
+		reading.X = -(float64(c.sb.UnpackInt24(r[4:7])) - cal_offset_y) * cal_gain_y
+		reading.Z = -(float64(c.sb.UnpackInt24(r[7:])) - cal_offset_z) * cal_gain_z
 		reading.AzimuthXY = AzimuthXY(reading.X, reading.Y)
-
-		//fmt.Printf("compass %v\n", reading)
 
 		chanMagReadings <- reading
 	}
@@ -117,16 +103,14 @@ func (c *Compass) SelfTest() bool {
 	// ID register should read 0x22 (may change with firmware revisions?)
 	read := c.Tx([]byte{0xb6, 0x00})
 
-	// todo, run the actual self-test here
-
 	return (int(read[1]) == 0x22)
 }
 
 // Returns the azimuth in radians
 func AzimuthXY(x, y float64) float64 {
-  // subtract 90 degrees here, because Atan returns 0 when north is aligned with the
-  // X axis, and device-relative coordinates is north aligned with Y.
-	return math.Atan2(y, x) - (math.Pi/2.0)
+	// subtract 90 degrees, because Atan returns 0 when north is aligned with the
+	// X axis, and device-relative coordinates have north aligned with Y.
+	return math.Atan2(y, x) - (math.Pi / 2.0)
 }
 
 func (c *Compass) FieldStrengthOverlimit(r MagnetometerReading) bool {

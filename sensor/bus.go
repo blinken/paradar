@@ -3,7 +3,6 @@ package sensor
 import (
 	"log"
 	"sync"
-	//"time"
 
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/physic"
@@ -20,9 +19,9 @@ type Bus struct {
 }
 
 func NewBus() *Bus {
-
 	busMutex.Lock()
-	// Make sure periph is initialized.
+	defer busMutex.Unlock()
+
 	if _, err := host.Init(); err != nil {
 		log.Fatal(err)
 	}
@@ -35,7 +34,6 @@ func NewBus() *Bus {
 	spiMOSI.SetFunc(spi.MOSI.Specialize(0, -1))
 	spiMISO.SetFunc(spi.MISO.Specialize(0, -1))
 
-	// Use spireg SPI port registry to find the first available SPI bus.
 	p, err := spireg.Open("")
 	if err != nil {
 		log.Fatal(err)
@@ -46,22 +44,53 @@ func NewBus() *Bus {
 		log.Fatal(err)
 	}
 
-	busMutex.Unlock()
 	return &Bus{connection: c}
-
 }
 
 func (s *Bus) Tx(write []byte, cs gpio.PinIO) []byte {
+	busMutex.Lock()
+	defer busMutex.Unlock()
 
 	read := make([]byte, len(write))
 
-	busMutex.Lock()
 	cs.Out(gpio.Low)
 	if err := s.connection.Tx(write, read); err != nil {
 		log.Fatal(err)
 	}
 	cs.Out(gpio.High)
-	busMutex.Unlock()
 
 	return read
+}
+
+// Unpack a little-endian signed int16 given two bytes
+func (s *Bus) UnpackInt16(input []byte) int32 {
+	var ures uint32
+	ures = uint32(uint(input[0]) | uint(input[1])<<8)
+	if (ures & 0x8000) > 0 {
+		return ((0xffff ^ int32(ures)) * -1)
+	} else {
+		return int32(ures)
+	}
+}
+
+// Unpack a big-endian signed int24 given three bytes
+func (s *Bus) UnpackInt24(input []byte) int32 {
+	var ures uint32
+	ures = uint32(uint(input[2]) | uint(input[1])<<8 | uint(input[0])<<16)
+	if (ures & 0x800000) > 0 {
+		return ((0xffffff ^ int32(ures)) * -1)
+	} else {
+		return int32(ures)
+	}
+}
+
+// Unpack a little-endian signed int24 given three bytes
+func (s *Bus) UnpackLEInt24(input []byte) int32 {
+	var ures uint32
+	ures = uint32(uint(input[0]) | uint(input[1])<<8 | uint(input[2])<<16)
+	if (ures & 0x800000) > 0 {
+		return ((0xffffff ^ int32(ures)) * -1)
+	} else {
+		return int32(ures)
+	}
 }
