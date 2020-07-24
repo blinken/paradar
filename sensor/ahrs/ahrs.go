@@ -20,7 +20,7 @@ type ahrs struct {
 	imuYawOffset float64 // offset in radians
 	imuCount     int
 
-  lastMagYaw, lastIMUYaw float64 // radians
+	lastMagYaw, lastIMUYaw float64 // radians
 
 	roll, pitch, yaw       float64 // adjusted readings in degrees
 	imuAvailable, usingImu bool
@@ -31,8 +31,8 @@ type ahrs struct {
 
 const (
 	nYawReadings   int = 500 // tune this
-  updateYawEvery int = 35 // must be less than 0.1*nYawReadings (410)
-  yawWarmup int = 30 // at startup, calculate the yaw every reading until this many readings have been collected 
+	updateYawEvery int = 35  // must be less than 0.1*nYawReadings (410)
+	yawWarmup      int = 30  // at startup, calculate the yaw every reading until this many readings have been collected
 )
 
 func NewAHRS(sb *sensor.Bus) *ahrs {
@@ -67,7 +67,7 @@ func (a *ahrs) levelMagAndGetAzimuth(u compass.MagnetometerReading) float64 {
 	//return compass.AzimuthXY(u.X, u.Y) // test one thing at a time
 	var corrected compass.MagnetometerReading
 
-  // Must be in radians
+	// Must be in radians
 	pitch_r := a.pitch * math.Pi / 180.0
 	roll_r := a.roll * math.Pi / 180.0
 
@@ -75,34 +75,78 @@ func (a *ahrs) levelMagAndGetAzimuth(u compass.MagnetometerReading) float64 {
 	corrected.Y = math.Sin(roll_r)*math.Sin(pitch_r)*u.X + math.Cos(roll_r)*u.Y + math.Sin(roll_r)*math.Cos(pitch_r)*u.Z
 	corrected.Z = math.Cos(roll_r)*math.Sin(pitch_r)*u.X + math.Sin(roll_r)*u.Y + math.Cos(roll_r)*math.Cos(pitch_r)*u.Z
 
-  // returns radians
+	// returns radians
 	return compass.AzimuthXY(corrected.X, corrected.Y)
 }
 
 func (a *ahrs) updateYawOffset() {
 
-  /*
-	if len(a.bufYawReadings) != len(a.bufMagReadings) {
-		fmt.Printf("ahrs.calculateYawOffset: yaw and mag readings are not the same length\n")
-	}*/
+	/*
+		if len(a.bufYawReadings) != len(a.bufMagReadings) {
+			fmt.Printf("ahrs.calculateYawOffset: yaw and mag readings are not the same length\n")
+		}*/
 
 	if len(a.bufYawReadings) > nYawReadings {
-    // throw out the bottom 10% of the array
-    a.bufYawReadings = a.bufYawReadings[nYawReadings/10:]
-    //a.bufMagReadings = a.bufMagReadings[nYawReadings/10:]
+		// throw out the bottom 10% of the array
+		a.mutex.Lock()
+		a.bufYawReadings = a.bufYawReadings[nYawReadings/10:]
+		a.mutex.Unlock()
+		//a.bufMagReadings = a.bufMagReadings[nYawReadings/10:]
 	}
 
 	//fmt.Printf("bufMagReadings: %v bufYawReadings: %v\n", len(a.bufMagReadings), len(a.bufYawReadings))
-  //a.DumpYawReadings()
-  if (len(a.bufYawReadings) % updateYawEvery  == 0) || (len(a.bufYawReadings) < yawWarmup) {
-    //offset_mag := stat.CircularMean(a.bufMagReadings, nil)
-    offset_yaw := stat.CircularMean(a.bufYawReadings, nil)
-    //fmt.Printf("ahrs: yaw offset=%3.2f %3.2f gain=%3.2f %3.2f\n", offset_mag, offset_yaw, gain_mag, gain_yaw)
+	//a.DumpYawReadings()
+	if (len(a.bufYawReadings)%updateYawEvery == 0) || (len(a.bufYawReadings) < yawWarmup) {
+		//offset_mag := stat.CircularMean(a.bufMagReadings, nil)
+		offset_yaw := stat.CircularMean(a.bufYawReadings, nil)
+		//fmt.Printf("ahrs: yaw offset=%3.2f %3.2f gain=%3.2f %3.2f\n", offset_mag, offset_yaw, gain_mag, gain_yaw)
 
-    a.mutex.Lock()
-    a.imuYawOffset = offset_yaw //- offset_mag // radians
-    a.mutex.Unlock()
-  }
+		a.mutex.Lock()
+		a.imuYawOffset = offset_yaw //- offset_mag // radians
+		a.mutex.Unlock()
+	}
+}
+
+func (a *ahrs) orientationTooCrazyToUse() bool {
+	a.mutex.RLock()
+	defer a.mutex.RUnlock()
+
+	if !a.IMUAvailable() {
+		return false
+	}
+
+	if (a.roll > 70.0) || (a.roll < -70.0) || (a.pitch > 60.0) || (a.pitch < -60.0) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (a *ahrs) correctYawForOrientation(yaw float64) float64 {
+	a.mutex.RLock()
+	defer a.mutex.RUnlock()
+
+	if !a.IMUAvailable() {
+		return yaw
+	}
+
+	// Apply calculated offset from magnetometer and convert to degrees
+	yaw = math.Mod((yaw-a.imuYawOffset)*180/math.Pi+360, 360)
+
+	if ((a.roll > 100.0) || (a.roll < -100.0)) && (a.pitch < 60.0) && (a.pitch > -60.0) {
+		// When the device is inverted but the pitch isn't crazy, we need to flip
+		// the direction of the yaw and rotate it 180, because it's levelled to
+		// always be relative to the world - not the display. Do this slightly
+		// beyond 90° so it's less likely people trigger it accidentally
+		yaw = math.Mod(-yaw+360+180, 360)
+	} else if a.orientationTooCrazyToUse() {
+		// If the device is in one of the asymptotes (close to 90° roll), discard
+		// the proposed new yaw value (freeze the display) to avoid the display
+		// going CRAZY
+		yaw = a.yaw
+	}
+
+	return yaw
 }
 
 func (a *ahrs) Track() {
@@ -140,33 +184,38 @@ func (a *ahrs) Track() {
 			//fmt.Printf("ahrs: got imu roll %.2f pitch %.2f yaw %.2f\n", imuReading.Roll, imuReading.Pitch, imuReading.YawUncorrected)
 			//fmt.Printf("ahrs: got mag %.2f\n", lastMagReading.AzimuthXY)
 
+			yaw := a.correctYawForOrientation(imuReading.YawUncorrected)
+			orientationTooCrazy := a.orientationTooCrazyToUse()
+
 			// TODO, add a test for excessive difference between IMU and Mag readings
 			if a.compass.FieldStrengthOverlimit(lastMagReading) {
 				// use corrected IMU yaw
 				a.mutex.Lock()
 				a.roll = imuReading.Roll
 				a.pitch = imuReading.Pitch
-				a.yaw = math.Mod((imuReading.YawUncorrected-a.imuYawOffset)*180/math.Pi+360, 360)
+				a.yaw = yaw
 				a.usingImu = true
 				a.imuCount = imuReading.Count
-        a.lastIMUYaw = imuReading.YawUncorrected
+				a.lastIMUYaw = imuReading.YawUncorrected
 				a.mutex.Unlock()
 
 			} else {
 				a.mutex.Lock()
 				a.roll = imuReading.Roll
 				a.pitch = imuReading.Pitch
-				a.yaw = math.Mod((imuReading.YawUncorrected-a.imuYawOffset)*180/math.Pi+360, 360)
+				a.yaw = yaw
 				//a.yaw = a.levelMagAndGetAzimuth(lastMagReading)
 				a.usingImu = false
 				a.imuCount = imuReading.Count
-        a.lastMagYaw = a.levelMagAndGetAzimuth(lastMagReading)
-        a.lastIMUYaw = imuReading.YawUncorrected
+				a.lastMagYaw = a.levelMagAndGetAzimuth(lastMagReading)
+				a.lastIMUYaw = imuReading.YawUncorrected
 
-				a.bufYawReadings = append(a.bufYawReadings, imuReading.YawUncorrected - a.levelMagAndGetAzimuth(lastMagReading))
+				if !orientationTooCrazy {
+					a.bufYawReadings = append(a.bufYawReadings, imuReading.YawUncorrected-a.levelMagAndGetAzimuth(lastMagReading))
+				}
 				a.mutex.Unlock()
 
-        a.updateYawOffset()
+				a.updateYawOffset()
 			}
 
 			//fmt.Printf("ahrs: mag yaw=%8.3f uncorrected inertial=%8.3f inertial=%8.3f\n", a.yaw, imuReading.YawUncorrected, math.Mod((imuReading.YawUncorrected-a.imuYawOffset)*180/math.Pi+360, 360)
@@ -236,14 +285,14 @@ func (a *ahrs) GetIMUYawUncorrected() float64 {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
-  return a.lastIMUYaw*180/math.Pi
+	return a.lastIMUYaw * 180 / math.Pi
 }
 
 func (a *ahrs) GetMagYawUncorrected() float64 {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
-  return a.lastMagYaw*180/math.Pi
+	return a.lastMagYaw * 180 / math.Pi
 }
 
 func (a *ahrs) GetIMUCount() int {
