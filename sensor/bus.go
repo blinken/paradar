@@ -57,13 +57,11 @@ func (s *Bus) Tx(write []byte, cs gpio.PinIO) []byte {
 
 	busMutex.Lock()
 	cs.Out(gpio.Low)
-	//time.Sleep(time.Millisecond)
 	if err := s.connection.Tx(write, read); err != nil {
 		log.Fatal(err)
 	}
 	cs.Out(gpio.High)
 	busMutex.Unlock()
-	//time.Sleep(time.Millisecond)
 
 	return read
 }

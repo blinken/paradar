@@ -2,6 +2,7 @@ package accelerometer
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/blinken/goahrs"
 	//"github.com/davecgh/go-spew/spew"
 
+	"github.com/golang/protobuf/proto"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/host/bcm283x"
 )
@@ -37,8 +39,6 @@ type IMURawReading struct {
 	temp    float64
 }
 
-var calibrationOffset IMURawReading
-
 const (
 	regFifoCtrl3 uint8 = 0x09
 	regFifoCtrl4 uint8 = 0x0a
@@ -57,6 +57,21 @@ const (
 	regResultTemp  uint8 = 0xa0 // 2 bytes: Temp LSB, MSB (two's complement)
 	regResultGyro  uint8 = 0xa2 // 6 bytes: Gyro  X LSB/MSB, Y, Z
 	regResultAccel uint8 = 0xa8 // 6 bytes: Accel X LSB/MSB, Y, Z
+)
+
+const (
+	imuCalibrationFile string  = "/storage/calibration_imu.pb"
+	imuCalibrationSize float64 = 200
+	imuUpdateRate      float64 = 97
+
+	// When calibrating, assume acceleration/movement all zeros except 1g
+	// perpendicular to Z axis
+	imuOffsetAccelZ float64 = 1.0
+
+	// Stored calibration is discarded if it's larger than this, to avoid bad
+	// calibrations being persisted
+	imuCalibrationAccelLimit float64 = 0.1
+	imuCalibrationGyroLimit  float64 = 0.1
 )
 
 var gpioChipSelect = bcm283x.GPIO17
@@ -83,59 +98,75 @@ func unpackInt16(input []byte) int32 {
 	}
 }
 
-// Calibrate using the first n readings from the sensor, then apply filtering
-// TODO - calibration needs to be persisted to disk
+// Deserialise the calibration from disk, if it's available
+func (a *Accelerometer) getCalibration(rawResults chan IMURawReading) Calibration {
+
+	var calibrationOffset Calibration
+
+	// Parse and return calibration from disk, if it's valid
+	if d, err := ioutil.ReadFile(imuCalibrationFile); err == nil {
+		err := proto.Unmarshal(d, &calibrationOffset)
+		if len(d) > 16 && err == nil &&
+			(math.Abs(calibrationOffset.GyroX) < imuCalibrationGyroLimit) &&
+			(math.Abs(calibrationOffset.GyroY) < imuCalibrationGyroLimit) &&
+			(math.Abs(calibrationOffset.GyroZ) < imuCalibrationGyroLimit) &&
+			(math.Abs(calibrationOffset.AccelX) < imuCalibrationAccelLimit) &&
+			(math.Abs(calibrationOffset.AccelY) < imuCalibrationAccelLimit) &&
+			(math.Abs(calibrationOffset.AccelZ) < imuCalibrationAccelLimit) {
+			fmt.Printf("accelerometer stored calibration %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps\n", calibrationOffset.AccelX, calibrationOffset.AccelY, calibrationOffset.AccelZ, calibrationOffset.GyroX, calibrationOffset.GyroY, calibrationOffset.GyroZ)
+			return calibrationOffset
+		}
+	}
+
+	// Otherwise, run the calibration again and save the results.
+	calibrationOffset = Calibration{}
+
+	for i := 0; float64(i) < imuCalibrationSize; i++ {
+		res := <-rawResults
+
+		calibrationOffset.GyroX += res.gyro_x / imuCalibrationSize
+		calibrationOffset.GyroY += res.gyro_y / imuCalibrationSize
+		calibrationOffset.GyroZ += res.gyro_z / imuCalibrationSize
+		calibrationOffset.AccelX += res.accel_x / imuCalibrationSize
+		calibrationOffset.AccelY += res.accel_y / imuCalibrationSize
+		calibrationOffset.AccelZ += res.accel_z / imuCalibrationSize
+	}
+
+	calibrationOffset.AccelZ -= imuOffsetAccelZ
+
+	dout, err := proto.Marshal(&calibrationOffset)
+	if err != nil {
+		fmt.Printf("failed to serialise calibration data: %s\n", err)
+	}
+	if err := ioutil.WriteFile(imuCalibrationFile, dout, 0644); err != nil {
+		fmt.Printf("failed to write calibration data: %s\n", err)
+	}
+
+	fmt.Printf("accelerometer calibration %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps\n", calibrationOffset.AccelX, calibrationOffset.AccelY, calibrationOffset.AccelZ, calibrationOffset.GyroX, calibrationOffset.GyroY, calibrationOffset.GyroZ)
+
+	return calibrationOffset
+}
+
+// Load calibration, then apply this as a filter
 func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 	var rawResults = make(chan IMURawReading)
 	go a.track(rawResults)
 
-	var averagedResult IMURawReading
-
-	// TODO need to be moved into module-level constants
-	var calibrationSize float64 = 200
-	var updateRate float64 = 97
-	// Assume a calibration temp of 22 degrees, and acceleration/movement all
-	// zeros except 1g perpendicular to Z axis
-	var offsetTemp float64 = 22.0
-	var offsetAccelZ float64 = 1.0
-
 	// Wait for the gyro to start up
 	for {
 		res := <-rawResults
-
 		if math.Abs(res.gyro_x) > 0 {
 			break
 		}
 	}
 
-	for i := 0; float64(i) < calibrationSize; i++ {
-
-		res := <-rawResults
-
-		//fmt.Printf("accelerometer %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", res.accel_x, res.accel_y, res.accel_z, res.gyro_x, res.gyro_y, res.gyro_z, res.temp)
-
-		averagedResult.gyro_x += res.gyro_x / calibrationSize
-		averagedResult.gyro_y += res.gyro_y / calibrationSize
-		averagedResult.gyro_z += res.gyro_z / calibrationSize
-		averagedResult.accel_x += res.accel_x / calibrationSize
-		averagedResult.accel_y += res.accel_y / calibrationSize
-		averagedResult.accel_z += res.accel_z / calibrationSize
-		averagedResult.temp += res.temp / calibrationSize
-
-		//fmt.Println(res)
-	}
-
-	averagedResult.temp -= offsetTemp
-	averagedResult.accel_z -= offsetAccelZ
-	calibrationOffset = averagedResult
-
-	fmt.Printf("accelerometer calibration %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", averagedResult.accel_x, averagedResult.accel_y, averagedResult.accel_z, averagedResult.gyro_x, averagedResult.gyro_y, averagedResult.gyro_z, averagedResult.temp)
+	calibrationOffset := a.getCalibration(rawResults)
 
 	var madgwickState = new(goahrs.Quaternion)
 	madgwickState.SetFilterGain(math.Sqrt(3.0/4.0) *
-		(calibrationOffset.gyro_x + calibrationOffset.gyro_y + calibrationOffset.gyro_z) / 3.0)
+		(calibrationOffset.GyroX + calibrationOffset.GyroY + calibrationOffset.GyroZ) / 3.0)
 
-	madgwickState.Begin(updateRate)
+	madgwickState.Begin(imuUpdateRate)
 
 	count := 0
 	for {
@@ -146,12 +177,12 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 		// to global coordinates (but roll and pitch are good to go!)
 		// http://www.x-io.co.uk/open-source-imu-and-ahrs-algorithms/
 		madgwickState.UpdateIMU(
-			res.gyro_x-calibrationOffset.gyro_x,
-			res.gyro_y-calibrationOffset.gyro_y,
-			res.gyro_z-calibrationOffset.gyro_z,
-			res.accel_x-calibrationOffset.accel_x,
-			res.accel_y-calibrationOffset.accel_y,
-			res.accel_z-calibrationOffset.accel_z,
+			res.gyro_x-calibrationOffset.GyroX,
+			res.gyro_y-calibrationOffset.GyroY,
+			res.gyro_z-calibrationOffset.GyroZ,
+			res.accel_x-calibrationOffset.AccelX,
+			res.accel_y-calibrationOffset.AccelY,
+			res.accel_z-calibrationOffset.AccelZ,
 		)
 
 		var imuRes IMUFilteredReading

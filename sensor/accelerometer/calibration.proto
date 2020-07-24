@@ -1,0 +1,11 @@
+syntax = "proto3";
+package accelerometer;
+
+message Calibration {
+  double gyro_x = 1;
+  double gyro_y = 2;
+  double gyro_z = 3;
+  double accel_x = 4;
+  double accel_y = 5;
+  double accel_z = 6;
+}
