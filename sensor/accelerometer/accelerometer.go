@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/blinken/paradar/sensor"
-	"github.com/brunocannavina/goahrs"
+	//"github.com/brunocannavina/goahrs"
+	"github.com/blinken/goahrs"
 	//"github.com/davecgh/go-spew/spew"
 
 	"periph.io/x/periph/conn/gpio"
@@ -131,6 +132,9 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 	fmt.Printf("accelerometer calibration %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", averagedResult.accel_x, averagedResult.accel_y, averagedResult.accel_z, averagedResult.gyro_x, averagedResult.gyro_y, averagedResult.gyro_z, averagedResult.temp)
 
 	var madgwickState = new(goahrs.Quaternion)
+	madgwickState.SetFilterGain(math.Sqrt(3.0/4.0) *
+		(calibrationOffset.gyro_x + calibrationOffset.gyro_y + calibrationOffset.gyro_z) / 3.0)
+
 	madgwickState.Begin(updateRate)
 
 	count := 0
@@ -242,7 +246,7 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 
 		if statusReg[1]&0x02 != 0 {
 			// 65.536 given by +/- 2000dps range, 16-bit signed int
-      // output in radians/sec
+			// output in radians/sec
 			res.gyro_x = float64(unpackInt16(r[3:5])) * math.Pi / (180 * 16.384)
 			res.gyro_y = float64(unpackInt16(r[5:7])) * math.Pi / (180 * 16.384)
 			res.gyro_z = float64(unpackInt16(r[7:9])) * math.Pi / (180 * 16.384)
