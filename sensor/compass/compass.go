@@ -9,6 +9,8 @@ import (
 
 	"github.com/blinken/paradar/sensor"
 
+	"github.com/cheggaaa/pb/v3"
+	"github.com/golang/protobuf/proto"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/host/bcm283x"
 )
@@ -38,6 +40,9 @@ const (
 	cal_gain_x   = 0.9951
 	cal_gain_y   = 0.9467
 	cal_gain_z   = 1.0652
+
+	compassCalibrationFile = "/storage/calibration_compass.pb"
+	compassCalibrationSize = 1000
 )
 
 var gpioChipSelect = bcm283x.GPIO24
@@ -52,8 +57,61 @@ func (c *Compass) Tx(write []byte) []byte {
 	return c.sb.Tx(write, gpioChipSelect)
 }
 
+// Deserialise the calibration from disk, if it's available
+func (c *Compass) getCalibration() Calibration {
+	var calibrationOffset Calibration
+
+	// Parse and return calibration from disk, if it's valid
+	if d, err := ioutil.ReadFile(compassCalibrationFile); err == nil {
+		err := proto.Unmarshal(d, &calibrationOffset)
+		if len(d) > 16 && err == nil {
+			fmt.Printf("compass stored calibration offset %.4f/%.4f/%.4f gain %.4f/%.4f/%.4f\n", calibrationOffset.OffsetX, calibrationOffset.OffsetY, calibrationOffset.OffsetZ, calibrationOffset.GainX, calibrationOffset.GainY, calibrationOffset.GainZ)
+			return calibrationOffset
+		}
+	}
+
+	// Otherwise, return zeros
+	fmt.Printf("compass returning zero calibration\n")
+	return Calibration{}
+}
+
+func (c *Compass) runCalibration(rawResults chan MagnetometerReading) {
+	fmt.Printf("compass: collecting %d samples for calibration\n", compassCalibrationSize)
+	fmt.Printf("compass: rotate the device evenly through as many axes as possible.\n")
+	bar := pb.StartNew(compassCalibrationSize)
+
+	var bufX, bufY, bufZ []float64
+
+	for i := 0; i < compassCalibrationSize; i++ {
+		res := <-rawResults
+
+		bufX = append(bufX, res.X)
+		bufY = append(bufY, res.Y)
+		bufZ = append(bufZ, res.Z)
+
+		bar.Increment()
+	}
+
+	bar.Finish()
+
+	// TODO - calculate calibration gain and offset by fitting an ellipsoid to
+	// the measurements
+	calibrationOffset = Calibration{}
+
+	dout, err := proto.Marshal(&calibrationOffset)
+	if err != nil {
+		fmt.Printf("compass: failed to serialise calibration data: %s\n", err)
+	}
+	if err := ioutil.WriteFile(compassCalibrationFile, dout, 0644); err != nil {
+		fmt.Printf("compass: failed to write calibration data: %s\n", err)
+	}
+
+	fmt.Printf("compass calibration offset %.4f/%.4f/%.4f gain %.4f/%.4f/%.4f\n", calibrationOffset.OffsetX, calibrationOffset.OffsetY, calibrationOffset.OffsetZ, calibrationOffset.GainX, calibrationOffset.GainY, calibrationOffset.GainZ)
+}
+
 func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 	fmt.Printf("compass tracking\n")
+	storedCalibration := c.getCalibration()
 
 	if err := gpioDataReady.In(gpio.PullDown, gpio.BothEdges); err != nil {
 		log.Fatal(err)
@@ -90,9 +148,9 @@ func (c *Compass) Track(chanMagReadings chan MagnetometerReading) {
 		// The compass words in north-east-down coordinates, and the accelerometer
 		// works with north up. "flip" the compass to the other side of the board.
 		var reading MagnetometerReading
-		reading.Y = (float64(c.sb.UnpackInt24(r[1:4])) - cal_offset_x) * cal_gain_x
-		reading.X = -(float64(c.sb.UnpackInt24(r[4:7])) - cal_offset_y) * cal_gain_y
-		reading.Z = -(float64(c.sb.UnpackInt24(r[7:])) - cal_offset_z) * cal_gain_z
+		reading.Y = (float64(c.sb.UnpackInt24(r[1:4])) - storedCalibration.OffsetX) * storedCalibration.GainX
+		reading.X = -(float64(c.sb.UnpackInt24(r[4:7])) - storedCalibration.OffsetY) * storedCalibration.GainY
+		reading.Z = -(float64(c.sb.UnpackInt24(r[7:])) - storedCalibration.OffsetZ) * storedCalibration.GainZ
 		reading.AzimuthXY = AzimuthXY(reading.X, reading.Y)
 
 		chanMagReadings <- reading
