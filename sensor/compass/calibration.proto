@@ -1,0 +1,11 @@
+syntax = "proto3";
+package compass;
+
+message Calibration {
+  double offset_x = 1;
+  double offset_y = 2;
+  double offset_z = 3;
+  double gain_x = 4;
+  double gain_y = 5;
+  double gain_z = 6;
+}
