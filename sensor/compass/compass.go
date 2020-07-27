@@ -11,6 +11,7 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/golang/protobuf/proto"
+	"gonum.org/v1/gonum/floats"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/host/bcm283x"
 )
@@ -33,13 +34,6 @@ const (
 	regResult                    uint8 = 0xa4
 
 	fieldStrengthLimit float64 = 3000.0
-
-	cal_offset_x = -0.1648
-	cal_offset_y = 0.6867
-	cal_offset_z = 0.1346
-	cal_gain_x   = 0.9951
-	cal_gain_y   = 0.9467
-	cal_gain_z   = 1.0652
 
 	compassCalibrationFile = "/storage/calibration_compass.pb"
 	compassCalibrationSize = 1000
@@ -94,9 +88,26 @@ func (c *Compass) runCalibration(rawResults chan MagnetometerReading) {
 
 	bar.Finish()
 
-	// TODO - calculate calibration gain and offset by fitting an ellipsoid to
-	// the measurements
+	// TODO - the formula below is not accurate. Calculate calibration gain and
+	// offset by fitting an ellipsoid to the measurements using 3D linear
+	// regression.
 	calibrationOffset = Calibration{}
+
+	// Hard iron correction - offset in each axis
+	calibrationOffset.OffsetX = (floats.Max(bufX) + floats.Min(bufX)) / 2
+	calibrationOffset.OffsetY = (floats.Max(bufY) + floats.Min(bufY)) / 2
+	calibrationOffset.OffsetZ = (floats.Max(bufZ) + floats.Min(bufZ)) / 2
+
+	// soft iron correction - scaling
+	x_radius := (floats.Max(bufX) - floats.Min(bufX)) / 2
+	y_radius := (floats.Max(bufY) - floats.Min(bufY)) / 2
+	z_radius := (floats.Max(bufZ) - floats.Min(bufZ)) / 2
+
+	avg_radius := (x_radius + y_radius + z_radius) / 3
+
+	calibrationOffset.GainX = avg_radius / x_radius
+	calibrationOffset.GainY = avg_radius / y_radius
+	calibrationOffset.GainZ = avg_radius / z_radius
 
 	dout, err := proto.Marshal(&calibrationOffset)
 	if err != nil {
