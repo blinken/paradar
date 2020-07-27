@@ -2,6 +2,7 @@ package compass
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"sync"
@@ -35,8 +36,8 @@ const (
 
 	fieldStrengthLimit float64 = 3000.0
 
-	compassCalibrationFile = "/storage/calibration_compass.pb"
-	compassCalibrationSize = 1000
+	CalibrationFile = "/storage/calibration_compass.pb"
+	calibrationSize = 1000
 )
 
 var gpioChipSelect = bcm283x.GPIO24
@@ -52,11 +53,11 @@ func (c *Compass) Tx(write []byte) []byte {
 }
 
 // Deserialise the calibration from disk, if it's available
-func (c *Compass) getCalibration() Calibration {
-	var calibrationOffset Calibration
+func (c *Compass) getCalibration() CompassCalibration {
+	var calibrationOffset CompassCalibration
 
 	// Parse and return calibration from disk, if it's valid
-	if d, err := ioutil.ReadFile(compassCalibrationFile); err == nil {
+	if d, err := ioutil.ReadFile(CalibrationFile); err == nil {
 		err := proto.Unmarshal(d, &calibrationOffset)
 		if len(d) > 16 && err == nil {
 			fmt.Printf("compass stored calibration offset %.4f/%.4f/%.4f gain %.4f/%.4f/%.4f\n", calibrationOffset.OffsetX, calibrationOffset.OffsetY, calibrationOffset.OffsetZ, calibrationOffset.GainX, calibrationOffset.GainY, calibrationOffset.GainZ)
@@ -65,18 +66,22 @@ func (c *Compass) getCalibration() Calibration {
 	}
 
 	// Otherwise, return zeros
-	fmt.Printf("compass returning zero calibration\n")
-	return Calibration{}
+	fmt.Printf("compass: no calibration found on disk, using nil\n")
+	return CompassCalibration{
+		GainX: 1.0,
+		GainY: 1.0,
+		GainZ: 1.0,
+	}
 }
 
-func (c *Compass) runCalibration(rawResults chan MagnetometerReading) {
-	fmt.Printf("compass: collecting %d samples for calibration\n", compassCalibrationSize)
+func (c *Compass) RunCalibration(rawResults chan MagnetometerReading) {
+	fmt.Printf("compass: collecting %d samples for calibration\n", calibrationSize)
 	fmt.Printf("compass: rotate the device evenly through as many axes as possible.\n")
-	bar := pb.StartNew(compassCalibrationSize)
+	bar := pb.StartNew(calibrationSize)
 
 	var bufX, bufY, bufZ []float64
 
-	for i := 0; i < compassCalibrationSize; i++ {
+	for i := 0; i < calibrationSize; i++ {
 		res := <-rawResults
 
 		bufX = append(bufX, res.X)
@@ -84,6 +89,7 @@ func (c *Compass) runCalibration(rawResults chan MagnetometerReading) {
 		bufZ = append(bufZ, res.Z)
 
 		bar.Increment()
+		time.Sleep(30 * time.Millisecond)
 	}
 
 	bar.Finish()
@@ -91,7 +97,7 @@ func (c *Compass) runCalibration(rawResults chan MagnetometerReading) {
 	// TODO - the formula below is not accurate. Calculate calibration gain and
 	// offset by fitting an ellipsoid to the measurements using 3D linear
 	// regression.
-	calibrationOffset = Calibration{}
+	calibrationOffset := CompassCalibration{}
 
 	// Hard iron correction - offset in each axis
 	calibrationOffset.OffsetX = (floats.Max(bufX) + floats.Min(bufX)) / 2
@@ -113,7 +119,7 @@ func (c *Compass) runCalibration(rawResults chan MagnetometerReading) {
 	if err != nil {
 		fmt.Printf("compass: failed to serialise calibration data: %s\n", err)
 	}
-	if err := ioutil.WriteFile(compassCalibrationFile, dout, 0644); err != nil {
+	if err := ioutil.WriteFile(CalibrationFile, dout, 0644); err != nil {
 		fmt.Printf("compass: failed to write calibration data: %s\n", err)
 	}
 

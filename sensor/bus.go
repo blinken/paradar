@@ -34,7 +34,7 @@ func NewBus() *Bus {
 	spiMOSI.SetFunc(spi.MOSI.Specialize(0, -1))
 	spiMISO.SetFunc(spi.MISO.Specialize(0, -1))
 
-	p, err := spireg.Open("")
+	p, err := spireg.Open("/dev/spidev0.0")
 	if err != nil {
 		log.Fatal(err)
 	}
