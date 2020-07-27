@@ -17,320 +17,108 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import struct
+import subprocess
 import math
 import time
 import sys
 from collections import deque
-#from spidev import SpiDev
-
-try:
-  from RPi import GPIO
-except ImportError:
-  from .gpio_stub import GPIO
-
 
 class Compass:
-  _REG_POLL = 0x00
-  _REG_CONTINUOUS_MEASUREMENT_MODE = 0x01
-  _REG_CYCLE_COUNT_X_H = 0x04
-  _REG_CYCLE_COUNT_X_L = 0x05
-  _REG_TMRC = 0x0b
-  _REG_RESULT = 0x24
-
-  _READ_OFFSET = 0x80
-
-  _SPI_FREQ = 500000 # We won't actually achieve this because time.sleep only has a resolution down to ~1ms
-  _INSTRUCTION_SLEEP = 1.0/_SPI_FREQ
-
-  _RES_DRDY = 0x80
-
-  _GPIO_CHIP_SELECT = 24
-  _GPIO_DRDY = 23
-  _CLK = 11
-  _MISO = 9
-  _MOSI = 10
-
-  _CAL_OFFSETS = (-0.1648, 0.6867, 0.1346)
-  _CAL_SCALING = (0.9951, 0.9467, 1.0652)
-
-  # Result is moving average of this many samples
-  _MOVING_AVG_LENGTH = 2
-
   def __init__(self):
     print("compass: starting up")
+    self._azimuth = 0.0
 
-    GPIO.setmode(GPIO.BCM)
+    self.proc = None
+    self.start()
 
-    GPIO.setup(self._GPIO_CHIP_SELECT, GPIO.OUT)
-    GPIO.setup(self._MISO, GPIO.IN)
-    GPIO.setup(self._MOSI, GPIO.OUT)
-    GPIO.setup(self._CLK, GPIO.OUT)
+  def start(self):
+    '''Start or restart the AHRS subprocess'''
 
-    GPIO.output(self._GPIO_CHIP_SELECT, GPIO.HIGH)
+    self.shutdown()
+    self._stop = False
 
-    GPIO.setup(self._GPIO_DRDY, GPIO.IN)
+    args = ["/storage/scratch/paradar/main"]
+    self.proc = subprocess.Popen(
+      args,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.STDOUT,
+      stdin=subprocess.DEVNULL,
+    )
 
-    self._clk_idle()
+  def shutdown(self):
+    self._stop = True
 
-    # Holds results to allow calculation of moving average
-    self._measurements_x = deque(maxlen=self._MOVING_AVG_LENGTH)
-    self._measurements_y = deque(maxlen=self._MOVING_AVG_LENGTH)
-    self._measurements_z = deque(maxlen=self._MOVING_AVG_LENGTH)
-
-    #self.spi = SpiDev()
-    #self.spi.open(0, 0)
-    #self.spi.max_speed_hz = self._SPI_FREQ
-    #self.spi.cshigh = False
-
-    # Clear REG_POLL & reg_cmm
-    #self._write(self._REG_POLL, 0x00)
-    #self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00)
-    self._soft_write_bytes([self._REG_POLL, 0x00])
-    self._soft_write_bytes([self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00])
-
-    # Set cycle count
-    self._set_cycle_count()
-
-    # Activate continuous measurement
-    self._soft_write_bytes([self._REG_TMRC, 0x92])
-    self._soft_write_bytes([self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x79])
-
-    r_tmrc = hex(self._soft_read_reg(0x8b))
-    r_cmm = hex(self._soft_read_reg(0x81))
-    print("compass: tmrc={} cmm={} ({})".format(r_tmrc, r_cmm, "borked!" if (r_tmrc == "0x0" or r_cmm == "0x0") else "healthy"))
-
-  def _raw_cs(self, state):
-    if state:
-      GPIO.output(self._GPIO_CHIP_SELECT, GPIO.LOW)
-    else:
-      GPIO.output(self._GPIO_CHIP_SELECT, GPIO.HIGH)
-
-  def _soft_write_bytes(self, w_bytes):
-    self._raw_cs(True)
-    for b in w_bytes:
-      self._soft_write(b, 8)
-    self._raw_cs(False)
-
-  def _soft_read_reg(self, reg):
-    self._raw_cs(True)
-    self._soft_write(reg, 8)
-    result = self._soft_read(8)
-    self._raw_cs(False)
-
-    return result
-
-  def _debug(self):
-    print("Data ready: " + str(GPIO.input(self._GPIO_DRDY)))
-    print("Clearing _REG_POLL & reg_cmm")
-    print("_REG_POLL: " + hex(self._write(self._REG_POLL, 0x00) & self._RES_DRDY))
-    print("reg_cmm: " + hex(self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x00) & self._RES_DRDY))
-
-    print("Setting cycle count")
-    self._set_cycle_count()
-
-    print("Setting up continuous measurement")
-    print("_REG_TMRC: " + hex(self._write(self._REG_TMRC, 0x98) & self._RES_DRDY))
-    print("reg_cmm: " + hex(self._write(self._REG_CONTINUOUS_MEASUREMENT_MODE, 0x71) & self._RES_DRDY))
-
-  # Wrap a method that does something with the chip, activating the chip-select
-  # before and after it is accessed.
-  def chip_select(function):
-    def decorator(*args):
-      time.sleep(Compass._INSTRUCTION_SLEEP)
-      GPIO.output(Compass._GPIO_CHIP_SELECT, GPIO.LOW)
-      time.sleep(Compass._INSTRUCTION_SLEEP)
-
-      result = function(*args)
-
-      time.sleep(Compass._INSTRUCTION_SLEEP)
-      GPIO.output(Compass._GPIO_CHIP_SELECT, GPIO.HIGH)
-      time.sleep(Compass._INSTRUCTION_SLEEP)
-
-      return result
-
-    return decorator
-
-  def _write(self, reg, value):
-    self._raw_cs(True)
-    result = self.spi.xfer2([reg, value])[0]
-    self._raw_cs(False)
-    return result
-
-  def _read(self, reg):
-    self._raw_cs(True)
-    result = self.spi.xfer2([reg | self._READ_OFFSET, 0x00])[1]
-    self._raw_cs(False)
-    return result
-
-  def _clk_active(self):
-    GPIO.output(self._CLK, GPIO.HIGH)
-
-  def _clk_idle(self):
-    GPIO.output(self._CLK, GPIO.LOW)
-
-  def _soft_write(self, data, numBits):
-    ''' Sends 1 Byte or less of data'''
-    data <<= (8 - numBits)
-    retVal = 0
-
-    self._clk_idle()
-    time.sleep(self._INSTRUCTION_SLEEP)
-
-    for bit in range(numBits):
-      # Set RPi's output bit high or low depending on highest bit of data field
-      if data & 0x80:
-        GPIO.output(self._MOSI, GPIO.HIGH)
-      else:
-        GPIO.output(self._MOSI, GPIO.LOW)
-
-      self._clk_active()
-      time.sleep(self._INSTRUCTION_SLEEP)
-
-      # Read 1 data bit in
-      if GPIO.input(self._MISO):
-        retVal |= 0x1
-
-      self._clk_idle()
-
-      # Advance input & data to next bit
-      retVal <<= 1
-      data <<= 1
-
-    # Divide by two to drop the NULL bit
-    retVal >>= 1
-    return retVal
-
-  def _soft_read(self, numBits):
-    '''Receives arbitrary number of bits'''
-    retVal = 0
-
-    GPIO.output(self._MOSI, GPIO.HIGH)
-    self._clk_idle()
-
-    for bit in range(numBits):
-      # Pulse clock pin
-      self._clk_active()
-      time.sleep(self._INSTRUCTION_SLEEP)
-
-      # Read 1 data bit in
-      if GPIO.input(self._MISO):
-        retVal |= 0x1
-
-      self._clk_idle()
-
-      # Advance input to next bit
-      retVal <<= 1
-
-    # Divide by two to drop the NULL bit
-    retVal >>= 1
-    return (retVal)
-
-  def _set_cycle_count(self):
-    cycle_count = 0xc8
-    # Set the cycle count the same for x/y/z
-    self._soft_write_bytes([
-      0x04,
-      0x00, cycle_count,
-      0x00, cycle_count,
-      0x00, cycle_count,
-    ])
-
-  def _unpack_measurement(self, l):
-    x = bytearray(l + [0x00])
-    return (struct.unpack(">i", x)[0] >>1)/46603.0
-
-  def get_raw_measurements(self):
-    # From the design guide --
-    # Normally it is only necessary to send "A4", since the register value automatically
-    # increments on the clock cycles such that after sending "A4" all 3 bytes for the X axis
-    # measurement would be clocked out, then the 3 bytes for the Y axis measurement, then the 3
-    # bytes for the Z axis measurement. After these 9 bytes have been clocked out, the subsequent
-    # output data has no relevance.
-
-    #self.spi.xfer2([self._REG_RESULT | self._READ_OFFSET])
-    #results = self.spi.readbytes(9)
-    self._raw_cs(True)
-    self._soft_write(0xa4, 8)
-    results = []
-    for i in range(9):
-      res = self._soft_read(8)
-      results = results + [res]
-    self._raw_cs(False)
-
-    x = self._unpack_measurement(results[:3])
-    y = self._unpack_measurement(results[3:6])
-    z = self._unpack_measurement(results[6:9])
-
-    return (x, y, z)
-
-  def calibrate(self):
-    measurements = 1000
-    print("Collecting {} measurements".format(measurements))
-
-    data_x = []
-    data_y = []
-    data_z = []
-    for i in range(measurements):
-      while GPIO.input(self._GPIO_DRDY) == 0:
-        time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
-
-      x,y,z = self.get_raw_measurements()
-      data_x.append(x)
-      data_y.append(y)
-      data_z.append(z)
-
-      if (i%10 == 0):
-        print(".", end=''),
-        sys.stdout.flush()
-
-    print()
-
-    # Ref https://github.com/kriswiner/MPU6050/wiki/Simple-and-Effective-Magnetometer-Calibration
-    # Hard iron correction
-    x_offset = (max(data_x) + min(data_x))/2
-    y_offset = (max(data_y) + min(data_y))/2
-    z_offset = (max(data_z) + min(data_z))/2
-
-    # Soft iron correction
-    x_radius = (max(data_x) - min(data_x))/2
-    y_radius = (max(data_y) - min(data_y))/2
-    z_radius = (max(data_z) - min(data_z))/2
-
-    avg_radius = (x_radius + y_radius + z_radius)/3
-
-    x_scale = avg_radius/x_radius
-    y_scale = avg_radius/y_radius
-    z_scale = avg_radius/z_radius
-
-    print("Offsets: {:3.4f} {:3.4f} {:3.4f}".format(x_offset, y_offset, z_offset))
-    print("Scaling: {:3.4f} {:3.4f} {:3.4f}".format(x_scale, y_scale, z_scale))
+    if self.proc:
+      print("compass: shutting down")
+      self.proc.kill()
+      self.proc.wait()
 
   def get_azimuth(self):
-    if self._measurements_x and self._measurements_y:
-      x = sum(self._measurements_x)/len(self._measurements_x)
-      y = sum(self._measurements_y)/len(self._measurements_y)
+    return self._azimuth
 
-      azimuth = (180/math.pi * math.atan2(y, x)) % 360
-      #print("{} {} {}".format(y, x, azimuth))
+  def track_ahrs(self):
+    while True:
+      for line in iter(self.proc.stdout.readline, b''):
+        line = line.decode('utf-8').strip()
+        if not line:
+          continue
 
-      return azimuth
-    else:
-      return 0.0
+        try:
+          self._azimuth = float(line.split(" ", 1)[0].strip())
+        except (ValueError, TypeError):
+          print("compass: ignoring message '{}'".format(line.strip()))
 
-  def update(self):
-    while GPIO.input(self._GPIO_DRDY) == 0:
-      time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
-
-    x, y, z = self.get_raw_measurements()
-    x = (x - self._CAL_OFFSETS[0]) * self._CAL_SCALING[0]
-    y = (y - self._CAL_OFFSETS[1]) * self._CAL_SCALING[1]
-    z = (z - self._CAL_OFFSETS[2]) * self._CAL_SCALING[2]
-
-    self._measurements_x.append(x)
-    self._measurements_y.append(y)
-    self._measurements_z.append(z)
-
+      # If the thread has been asked to exit, don't attempt to restart
+      # ahrs. Otherwise, just loop slowly
+      if self._stop:
+        time.sleep(1)
+      else:
+        print("compass: ahrs stopped, restarting it")
+        time.sleep(1)
+        self.start()
 
   def to_string(self):
-    return str(round(self.get_azimuth(), 1))
+    return str(round(self._azimuth, 1))
+
+  #def calibrate(self):
+  #  measurements = 1000
+  #  print("Collecting {} measurements".format(measurements))
+
+  #  data_x = []
+  #  data_y = []
+  #  data_z = []
+  #  for i in range(measurements):
+  #    while GPIO.input(self._GPIO_DRDY) == 0:
+  #      time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
+
+  #    x,y,z = self.get_raw_measurements()
+  #    data_x.append(x)
+  #    data_y.append(y)
+  #    data_z.append(z)
+
+  #    if (i%10 == 0):
+  #      print(".", end=''),
+  #      sys.stdout.flush()
+
+  #  print()
+
+  #  # Ref https://github.com/kriswiner/MPU6050/wiki/Simple-and-Effective-Magnetometer-Calibration
+  #  # Hard iron correction
+  #  x_offset = (max(data_x) + min(data_x))/2
+  #  y_offset = (max(data_y) + min(data_y))/2
+  #  z_offset = (max(data_z) + min(data_z))/2
+
+  #  # Soft iron correction
+  #  x_radius = (max(data_x) - min(data_x))/2
+  #  y_radius = (max(data_y) - min(data_y))/2
+  #  z_radius = (max(data_z) - min(data_z))/2
+
+  #  avg_radius = (x_radius + y_radius + z_radius)/3
+
+  #  x_scale = avg_radius/x_radius
+  #  y_scale = avg_radius/y_radius
+  #  z_scale = avg_radius/z_radius
+
+  #  print("Offsets: {:3.4f} {:3.4f} {:3.4f}".format(x_offset, y_offset, z_offset))
+  #  print("Scaling: {:3.4f} {:3.4f} {:3.4f}".format(x_scale, y_scale, z_scale))
 
