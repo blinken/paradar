@@ -37,7 +37,7 @@ class Compass:
     self.shutdown()
     self._stop = False
 
-    args = ["/storage/scratch/paradar/main"]
+    args = ["/opt/paradar/main"]
     self.proc = subprocess.Popen(
       args,
       stdout=subprocess.PIPE,
