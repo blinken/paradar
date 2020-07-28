@@ -62,7 +62,7 @@ const (
 	imuCalibrationSize float64 = 200
 
 	// Must match actual update rate, so the model is correct
-	imuUpdateRate float64 = 97
+	imuUpdateRate float64 = 49
 
 	// When calibrating, assume acceleration/movement all zeros except 1g
 	// perpendicular to Z axis
@@ -296,11 +296,11 @@ func (a *Accelerometer) track(c chan IMURawReading) {
 		//fmt.Printf("accelerometer %.4f/%.4f/%.4fg gyro %.4f/%.4f/%.4f dps temp %.2f°\n", res.accel_x, res.accel_y, res.accel_z, res.gyro_x, res.gyro_y, res.gyro_z, res.temp)
 		c <- res
 
-		// Ensure result rate is stable - pad the loop so it always takes 7ms (this
+		// Ensure result rate is stable - pad the loop so it always takes 20ms (this
 		// is roughly the time for the accelerometer to return a result the way
 		// we've configured it)
 		runtime_ns := time.Now().UnixNano() - time_start
-		time.Sleep(time.Duration(10000000-runtime_ns) * time.Nanosecond)
+		time.Sleep(time.Duration(20000000-runtime_ns) * time.Nanosecond)
 	}
 }
 

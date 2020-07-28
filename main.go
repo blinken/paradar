@@ -59,6 +59,6 @@ func main() {
 		*/
 
 		fmt.Printf("%.3f %d\n", orientation.GetYaw(), int(alt.GetAltitude()))
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(30 * time.Millisecond)
 	}
 }
