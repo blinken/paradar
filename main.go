@@ -41,20 +41,20 @@ func main() {
 		}
 
 		/*
-			    // Detailed debugging
-			    offset := orientation.GetIMUYawOffset()
-					fmt.Printf("%04.3f %04d %04.3f %04.3f | %9.4f %7.4f (only gyro=%5t offset=%3.3f c=%04d rate=%2.2f)\n",
-						orientation.GetYaw(),
-						alt.GetAltitude(),
-						orientation.GetIMUYawUncorrected(),
-						orientation.GetMagYawUncorrected(),
-						orientation.GetRoll(),
-						orientation.GetPitch(),
-						orientation.UsingIMU(),
-						offset,
-						orientation.GetIMUCount(),
-						float64(orientation.GetIMUCount())/count*20,
-					)
+					    // Detailed debugging
+					    offset := orientation.GetIMUYawOffset()
+		          fmt.Printf("%04.3f %04d my %04.3f iy %04.3f | r %9.4f p %7.4f (only gyro=%5t offset=%3.3f c=%04d rate=%2.2f)\n",
+								orientation.GetYaw(),
+								alt.GetAltitude(),
+								orientation.GetIMUYawUncorrected(),
+								orientation.GetMagYawUncorrected(),
+								orientation.GetRoll(),
+								orientation.GetPitch(),
+								orientation.UsingIMU(),
+								offset,
+								orientation.GetIMUCount(),
+								float64(orientation.GetIMUCount())/count*20,
+							)
 		*/
 		count += 1
 

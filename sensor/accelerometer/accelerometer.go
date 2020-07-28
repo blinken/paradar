@@ -59,10 +59,10 @@ const (
 
 const (
 	imuCalibrationFile string  = "/storage/calibration_imu.pb"
-	imuCalibrationSize float64 = 200
+	imuCalibrationSize float64 = 400
 
 	// Must match actual update rate, so the model is correct
-	imuUpdateRate float64 = 49
+	imuUpdateRate float64 = 49.5
 
 	// When calibrating, assume acceleration/movement all zeros except 1g
 	// perpendicular to Z axis
@@ -153,8 +153,9 @@ func (a *Accelerometer) TrackCalibrated(c chan IMUFilteredReading) {
 	calibrationOffset := a.getCalibration(rawResults)
 
 	var madgwickState = new(goahrs.Quaternion)
-	madgwickState.SetFilterGain(math.Sqrt(3.0/4.0) *
-		(calibrationOffset.GyroX + calibrationOffset.GyroY + calibrationOffset.GyroZ) / 3.0)
+	//madgwickState.SetFilterGain(math.Sqrt(3.0/4.0) *
+	//	(calibrationOffset.GyroX + calibrationOffset.GyroY + calibrationOffset.GyroZ) / 3.0)
+	madgwickState.SetFilterGain(0.1)
 
 	madgwickState.Begin(imuUpdateRate)
 
