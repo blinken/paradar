@@ -33,6 +33,7 @@ func main() {
 	go alt.Track()
 	go orientation.Track()
 
+	var count float64 = 1.0
 	for {
 		if orientation.GetRoll() == 0.0 {
 			time.Sleep(100 * time.Millisecond)
@@ -40,25 +41,24 @@ func main() {
 		}
 
 		/*
-		    // Detailed debugging
-			  var count float64 = 1.0
-		    offset := orientation.GetIMUYawOffset()
-				fmt.Printf("%04.3f %04.3f %04.3f | %9.4f %7.4f (only gyro=%5t offset=%3.3f c=%04d rate=%2.2f) %4dft\n",
-					orientation.GetYaw(),
-					orientation.GetIMUYawUncorrected(),
-					orientation.GetMagYawUncorrected(),
-					orientation.GetRoll(),
-					orientation.GetPitch(),
-					orientation.UsingIMU(),
-					offset,
-					orientation.GetIMUCount(),
-					float64(orientation.GetIMUCount())/count*10,
-					alt.GetAltitude(),
-				)
-				count += 1
+			    // Detailed debugging
+			    offset := orientation.GetIMUYawOffset()
+					fmt.Printf("%04.3f %04d %04.3f %04.3f | %9.4f %7.4f (only gyro=%5t offset=%3.3f c=%04d rate=%2.2f)\n",
+						orientation.GetYaw(),
+						alt.GetAltitude(),
+						orientation.GetIMUYawUncorrected(),
+						orientation.GetMagYawUncorrected(),
+						orientation.GetRoll(),
+						orientation.GetPitch(),
+						orientation.UsingIMU(),
+						offset,
+						orientation.GetIMUCount(),
+						float64(orientation.GetIMUCount())/count*20,
+					)
 		*/
+		count += 1
 
-		fmt.Printf("%.3f %d\n", orientation.GetYaw(), int(alt.GetAltitude()))
-		time.Sleep(30 * time.Millisecond)
+		fmt.Printf("%.3f %04d ft\n", orientation.GetYaw(), int(alt.GetAltitude()))
+		time.Sleep(50 * time.Millisecond)
 	}
 }

@@ -79,12 +79,13 @@ class GDL90:
   _DEFAULT_TRAFFIC_CALLSIGN = '        '
   _DEFAULT_TRAFFIC_EMITTER_CATEGORY = 0
 
-  def __init__(self, gps, aircraft):
+  def __init__(self, gps, aircraft, compass):
     self._crc_table = {}
     self._crc_init()
 
     self._gps = gps
     self._aircraft = aircraft
+    self._compass = compass
 
     self._sched = None
 
@@ -223,7 +224,7 @@ class GDL90:
 
       msg.extend(self._traffic_report_generic(
         lat=my_lat, lon=my_lon,
-        altitude=gps_p.altitude(),
+        altitude=self._compass.get_altitude(),
         speed_h=gps_p.speed(),
         speed_v=gps_p.speed_vertical(),
         speed_h_source="GS",
@@ -243,12 +244,13 @@ class GDL90:
     #print("gdl90: sent ownship")
 
   def ownship_geometric_altitude(self):
-    '''Generate an ownship geometric altitude message'''
+    '''Generate an ownship geometric altitude message, which should be the
+    altitude above a WGS84 ellipsoid'''
 
     msg = bytearray([0x0b])
     try:
       gps_p = self._gps.position_detailed()
-      alt_gdl90 = int(gps_p.altitude()/5)
+      alt_gdl90 = int(gps_p.altitude()*3.281/5) # gps_p returns meters
       r = bytearray(pack('>i', alt_gdl90))
       msg.append(r[2])
       msg.append(r[3])
@@ -342,6 +344,7 @@ class GDL90:
     r = bytearray(alt_gdl90.to_bytes(2, byteorder='big'))
     return r
 
+  # altitude in ft
   def _traffic_report_generic(self,
     address=(0x0, 0x0, 0x0), lat=0.0, lon=0.0, altitude=0,
     misc=0x0,

@@ -135,13 +135,13 @@ ac = Aircraft(gps)
 threads["aircraft"] = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
 threads["aircraft"].start()
 
-gdl90 = GDL90(gps, ac)
-threads["gdl90"] = threading.Thread(target=gdl90.transmit_gdl90, args=(), daemon=True)
-threads["gdl90"].start()
-
 compass = Compass()
 threads["compass"] = threading.Thread(target=compass.track_ahrs, args=(), daemon=True)
 threads["compass"].start()
+
+gdl90 = GDL90(gps, ac, compass)
+threads["gdl90"] = threading.Thread(target=gdl90.transmit_gdl90, args=(), daemon=True)
+threads["gdl90"].start()
 
 startup_tasks()
 delay = 20

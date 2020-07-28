@@ -28,6 +28,7 @@ class Compass:
   def __init__(self):
     print("compass: starting up")
     self._azimuth = 0.0
+    self._altitude = 0.0
 
     self.proc = None
     self.start()
@@ -58,6 +59,9 @@ class Compass:
   def get_azimuth(self):
     return self._azimuth
 
+  def get_altitude(self):
+    return self._altitude
+
   def track_ahrs(self):
     while True:
       for line in iter(self.proc.stdout.readline, b''):
@@ -66,7 +70,11 @@ class Compass:
           continue
 
         try:
-          self._azimuth = float(line.split(" ", 1)[0].strip())
+          azimuth, altitude, _ = line.split(" ", 2)
+          self._azimuth = float(azimuth)
+          self._altitude = float(altitude)
+
+          #print(line)
         except (ValueError, TypeError):
           print("compass: ignoring message '{}'".format(line.strip()))
 
@@ -81,46 +89,3 @@ class Compass:
 
   def to_string(self):
     return str(round(self._azimuth, 1))
-
-  #def calibrate(self):
-  #  measurements = 1000
-  #  print("Collecting {} measurements".format(measurements))
-
-  #  data_x = []
-  #  data_y = []
-  #  data_z = []
-  #  for i in range(measurements):
-  #    while GPIO.input(self._GPIO_DRDY) == 0:
-  #      time.sleep(self._INSTRUCTION_SLEEP) # todo, convert to wait_for_edge
-
-  #    x,y,z = self.get_raw_measurements()
-  #    data_x.append(x)
-  #    data_y.append(y)
-  #    data_z.append(z)
-
-  #    if (i%10 == 0):
-  #      print(".", end=''),
-  #      sys.stdout.flush()
-
-  #  print()
-
-  #  # Ref https://github.com/kriswiner/MPU6050/wiki/Simple-and-Effective-Magnetometer-Calibration
-  #  # Hard iron correction
-  #  x_offset = (max(data_x) + min(data_x))/2
-  #  y_offset = (max(data_y) + min(data_y))/2
-  #  z_offset = (max(data_z) + min(data_z))/2
-
-  #  # Soft iron correction
-  #  x_radius = (max(data_x) - min(data_x))/2
-  #  y_radius = (max(data_y) - min(data_y))/2
-  #  z_radius = (max(data_z) - min(data_z))/2
-
-  #  avg_radius = (x_radius + y_radius + z_radius)/3
-
-  #  x_scale = avg_radius/x_radius
-  #  y_scale = avg_radius/y_radius
-  #  z_scale = avg_radius/z_radius
-
-  #  print("Offsets: {:3.4f} {:3.4f} {:3.4f}".format(x_offset, y_offset, z_offset))
-  #  print("Scaling: {:3.4f} {:3.4f} {:3.4f}".format(x_scale, y_scale, z_scale))
-
