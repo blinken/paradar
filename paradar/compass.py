@@ -21,6 +21,7 @@ import subprocess
 import math
 import time
 import sys
+import os
 from collections import deque
 
 class Compass:
@@ -43,6 +44,7 @@ class Compass:
       stdout=subprocess.PIPE,
       stderr=subprocess.STDOUT,
       stdin=subprocess.DEVNULL,
+      preexec_fn=lambda: os.nice(-20),
     )
 
   def shutdown(self):

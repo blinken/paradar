@@ -129,7 +129,7 @@ display = Display()
 # Blocks until the GPS is ready
 display.start(gps)
 
-os.nice(5)
+os.nice(15)
 
 ac = Aircraft(gps)
 threads["aircraft"] = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
@@ -144,6 +144,7 @@ threads["compass"] = threading.Thread(target=compass.track_ahrs, args=(), daemon
 threads["compass"].start()
 
 startup_tasks()
+delay = 20
 
 while True:
   t_start = time.time()
@@ -151,9 +152,14 @@ while True:
 
   for i in range(cycle_length):
     display.update(compass, gps, Aircraft.positions)
+    time.sleep(delay/1000.0)
 
   t_end = time.time()
   refresh_rate = cycle_length*1.0/(t_end - t_start)
+  if refresh_rate > 20:
+    delay += 1
+  else:
+    delay = max(0, delay-1)
 
   try:
     my_latitude, my_longitude = gps.position()
