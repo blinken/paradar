@@ -18,6 +18,7 @@
 
 import time
 import neopixel
+import math
 
 from math import sin, asin, cos, atan2, sqrt, floor, degrees, radians, isclose
 from gpsd import NoFixError
@@ -60,17 +61,19 @@ class Display:
   # https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0005594
   _DISTANCE_SQUELCH = 30.0
 
-  # Ignore aircraft higher than this many ft
-  _ALTITUDE_SQUELCH = 10000
+  # When flight mode is on, only show aircraft within 3000ft (above or below)
+  # and 15km
+  _FLIGHT_MODE_VERTICAL_SEP = 3000 # ft
+  _FLIGHT_MODE_HORIZONTAL_SEP = 15.0 # km
 
   # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
   # distance (kilometers)
-  _DISTANCE_WARNING = 15.0
+  _DISTANCE_WARNING = 15.0 # km
 
   # Don't display aircraft closer than this distance (they're probably our own
   # ADS-B transmitter), and clamp the home location indicator to 180 degrees.
   # This is to avoid display jitter - GPS isn't much more accurate than 5m.
-  _IGNORE_CLOSER_THAN = 15.0/1000 # 15m
+  _IGNORE_CLOSER_THAN = 15.0/1000 # 15m, in km
 
   _TEST_COLOURS = (
     (255,0,0),     # R
@@ -85,7 +88,7 @@ class Display:
   _STARTUP_BRIGHTNESS = 0.2
 
 
-  def __init__(self):
+  def __init__(self, gps, compass):
     print("display: starting up")
     GPIO.setmode(GPIO.BCM)
 
@@ -103,19 +106,22 @@ class Display:
     self.off()
     self._refresh()
 
-  def start(self, gps):
+    self._gps = gps
+    self._compass = compass
+
+  def start(self):
     '''Display a startup animation'''
 
     while True:
       for i in range(self._PIXEL_COUNT):
-        if not gps.is_fresh():
+        if not self._gps.is_fresh():
           self.off()
         self.pixels[i] = self._COLOUR_STARTUP
         # Limit brightness to avoid breaking the power supply on startup
         self._refresh(brightness=self._STARTUP_BRIGHTNESS)
         time.sleep(0.02)
 
-      if gps.is_fresh():
+      if self._gps.is_fresh():
         break
 
     for i in range(self._PIXEL_COUNT):
@@ -142,6 +148,18 @@ class Display:
     # whereas the compass indicates 0 degrees at the top-center.
     return int((uncorrected_pixel + self._PIXEL_ANGLE_OFFSET) % (self._PIXEL_COUNT))
 
+  # Get the barometric altitude, if available - otherwise fall back to
+  # geometric altitude. Returns altitude in ft. May return None
+  def _altitude(self):
+    if self._compass.get_altitude():
+      return self._compass.get_altitude()
+    else:
+      try:
+        gps_p = self._gps.position_detailed()
+        return gps_p.altitude()*3.281 # gps_p returns metres
+      except (NoFixError, UserWarning):
+        return None
+
   def _haversine(self, lat1, lon1, lat2, lon2):
     # shamelessly stolen from SO, https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
 
@@ -158,9 +176,9 @@ class Display:
     return R * c
 
   # Throws GPS.NoFixError if the GPS is not yet running
-  def _calculate_bearing(self, ac, gps):
+  def _calculate_bearing(self, ac):
     # We're point A, and AC is point B
-    (my_lat, my_lon) = gps.position()
+    (my_lat, my_lon) = self._gps.position()
     ac_lat = ac.get("lat", None)
     ac_lon = ac.get("lon", None)
 
@@ -217,11 +235,11 @@ class Display:
     self.pixels.show()
 
   # Refresh the display with the value of self.pixels
-  def update(self, compass, gps, aircraft_list):
+  def update(self, aircraft_list):
     self.off()
 
     # One call to compass means less display weirdness on update
-    azimuth = compass.get_azimuth()
+    azimuth = self._compass.get_azimuth()
 
     # Indicate compass north
     if Config.show_north():
@@ -231,7 +249,7 @@ class Display:
     # Otherwise, attempt to update the home location (track_home switch has
     # just been enabled)
     if Config.track_home() and self._home_location:
-      self._calculate_bearing(self._home_location, gps)
+      self._calculate_bearing(self._home_location, self._gps)
 
       if self._home_location["distance"] < self._IGNORE_CLOSER_THAN:
         # display nearby home as due south to avoid display weirdness
@@ -242,7 +260,7 @@ class Display:
         self.pixels[self._pixel_for_bearing(bearing)] = self._COLOUR_HOME
     elif Config.track_home() and not self._home_location:
       try:
-        (lat, lon) = gps.position()
+        (lat, lon) = self._gps.position()
         # The home location is recorded ~5m south of the current location, to
         # avoid 
         self._home_location = {"lat": lat, "lon": lon}
@@ -255,7 +273,7 @@ class Display:
 
     try:
       for ac in aircraft_list.values():
-        self._calculate_bearing(ac, gps)
+        self._calculate_bearing(ac, self._gps)
     except NoFixError:
       print("display: error updating bearings - GPS does not have a fix")
       vectors = []
@@ -273,14 +291,20 @@ class Display:
       print("display: aircraft list changed during refresh, skipping update")
       return
 
+    altitude = self._altitude()
     for ac_bearing, ac_distance, ac_altitude in vectors:
+      # Flight mode
+      if Config.flight_mode():
+        if altitude && math.fabs(ac_altitude - altitude) > self._FLIGHT_MODE_VERTICAL_SEP:
+          continue
+
+        if ac_distance > self._FLIGHT_MODE_HORIZONTAL_SEP:
+          continue
+
       if ac_distance > self._DISTANCE_SQUELCH:
         continue
 
       if ac_distance < self._IGNORE_CLOSER_THAN:
-        continue
-
-      if Config.altitude_squelch() and ac_altitude > self._ALTITUDE_SQUELCH:
         continue
 
       bearing = (ac_bearing + azimuth) % 360

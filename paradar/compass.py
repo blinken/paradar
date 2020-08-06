@@ -56,9 +56,11 @@ class Compass:
       self.proc.kill()
       self.proc.wait()
 
+  # azimuth to magnetic north in degrees
   def get_azimuth(self):
     return self._azimuth
 
+  # altitude in ft
   def get_altitude(self):
     return self._altitude
 
@@ -72,7 +74,11 @@ class Compass:
         try:
           azimuth, altitude, _ = line.split(" ", 2)
           self._azimuth = float(azimuth)
-          self._altitude = float(altitude)
+
+          if altitude == "----":
+            self._altitude = None
+          else:
+            self._altitude = float(altitude)
 
           #print(line)
         except (ValueError, TypeError):
