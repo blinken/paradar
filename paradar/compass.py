@@ -56,9 +56,11 @@ class Compass:
       self.proc.kill()
       self.proc.wait()
 
+  # azimuth to magnetic north in degrees
   def get_azimuth(self):
     return self._azimuth
 
+  # altitude in ft
   def get_altitude(self):
     return self._altitude
 

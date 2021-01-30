@@ -250,7 +250,7 @@ class GDL90:
     msg = bytearray([0x0b])
     try:
       gps_p = self._gps.position_detailed()
-      alt_gdl90 = int(gps_p.altitude()*3.281/5) # gps_p returns meters
+      alt_gdl90 = int(gps_p.altitude()*3.281/5) # gps_p returns metres
       r = bytearray(pack('>i', alt_gdl90))
       msg.append(r[2])
       msg.append(r[3])

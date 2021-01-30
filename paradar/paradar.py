@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 #
 # This file is part of paradar (https://github.com/blinken/paradar).
 #
@@ -124,20 +125,21 @@ def startup_tasks():
 os.nice(-5)
 
 gps = GPS()
-display = Display()
+
+compass = Compass()
+threads["compass"] = threading.Thread(target=compass.track_ahrs, args=(), daemon=True)
+threads["compass"].start()
+
+display = Display(gps, compass)
 
 # Blocks until the GPS is ready
-display.start(gps)
+display.start()
 
 os.nice(15)
 
 ac = Aircraft(gps)
 threads["aircraft"] = threading.Thread(target=ac.track_aircraft, args=(), daemon=True)
 threads["aircraft"].start()
-
-compass = Compass()
-threads["compass"] = threading.Thread(target=compass.track_ahrs, args=(), daemon=True)
-threads["compass"].start()
 
 gdl90 = GDL90(gps, ac, compass)
 threads["gdl90"] = threading.Thread(target=gdl90.transmit_gdl90, args=(), daemon=True)
@@ -161,7 +163,7 @@ while True:
   else:
     delay = max(0, delay-1)
 
-  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft (alt squelch {}), gps {}".format(refresh_rate, len(Aircraft.positions), "on" if Config.altitude_squelch() else "off", gps.get_status_str()))
+  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft (alt squelch {}), gps {}".format(refresh_rate, len(Aircraft.positions), "on" if Config.flight_mode() else "off", gps.get_status_str()))
 
   try:
     print("main: system temperature is {}°C".format(get_system_temp()))
