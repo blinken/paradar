@@ -74,11 +74,7 @@ class Compass:
         try:
           azimuth, altitude, _ = line.split(" ", 2)
           self._azimuth = float(azimuth)
-
-          if altitude == "----":
-            self._altitude = None
-          else:
-            self._altitude = float(altitude)
+          self._altitude = float(altitude)
 
           #print(line)
         except (ValueError, TypeError):
