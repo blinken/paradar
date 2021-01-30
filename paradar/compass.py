@@ -24,11 +24,14 @@ import sys
 import os
 from collections import deque
 
+from gpsd import NoFixError
+
 class Compass:
   def __init__(self):
     print("compass: starting up")
     self._azimuth = 0.0
     self._altitude = 0.0
+    self._initial_altitude = None
 
     self.proc = None
     self.start()
@@ -64,6 +67,13 @@ class Compass:
   def get_altitude(self):
     return self._altitude
 
+  # altitude in ft, relative to turn-on (can be negative)
+  def get_relative_altitude(self):
+    if self._initial_altitude == None:
+      raise NoFixError
+
+    return self._altitude - self._initial_altitude
+
   def track_ahrs(self):
     while True:
       for line in iter(self.proc.stdout.readline, b''):
@@ -75,6 +85,9 @@ class Compass:
           azimuth, altitude, _ = line.split(" ", 2)
           self._azimuth = float(azimuth)
           self._altitude = float(altitude)
+
+          if self._initial_altitude == None and self._altitude != 0.0:
+            self._initial_altitude = self._altitude
 
           #print(line)
         except (ValueError, TypeError):

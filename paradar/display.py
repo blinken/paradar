@@ -44,6 +44,7 @@ class Display:
   # This number is given in pixels (1 pixel = 10 degrees)
   # = 18 (180 degree rotation) + 4.5 (first pixel is top-left of board, not top-center)
   _PIXEL_ANGLE_OFFSET = 18 + 4.5
+  _PIXEL_TDC_OFFSET = 5 # top-dead-center is just to the left of pixel 5
 
   _DEGREES_PER_PIXEL = 360.0/_PIXEL_COUNT
 
@@ -63,8 +64,11 @@ class Display:
 
   # When flight mode is on, only show aircraft within 3000ft (above or below)
   # and 15km
-  _FLIGHT_MODE_VERTICAL_SEP = 3000 # ft
+  _FLIGHT_MODE_VERTICAL_SEP = 3000.0 # ft
   _FLIGHT_MODE_HORIZONTAL_SEP = 15.0 # km
+  _FLIGHT_MODE_ALTIMETER_MIN = 20.0 # ft, minimum height to enable the altimeter
+  _FLIGHT_MODE_ALTIMETER_MAX = 1000.0 # ft
+  _FLIGHT_MODE_ALTIMETER_COLOUR = (255, 202, 133) # soothing orange
 
   # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
   # distance (kilometers)
@@ -234,12 +238,29 @@ class Display:
     self.brightness = self._SELFTEST_BRIGHTNESS
     self.pixels.show()
 
+  # Fill the pixels like a progress indicator with the specified colour. Value
+  # should be between 0.0 and 1.0.
+  #
+  # The fill begins from _PIXEL_TDC_OFFSET, ie just to the right of
+  # top-dead-center of the display.
+  def fill_percent(colour, value):
+    value = max(0.0, value)
+    value = min(1.0, value)
+
+    for i in range(int(self._PIXEL_COUNT * value)):
+      self.pixels[(i + self._PIXEL_TDC_OFFSET) % self._PIXEL_COUNT] = colour
+
   # Refresh the display with the value of self.pixels
   def update(self, aircraft_list):
     self.off()
 
     # One call to compass means less display weirdness on update
     azimuth = self._compass.get_azimuth()
+    altitude = self._altitude()
+
+    if Config.flight_mode():
+      if altitude > self._FLIGHT_MODE_ALTIMETER_MIN and altitude < self._FLIGHT_MODE_ALTIMETER_MAX:
+        self.fill_percent(self._FLIGHT_MODE_ALTIMETER_COLOUR, altitude/self._FLIGHT_MODE_ALTIMETER_MAX)
 
     # Indicate compass north
     if Config.show_north():
@@ -291,11 +312,10 @@ class Display:
       print("display: aircraft list changed during refresh, skipping update")
       return
 
-    altitude = self._altitude()
     for ac_bearing, ac_distance, ac_altitude in vectors:
       # Flight mode
       if Config.flight_mode():
-        if altitude && math.fabs(ac_altitude - altitude) > self._FLIGHT_MODE_VERTICAL_SEP:
+        if altitude and math.fabs(ac_altitude - altitude) > self._FLIGHT_MODE_VERTICAL_SEP:
           continue
 
         if ac_distance > self._FLIGHT_MODE_HORIZONTAL_SEP:
