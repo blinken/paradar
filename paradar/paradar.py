@@ -161,13 +161,7 @@ while True:
   else:
     delay = max(0, delay-1)
 
-  try:
-    my_latitude, my_longitude = gps.position()
-    gps_msg = "local position is ({:3.6f}, {:3.6f})".format(my_latitude, my_longitude)
-  except NoFixError:
-    gps_msg = "GPS does not have a fix"
-
-  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft (alt squelch {}), {}".format(refresh_rate, len(Aircraft.positions), "on" if Config.altitude_squelch() else "off", gps_msg))
+  print("main: display refresh rate {:2.2f} Hz, tracking {} aircraft (alt squelch {}), gps {}".format(refresh_rate, len(Aircraft.positions), "on" if Config.altitude_squelch() else "off", gps.get_status_str()))
 
   try:
     print("main: system temperature is {}°C".format(get_system_temp()))

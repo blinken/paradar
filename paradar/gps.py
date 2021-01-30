@@ -40,10 +40,8 @@ class GPS:
       mode = 1
 
     if mode == 0:
-      print("gps: no data received from GPS module/not connected (borked)")
       return False
     elif mode == 1:
-      #print("gps: module connected, no fix (maybe borked)")
       return False
     elif mode == 2:
       # module connected, 2D fix (healthy)
@@ -52,8 +50,27 @@ class GPS:
       # module connected, 3D fix (healthy)
       return True
     else:
-      print("gps: unknown mode returned by gpsd, hoping for the best")
       return True
+
+  def get_status_str(self):
+    try:
+      position = get_current()
+      mode = position.mode
+    except UserWarning:
+      mode = 0
+    except NoFixError:
+      mode = 1
+
+    if mode == 0:
+      return "borked, no data received/not connected"
+    elif mode == 1:
+      return "borked, module connected but no fix"
+    elif mode == 2:
+      return "healthy, module connected, 2D fix"
+    elif mode == 3:
+      return "healthy, module connected, 3D fix"
+    else:
+      return "may be borked, unknown mode returned by gpsd, hoping for the best"
 
   # Throws NoFixError if a fix cannot be obtained
   def position(self):
