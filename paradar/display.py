@@ -100,6 +100,7 @@ class Display:
     self._vectors_last_update = datetime(1970, 1, 1, 0, 0, 0)
     self._test_cycle = cycle(self._TEST_COLOURS)
     self._home_location = None
+    self._initial_altitude = None
 
     self.pixels = neopixel.NeoPixel(self._GPIO_DATA, self._PIXEL_COUNT,
       auto_write=False,
@@ -163,6 +164,18 @@ class Display:
         return gps_p.altitude()*3.281 # gps_p returns metres
       except (NoFixError, UserWarning):
         return None
+
+  # altitude in ft, relative to turn-on (can be negative)
+  def _relative_altitude(self):
+    altitude = self._altitude()
+
+    if self._initial_altitude == None and altitude != 0.0:
+      self._initial_altitude = altitude
+    elif self._initial_altitude == None and altitude == 0.0:
+      # No stored altitude & the altimiter may not be started yet
+      raise NoFixError
+
+    return altitude - self._initial_altitude
 
   def _haversine(self, lat1, lon1, lat2, lon2):
     # shamelessly stolen from SO, https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
@@ -260,7 +273,13 @@ class Display:
 
     if Config.flight_mode():
       if altitude > self._FLIGHT_MODE_ALTIMETER_MIN and altitude < self._FLIGHT_MODE_ALTIMETER_MAX:
-        self.fill_percent(self._FLIGHT_MODE_ALTIMETER_COLOUR, altitude/self._FLIGHT_MODE_ALTIMETER_MAX)
+        try:
+          self.fill_percent(
+            self._FLIGHT_MODE_ALTIMETER_COLOUR,
+            self._relative_altitude()/self._FLIGHT_MODE_ALTIMETER_MAX
+          )
+        except NoFixError:
+          pass
 
     # Indicate compass north
     if Config.show_north():
