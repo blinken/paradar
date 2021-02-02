@@ -68,7 +68,7 @@ class Display:
   _FLIGHT_MODE_HORIZONTAL_SEP = 15.0 # km
   _FLIGHT_MODE_ALTIMETER_MIN = 20.0 # ft, minimum height to enable the altimeter
   _FLIGHT_MODE_ALTIMETER_MAX = 1000.0 # ft
-  _FLIGHT_MODE_ALTIMETER_COLOUR = (255, 202, 133) # soothing orange
+  _FLIGHT_MODE_ALTIMETER_COLOUR = (255, 142, 43) # soothing orange
 
   # Begin to fade the LED to from COLOUR_AIRCRAFT_FAR to .._NEAR from this
   # distance (kilometers)
@@ -256,9 +256,10 @@ class Display:
   #
   # The fill begins from _PIXEL_TDC_OFFSET, ie just to the right of
   # top-dead-center of the display.
-  def fill_percent(colour, value):
+  def fill_percent(self, colour, value):
     value = max(0.0, value)
     value = min(1.0, value)
+    #print("fill pct %{}".format(value))
 
     for i in range(int(self._PIXEL_COUNT * value)):
       self.pixels[(i + self._PIXEL_TDC_OFFSET) % self._PIXEL_COUNT] = colour
@@ -270,13 +271,15 @@ class Display:
     # One call to compass means less display weirdness on update
     azimuth = self._compass.get_azimuth()
     altitude = self._altitude()
+    rel_altitude = self._relative_altitude()
 
     if Config.flight_mode():
-      if altitude > self._FLIGHT_MODE_ALTIMETER_MIN and altitude < self._FLIGHT_MODE_ALTIMETER_MAX:
+      #print("rel altitude: {}".format(rel_altitude))
+      if rel_altitude > self._FLIGHT_MODE_ALTIMETER_MIN and rel_altitude < self._FLIGHT_MODE_ALTIMETER_MAX:
         try:
           self.fill_percent(
             self._FLIGHT_MODE_ALTIMETER_COLOUR,
-            self._relative_altitude()/self._FLIGHT_MODE_ALTIMETER_MAX
+            rel_altitude/self._FLIGHT_MODE_ALTIMETER_MAX,
           )
         except NoFixError:
           pass
@@ -289,7 +292,7 @@ class Display:
     # Otherwise, attempt to update the home location (track_home switch has
     # just been enabled)
     if Config.track_home() and self._home_location:
-      self._calculate_bearing(self._home_location, self._gps)
+      self._calculate_bearing(self._home_location)
 
       if self._home_location["distance"] < self._IGNORE_CLOSER_THAN:
         # display nearby home as due south to avoid display weirdness
@@ -313,7 +316,7 @@ class Display:
 
     try:
       for ac in aircraft_list.values():
-        self._calculate_bearing(ac, self._gps)
+        self._calculate_bearing(ac)
     except NoFixError:
       print("display: error updating bearings - GPS does not have a fix")
       vectors = []

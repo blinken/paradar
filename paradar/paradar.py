@@ -153,7 +153,7 @@ while True:
   cycle_length = 500
 
   for i in range(cycle_length):
-    display.update(compass, gps, Aircraft.positions)
+    display.update(Aircraft.positions)
     time.sleep(delay/1000.0)
 
   t_end = time.time()
