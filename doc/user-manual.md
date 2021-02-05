@@ -1,12 +1,12 @@
 # paradar user manual
 
-Last update: July 2020. See https://github.com/blinken/paradar/tree/master/doc/user-manual.md for the
+Last update: February 2021. See https://github.com/blinken/paradar/tree/master/doc/user-manual.md for the
 latest version.
 
 | Serial number |             |
 | ------------- | ------------|
 
-Paradar, Lytchett House, 13 Freeland Park, Wareham Road, Poole, BH16 6FA<br/>
+BLINKENLIGHT Ltd, Lytchett House, 13 Freeland Park, Wareham Road, Poole, BH16 6FA<br/>
 info@paradar.co.uk
 
 ## Overview
@@ -161,6 +161,7 @@ coloured lights, all of which will move together as the device is rotated:
 * Purple/red light: indicates an aircraft - nearby (less than 15km distant). The
   colour fades slowly from blue to red as the aircraft comes closer - a bright
   red light indicates that the aircraft is very close.
+* Light orange light: altitude indicator in flight mode. See more on this below.
 
 Note that aircraft distance indication (the colour of an aircraft indicator
 light, from blue -> red) only considers the horizontal distance. That is, an
@@ -172,10 +173,11 @@ and clearance from nearby obstacles (buildings, trees, terrain). Outdoors,
 clear of obstructions, with a good line of sight in all directions, the
 included 2dBi (10cm) antenna will receive large aircraft 20-30km away. A 5dBi
 antenna (20cm) or a larger magnetic-mounted whip placed in a high location (eg,
-a vehicle roof) will receive more distant aircraft. 
+a vehicle roof) will receive more distant aircraft.
 
-paradar uses a female SMA antenna connector (the antenna should have a male SMA
-connector).
+paradar uses a female SMA antenna connector (the antenna must have a male SMA
+connector). If you break the antenna, contact info@paradar.co.uk and we'll send
+you a new one, if you cover postage.
 
 > ![Caution](https://raw.githubusercontent.com/blinken/paradar/master/doc/symbol-caution.png)
 > 
@@ -325,7 +327,7 @@ turn it off, move it down.
 | 2 | Wifi control | Wifi hotspot enabled | Wifi hotspot disabled (saves power) |
 | 3 | Guide-me-home (green/teal indicator) | Feature enabled | Feature disabled |
 | 4 | Compass north (white indicator) | North shown | North not shown |
-| 5 | Altitude squelch | Aircraft higher than 10,000ft are not shown, even if within 30km | All aircraft closer than 30km are shown |
+| 5 | Flight mode | Aircraft are only shown if within 3000ft of the current altitude, or less than 15km away | All aircraft closer than 30km are shown |
 | 6 | Dual-mode 978Mhz operation | Device switches between 1090Mhz and 978Mhz reception periodically (for use in the USA) | Device listens continuously on 1090MHz (all other regions) |
 
 It's fine to run paradar with the cover off for testing. You can change the
@@ -411,15 +413,34 @@ give you confidence that the compass is working without interference.
 
 To indicate north, set switch #4 to ON.
 
-### Altitude squelch
+### Flight mode
 
-It's rare that paramotor, paraglider or drone pilots ascend above 10,000ft (and
-if you find yourself that high, other aircraft probably aren't your primary
-concern). To reduce clutter on the display, you can optionally hide any
-aircraft reporting altitudes greater than 10,000ft. This is useful to avoid
-displaying large jets cruising at 35,000ft.
+Flight mode is intended for use when flying, and has two features.
 
-To do this, set switch #5 to ON.
+1. When activated, paradar will only show aircraft in a bubble of +/- 3000ft
+   from the current altitude, and less than 15km distant. All other aircraft
+   are hidden (but still sent via the WiFi link, if enabled). This is useful to
+   avoid displaying large jets cruising at 35,000ft when you are flying low.
+
+1. When paradar is turned on, the initial altitude is stored (this is reset
+   when you turn it off again). Relative to the turn-on altitude, paradar will
+   display an altimeter scale on the display between 20ft and 1000ft above the
+   turn-on altitude. This is shown in light orange, as a "background" to other
+   indicators (ie. North, Guide-me-home, and traffic all show on top of the
+   altimeter).
+
+   Note that long periods of flying at just below 1000ft will rapidly drain the
+   battery, as all LEDs will be lit.
+
+**The altimeter is based on barometric pressure using the IACO standard pressure
+altitude model (on v1.5 hardware, white PCB) or GPS altitude (v1.4 hardware,
+green PCB). It will be affected by changes in barometric pressure due to
+weather conditions, or by interference with the GPS signal.**
+
+**Do not rely on the altimeter function. It indicates pressure altitude, NOT
+height-above-ground.**
+
+To activate flight mode, set switch #5 to ON.
 
 ### Dual-band 978MHz+1090MHz operation
 
@@ -466,6 +487,8 @@ table with plenty of light.
 1. Remove the four screws on the top surface using a 2.5mm hex bit or allen
    key, and carefully remove the lid. Be cautious not to yank on the main
    circuit board just under the lid.
+1. Carefully loosen the nut that holds on the antenna connector. Be careful not
+   to damage the antenna connector thread.
 1. The SD card lives under the main circuit board on the left side - directly
    across from the USB-C connector.
 1. Gripping the GPS antenna, cautiously lift the main circuit board by no more
@@ -484,10 +507,14 @@ To re-install:
 1. Make sure the main circuit board is gently seated in the center of the
    bottom case. The top of the circuit board should be level with the top of
    the case walls, and there should be an even gap around all sides.
+
+   Sometimes, a connector under the top of the display blocks re-installation.
+   Gently poke it with a small allen key or similar, so the main circuit board
+   sits flat.
 1. Re-attach the lid, being cautious that the tabs on the bottom of the lid fit
    in the gap between the main PCB and the side of the bottom case.
 1. Reinstall all four lid screws and gently tighten. They do not need to be
-   very tight.
+   very tight. Retighten the antenna connector nut.
 
 ## Bug reports, feature requests and support
 
@@ -500,7 +527,7 @@ https://github.com/blinken/paradar/issues. For bug reports, please include as
 much information as you possibly can about what you were doing.
 
 For general queries (including bulk order discounts), you can contact Patrick
-directly at blinken@gmail.com.
+directly at patrick@paradar.co.uk.
 
 <div style="page-break-after: always;"></div>
 
@@ -530,7 +557,7 @@ an aircraft.**
 they have appropriate flight rated equipment alongside paradar and for
 obeying all applicable laws.**
 
-Copyright (C) 2020 Patrick Coleman
+Copyright (C) 2021 Patrick Coleman
 
 paradar is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
