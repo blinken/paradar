@@ -16,7 +16,7 @@ apt-get clean
 
 echo "=> Updating /opt/paradar"
 cd /opt/paradar
-git pull --rebase
+git pull --rebase -X ours --depth=1 origin release-1.5-rc1
 
 if [ $? -ne 0 ]; then
   echo "Rebase failed - aborting."
